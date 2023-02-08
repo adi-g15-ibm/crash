@@ -840,6 +840,7 @@ main_loop(void)
 	}
 }
 
+// @adi this is the function that decides execution of command entered
 /*
  *  Most of the time args[0] simply contains the name string of a command
  *  found in the global command_table[].  Special consideration is done for 

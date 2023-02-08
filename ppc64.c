@@ -33,6 +33,7 @@ static int ppc64_eframe_search(struct bt_info *);
 static void ppc64_back_trace_cmd(struct bt_info *);
 static void ppc64_back_trace(struct gnu_request *, struct bt_info *);
 static void get_ppc64_frame(struct bt_info *, ulong *, ulong *);
+static void ppc64_dump_frame(int frame_num, struct bt_info* bt);
 static void ppc64_print_stack_entry(int,struct gnu_request *, 
 	ulong, ulong, struct bt_info *);
 static void ppc64_dump_irq(int);
@@ -383,6 +384,7 @@ ppc64_init(int when)
                 machdep->is_uvaddr = generic_is_uvaddr;
 	        machdep->eframe_search = ppc64_eframe_search;
 	        machdep->back_trace = ppc64_back_trace_cmd;
+	        machdep->dump_frame = ppc64_dump_frame;
 	        machdep->processor_speed = ppc64_processor_speed;
 	        machdep->uvtop = ppc64_uvtop;
 	        machdep->kvtop = ppc64_kvtop;
@@ -2008,6 +2010,7 @@ ppc64_set_bt_emergency_stack(enum emergency_stack_type type, struct bt_info *bt)
 	}
 }
 
+// @adi Put breakpoint here
 /*
  *  Unroll a kernel stack.
  */
@@ -2046,7 +2049,7 @@ ppc64_back_trace_cmd(struct bt_info *bt)
 			req->sp = ppc64_check_sp_in_HWintrstack(req->sp, bt);
 		print_stack_text_syms(bt, req->sp, req->pc);
 	} else {
-				
+		// @adi meaningless it has no effect after GDB 5.3
         	if (bt->flags & BT_USE_GDB) {
                 	strcpy(req->buf, "backtrace");
                 	gdb_interface(req);
@@ -2120,10 +2123,12 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 			return;
 		}
 	}
-	
-		
+
+	printf("req->sp
 	while (INSTACK(req->sp, bt)) {
 		newsp = *(ulong *)&bt->stackbuf[req->sp - bt->stackbase];
+
+		// @adi req->name is the function name
 		if ((req->name = closest_symbol(req->pc)) == NULL) {
 			if (CRASHDEBUG(1)) {
 				error(FATAL,
@@ -2133,6 +2138,15 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 		}
 
 		bt->flags |= BT_SAVE_LASTSP;
+
+		// @adi IMP++ this function prints the lines in the `bt`,
+		// basically in the while loop, req->pc and req->sp are
+		// modified, then this ppc64_print_stack_entry does something to
+		// print the frame for corresponding frame.
+		// frame is just a number denoting the number of frames printed
+		// before this
+		// So... req->pc and req->sp should be enough to print a
+		// function's frame na, ie. knowing how big is the frame too ?
 		ppc64_print_stack_entry(frame, req, newsp, lr, bt);
 		bt->flags &= ~(ulonglong)BT_SAVE_LASTSP;
 		lr = 0;	
@@ -2160,6 +2174,8 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 					alter_stackbuf(bt);
 				}
 			}
+
+			// @adi newpc is being assigned here
 			if (IS_KVADDR(newsp) && INSTACK(newsp, bt))
 				newpc = *(ulong *)&bt->stackbuf[newsp + 16 -
 						bt->stackbase];
@@ -2167,7 +2183,7 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 
 		if (BT_REFERENCE_FOUND(bt))
 			return;
-		
+
 		eframe_found =  FALSE;
 		/*
 		 * Is this frame an execption one?
@@ -2254,6 +2270,76 @@ ppc64_display_full_frame(struct bt_info *bt, ulong nextsp, FILE *ofp)
         fprintf(ofp, "\n");
 }
 
+static void
+ppc64_dump_frame(int frame,
+		struct bt_info* bt)
+{
+	struct gnu_request* req;
+	ulong newsp;
+	ulong lr = 0; /* hack... from ppc64_back_trace, need initial lr reg */
+
+	int frame_num = CURRENT_FRAME();
+
+	// we only need req->pc and req->sp for our purposes
+	req = (struct gnu_request*)GETBUF(sizeof (struct gnu_request));
+	printf("HERE1: %lx\n", req); fflush(stdout);
+	// TODO: Init other fields
+	req->task = bt->task;
+
+	ulong ip, sp; // pc is basically ip
+	get_ppc64_frame(bt, &ip, &sp);
+
+	printf("HERE2: ip: %d, sp: %d\n", ip, sp); fflush(stdout);
+
+	bt->instptr = ip;
+	bt->stkptr = sp;
+
+	req->pc = bt->instptr;
+	req->sp = /*ppc64_get_sp(bt->task)*/ bt->stkptr;
+
+	// BUG: bt->stackbase > req->sp
+	printf("HERE1: %lx[%d]\n", bt->stackbuf, req->sp - bt->stackbase ); fflush(stdout);
+	// TODO: Currently printing for the 0th frame basically
+	newsp = bt->stackbuf[req->sp - bt->stackbase];
+
+	printf("HERE1\n"); fflush(stdout);
+
+	req->name = closest_symbol(req->pc);
+	if((req->name == NULL) && CRASHDEBUG(1)) {
+		error(FATAL,
+		"ppc64_dump_frame hit unknown symbol (%lx).\n",
+			req->pc);
+	}
+
+	printf("HERE1\n"); fflush(stdout);
+	// @adi doing this, just because ppc64_back_trace does this, will have
+	// to see again
+
+	bt->flags |= BT_SAVE_LASTSP;
+
+	printf("HERE1. Going to print stack entry\n"); fflush(stdout);
+	// frame: ppc64_dump_frame hit unknown symbol (7fffffff).
+	ppc64_print_stack_entry(frame_num, req, newsp, lr, bt);
+	printf("HERE1. Printed stack entry\n"); fflush(stdout);
+
+	bt->flags |= ~(ulonglong)BT_SAVE_LASTSP;
+
+	// TODO
+	
+	FREEBUF(req);
+}
+
+/* @adi
+ *
+ * Information required for one frame:
+ * 1. gnu_request.{pc,sp (the first address after #0), name, ra}
+ * 2. newsp
+ * 3. lr
+ * 4. bt_info.{flags, ref*, }
+ *
+ * req->pc, req->sp are enough to print that one line
+ *
+ * */
 /*
  *  print one entry of a stack trace
  */
@@ -2291,20 +2377,24 @@ ppc64_print_stack_entry(int frame,
 			if (sp && offset) 
 				name_plus_offset = value_to_symstr(req->pc, buf, bt->radix);
 		}
-		
+
+		// @adi in bt, most of the info is this part only
 		fprintf(fp, "%s#%d [%lx] %s at %lx",
 			frame < 10 ? " " : "", frame,
 			req->sp, name_plus_offset ? name_plus_offset : req->name, 
 			req->pc);
 		if (module_symbol(req->pc, NULL, &lm, NULL, 0))
 			fprintf(fp, " [%s]", lm->mod_name);
-	
+
+		// @adi req->ra is 0 in first and every other frame also
 		if (req->ra) {
 			/*
 			 * Previous frame is an exception one. If the func 
 			 * symbol for the current frame is same as with 
 			 * the previous frame's LR value, print "(unreliable)".
 			 */
+
+			// lr = Link Register
 			lrname = closest_symbol(req->ra);
 			req->ra = 0;
 			if (!lrname) {
@@ -2315,6 +2405,7 @@ ppc64_print_stack_entry(int frame,
 				return;
 			}
 		}
+		// @adi lr = 0 for me
 		if (lr) {
 			/*
 			 * Link register value for an expection frame.
@@ -2339,9 +2430,12 @@ ppc64_print_stack_entry(int frame,
 		req->lastsp = req->sp;
 
 	bt->frameptr = req->sp;
+
+	// @adi -f flag
 	if (bt->flags & BT_FULL) 
 		if (IS_KVADDR(newsp))
 			ppc64_display_full_frame(bt, newsp, fp);
+	// @adi -l flag
 	if (bt->flags & BT_LINE_NUMBERS)
 		ppc64_dump_line_number(req->pc);
 }
@@ -2748,7 +2842,7 @@ retry:
 }
 
 
-
+// @adi Point of interest
 /*
  *  Get a stack frame combination of pc and ra from the most relevent spot.
  */

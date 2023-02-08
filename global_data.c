@@ -32,6 +32,7 @@ FILE *fp;
  *  Given that it's consulted so often, "pc" is globally available to
  *  quickly access the structure contents.
  */
+// @adi IMP global symbols like this are accessible to `p` command in gdb
 struct program_context program_context = { 0 };
 struct program_context *pc = &program_context;
 
@@ -77,11 +78,13 @@ struct command_table_entry linux_command_table[] = {
 	{"btop",    cmd_btop,    help_btop,    0},
 	{"dev",     cmd_dev,     help_dev,     0},
 	{"dis",     cmd_dis,     help_dis,     MINIMAL},
+        {"down",    cmd_down,    help_down,    REFRESH_TASK_TABLE},
 	{"eval",    cmd_eval,    help_eval,    MINIMAL},
 	{"exit",    cmd_quit,    help_exit,    MINIMAL},
 	{"extend",  cmd_extend,  help_extend,  MINIMAL},
 	{"files",   cmd_files,   help_files,   REFRESH_TASK_TABLE},
 	{"foreach", cmd_foreach, help_foreach, REFRESH_TASK_TABLE},
+        {"frame",   cmd_frame,   help_frame,   REFRESH_TASK_TABLE},
 	{"fuser",   cmd_fuser,   help_fuser,   REFRESH_TASK_TABLE},
 	{"gdb",     cmd_gdb,     help_gdb,     REFRESH_TASK_TABLE},
         {"help",    cmd_help,    help_help,    MINIMAL},
@@ -116,6 +119,7 @@ struct command_table_entry linux_command_table[] = {
         {"task",    cmd_task,    help_task,    REFRESH_TASK_TABLE},
 	{"test",    cmd_test,    NULL,         HIDDEN_COMMAND},
         {"timer",   cmd_timer,   help_timer,   0},
+        {"up",      cmd_up,      help_up,   REFRESH_TASK_TABLE},
 	{"union",   cmd_union,   help_union,   0},
 	{"vm",      cmd_vm,      help_vm,      REFRESH_TASK_TABLE},
 	{"vtop",    cmd_vtop,    help_vtop,    REFRESH_TASK_TABLE},

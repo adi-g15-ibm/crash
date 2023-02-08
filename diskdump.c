@@ -1510,6 +1510,7 @@ get_diskdump_regs_ppc64(struct bt_info *bt, ulong *eip, ulong *esp)
 		}
 	}
 
+	// @adi Point of Interest
 	machdep->get_stack_frame(bt, eip, esp);
 }
 

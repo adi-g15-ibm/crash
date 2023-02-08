@@ -335,6 +335,7 @@ retry:
 	FREEBUF(req);
 }
 
+// @adi helpful in case we don't want to create the whole requests object
 /*
  *  Quickest way to gdb -- just pass a command string to pass through.
  */
@@ -672,6 +673,7 @@ is_gdb_command(int merge_orig_args, ulong flags)
 		return TRUE;
 	}
 
+	// @adi here it put 'find' as prohibited command
 	if (is_restricted_command(args[0], flags))
 		return FALSE;
 
@@ -706,6 +708,8 @@ is_gdb_command(int merge_orig_args, ulong flags)
 /*
  *  Check whether a command is on the gdb-prohibited list.
  */
+// @adi analysis: removing any command from here simply causes:
+// "gdb: gdb request failed: frame 3"
 static char *prohibited_list[] = {
 	"run", "r", "break", "b", "tbreak", "hbreak", "thbreak", "rbreak",
 	"watch", "rwatch", "awatch", "attach", "continue", "c", "fg", "detach", 
