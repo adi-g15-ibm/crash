@@ -3553,6 +3553,8 @@ dump_current_frame(void)
 
 	bt = &bt_info;
 	BZERO(bt, sizeof (struct bt_info));
+	BCOPY(bt, &bt_setup, sizeof(struct bt_info));  // basically copy from bt to
+	                                               // bt_setup, ie. zeroed bt_setup
 
 	tc = CURRENT_CONTEXT();
 
