@@ -2677,7 +2677,7 @@ ppc64_print_eframe(char *efrm_str, struct ppc64_pt_regs *regs,
 	ppc64_print_nip_lr(regs, 1);
 }
 
-// @adi Point of interest, ppc64_get_dumpfile_stack_frame calls this vmcore_stack_frame, but requires bt->machdep must be initialised (done by get_kdump_regs etc)
+// @adi ppc64_get_dumpfile_stack_frame calls only when bt->machdep is not defined, and in that case this also just fails with an error, so no benefit in my case
 /*
  * For vmcore typically saved with KDump or FADump, get SP and IP values
  * from the saved ptregs.
@@ -2951,7 +2951,11 @@ retry:
 }
 
 
-// @adi Point of interest
+// @adi Point of interest, in case of dumpfile, requires bt->machdep to be
+// defined, since it doesn't init that
+// else in case it's not a dumpfile, or task is not active, it finds the pt_regs
+// even without ELF notes, rather directly readmem pt_regs from a stack pointer
+// and offset
 /*
  *  Get a stack frame combination of pc and ra from the most relevent spot.
  */
@@ -2963,7 +2967,6 @@ ppc64_get_stack_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 	nip = ksp = 0;
 
 	if (DUMPFILE() && is_task_active(bt->task)) 
-		// @adi This is the one getting run
 		ppc64_get_dumpfile_stack_frame(bt, &nip, &ksp);
 	else
 		get_ppc64_frame(bt, &nip, &ksp);
@@ -3015,6 +3018,9 @@ get_ppc64_frame(struct bt_info *bt, ulong *getpc, ulong *getsp)
 	sp = ppc64_get_sp(task);
 	if (!INSTACK(sp, bt))
 		goto out;
+
+    // @adi Point of interest, even without using bt->machdep. instead reading
+    // from some offset from sp to get pt_regs
 	readmem(sp+STACK_FRAME_OVERHEAD, KVADDR, &regs, 
 		sizeof(struct ppc64_pt_regs),
 		"PPC64 pt_regs", FAULT_ON_ERROR);

@@ -106,7 +106,7 @@ map_cpus_to_prstatus(void)
 	FREEBUF(nt_ptr);
 }
 
-// @adi Point of interest, here is where is initialises vmcore_data, go to `nd`
+// @adi Point of interest, here is where is initialises vmcore_data, (ie. `nd`)
 /*
  *  Determine whether a file is a netdump/diskdump/kdump creation, 
  *  and if TRUE, initialize the vmcore_data structure.
@@ -3829,7 +3829,7 @@ get_netdump_regs_ppc(struct bt_info *bt, ulong *eip, ulong *esp)
 	get_netdump_regs_32(bt, eip, esp);
 }
 
-// @adi Point of interest, get_kdump_regs (in case of elf), calls get_netdum_regs which calls this, and the IP and SP are assigned here
+// @adi Point of interest, get_kdump_regs (in case of elf), calls get_netdum_regs which calls this, and the IP and SP are assigned later by machdep->get_stack_frame
 static void
 get_netdump_regs_ppc64(struct bt_info *bt, ulong *eip, ulong *esp)
 {
@@ -3870,7 +3870,6 @@ get_netdump_regs_ppc64(struct bt_info *bt, ulong *eip, ulong *esp)
 			MEMBER_OFFSET("elf_prstatus", "pr_reg"));
 	}
 
-// @adi Point of interest, finally it calls ppc64_get_stack_frame
 no_nt_prstatus_exists:
 	machdep->get_stack_frame(bt, eip, esp);
 }
