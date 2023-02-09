@@ -2141,7 +2141,6 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 
 		bt->flags |= BT_SAVE_LASTSP;
 
-	printf("req->sp: %lx, req->pc: %lx, newsp: %lx, stackbuf: %lx[%d]\n", req->sp, req->pc, newsp, bt->stackbuf, req->sp - bt->stackbase);
 		// @adi IMP++ this function prints the lines in the `bt`,
 		// basically in the while loop, req->pc and req->sp are
 		// modified, then this ppc64_print_stack_entry does something to
@@ -2311,9 +2310,6 @@ ppc64_dump_frame(int frame,
 	// sp = ppc64_get_sp(bt->task) /*0xc0000000556cfb00*/,
 	// ip = 0xc000000000270318;
 
-	// @bug sp is fine, ip is the problem
-	printf("ppc64_dump_frame: ip: %lx, sp: %lx\n", ip, sp); fflush(stdout);
-
 	// @adi These values ppc64_back_trace_cmd (machdep->back_trace) receives from back_trace (kernel.c), which it gets from ppc64_get_diskdump_regs (called by get_diskdump_regs)
 	// not modifying bt_info
 	// bt->instptr = ip;
@@ -2414,8 +2410,6 @@ ppc64_dump_frame(int frame,
 
     req->sp = newsp;
     req->pc = newpc;
-
-	printf("ppc64_dump_frame: newsp: %lx, stackbuf: %lx[%d]\n", newsp, bt->stackbuf, req->sp - bt->stackbase); fflush(stdout);
 
 	if ((req->name = closest_symbol(req->pc)) == NULL) {
 	    if(CRASHDEBUG(1)) {

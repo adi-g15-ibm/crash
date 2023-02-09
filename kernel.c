@@ -3583,7 +3583,6 @@ cmd_frame(void)
 	// `frame` takes one optional argument as the frame number
 	char* frame_num = args[optind+1];
 
-	printf("Current: %d, frame_num: %s\n", CURRENT_FRAME(), frame_num);
 	if(frame_num) {
 		// TODO: Check for validity
 		// TODO: `gdb` supports "It can be a stack frame number or the
@@ -3593,7 +3592,13 @@ cmd_frame(void)
 		// @adi for the validity check, I might have to init the registers here
 
 		// set frame number to `frame_num`
-		CURRENT_FRAME() = atoi(frame_num);
+		long n = strtol(frame_num, NULL, 10);
+		if( n<0 ) {
+			error(FATAL, "Passed frame number is invalid.");
+			return;
+		}
+
+		CURRENT_FRAME() = n;
 	}
 
 	// Whether frame_num given or not, we dump the frame nevertheless, same
@@ -3624,7 +3629,7 @@ cmd_down(void)
 		error(INFO, "Bottom (innermost) frame selected; you cannot go down.");
 	} else {
 		CURRENT_FRAME() -= 1;
-		
+
 		dump_current_frame();
 	}
 }
