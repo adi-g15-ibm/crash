@@ -73,6 +73,7 @@ static ulong pud_page_vaddr_l4(ulong pud);
 static ulong pmd_page_vaddr_l4(ulong pmd);
 static int is_opal_context(ulong sp, ulong nip);
 void opalmsg(void);
+static int ppc64_get_dumpfile_stack_frame(struct bt_info *bt_in, ulong *nip, ulong *ksp);
 
 static int is_opal_context(ulong sp, ulong nip)
 {
@@ -2035,6 +2036,7 @@ ppc64_back_trace_cmd(struct bt_info *bt)
         req->debug = bt->debug;
         req->task = bt->task;
 
+	// @adi Point of interest, this is where we assign req->pc, req->sp, from bt
         req->pc = bt->instptr;
         req->sp = bt->stkptr;
 
@@ -2124,7 +2126,7 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 		}
 	}
 
-	printf("req->sp
+
 	while (INSTACK(req->sp, bt)) {
 		newsp = *(ulong *)&bt->stackbuf[req->sp - bt->stackbase];
 
@@ -2139,6 +2141,7 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 
 		bt->flags |= BT_SAVE_LASTSP;
 
+	printf("req->sp: %lx, req->pc: %lx, newsp: %lx, stackbuf: %lx[%d]\n", req->sp, req->pc, newsp, bt->stackbuf, req->sp - bt->stackbase);
 		// @adi IMP++ this function prints the lines in the `bt`,
 		// basically in the while loop, req->pc and req->sp are
 		// modified, then this ppc64_print_stack_entry does something to
@@ -2287,22 +2290,36 @@ ppc64_dump_frame(int frame,
 	req->task = bt->task;
 
 	ulong ip, sp; // pc is basically ip
-	get_ppc64_frame(bt, &ip, &sp);
 
-	printf("HERE2: ip: %d, sp: %d\n", ip, sp); fflush(stdout);
+	// @adi Wierd: get_kdump_regs is used for ELF which calls get_netdump_regs, else get_diskdump_regs is used for kdump compressed
+	// get_diskdump_regs_ppc64(when kdump format)/get_kdump_regs(when elf format) calls ppc64_get_stack_frame (machdep->get_stack_frame) calls get_ppc64_frame
+	//ppc64_get_stack_frame(bt, &ip, &sp);	// doesn't even set one thing correctly
+	//get_ppc64_frame(bt, &ip, &sp);	// it works the same way for ppc64_get_sp, for sp
+	//ppc64_get_dumpfile_stack_frame(bt, &ip, &sp);  // problem: requires bt->machdep (pointing to pt_regs to be initialised)
+	// get_netdump_regs_ppc64(bt, &ip, &sp);	// internally calls ppc64_get_dumpfile_stack_frame but after init bt->machdep
+	// @ref: this has been copied from back_trace function in kernel.c
+	get_netdump_regs(bt, &ip, &sp);		// even get_kdump_regs ends up here, it calls get_netdump_regs_ppc64
 
+	// either of these `sp` works and stack frame shows same symbol __crash_kexec, that means it's the closest_symbol to both sp
+	// sp = ppc64_get_sp(bt->task) /*0xc0000000556cfb00*/,
+	// ip = 0xc000000000270318;
+
+	// @bug sp is fine, ip is the problem
+	printf("HERE2: ip: %lx, sp: %lx\n", ip, sp); fflush(stdout);
+
+	// @adi These values ppc64_back_trace_cmd (machdep->back_trace) receives from back_trace (kernel.c), which it gets from ppc64_get_diskdump_regs (called by get_diskdump_regs)
 	bt->instptr = ip;
 	bt->stkptr = sp;
 
+	// @adi These values ppc64_back_trace receives from ppc64_back_trace_cmd
 	req->pc = bt->instptr;
 	req->sp = /*ppc64_get_sp(bt->task)*/ bt->stkptr;
 
-	// BUG: bt->stackbase > req->sp
-	printf("HERE1: %lx[%d]\n", bt->stackbuf, req->sp - bt->stackbase ); fflush(stdout);
 	// TODO: Currently printing for the 0th frame basically
-	newsp = bt->stackbuf[req->sp - bt->stackbase];
+	// @adi @learning: `*(ulong *)&something` is not same as `something`, I thought since the lhs is ulong, so will use that, but nope, it read an integer or something
+	newsp = *(ulong*)&bt->stackbuf[req->sp - bt->stackbase];
 
-	printf("HERE1\n"); fflush(stdout);
+	printf("HERE3: newsp: %lx, stackbuf: %lx[%d]\n", newsp, bt->stackbuf, req->sp - bt->stackbase); fflush(stdout);
 
 	req->name = closest_symbol(req->pc);
 	if((req->name == NULL) && CRASHDEBUG(1)) {
@@ -2311,16 +2328,16 @@ ppc64_dump_frame(int frame,
 			req->pc);
 	}
 
-	printf("HERE1\n"); fflush(stdout);
+	printf("HERE4: name: %s\n", req->name); fflush(stdout);
 	// @adi doing this, just because ppc64_back_trace does this, will have
 	// to see again
 
 	bt->flags |= BT_SAVE_LASTSP;
 
-	printf("HERE1. Going to print stack entry\n"); fflush(stdout);
+	printf("HERE5. Going to print stack entry\n"); fflush(stdout);
 	// frame: ppc64_dump_frame hit unknown symbol (7fffffff).
 	ppc64_print_stack_entry(frame_num, req, newsp, lr, bt);
-	printf("HERE1. Printed stack entry\n"); fflush(stdout);
+	printf("HERE6. Printed stack entry\n"); fflush(stdout);
 
 	bt->flags |= ~(ulonglong)BT_SAVE_LASTSP;
 
@@ -2357,6 +2374,7 @@ ppc64_print_stack_entry(int frame,
 	char *name_plus_offset;
 	char buf[BUFSIZE];
 
+	printf("FUNC1: val: %d\n", BT_REFERENCE_CHECK(bt)); fflush(stdout);
 	if (BT_REFERENCE_CHECK(bt)) {
 		switch (bt->ref->cmdflags & (BT_REF_SYMBOL|BT_REF_HEXVAL))
 		{
@@ -2371,6 +2389,7 @@ ppc64_print_stack_entry(int frame,
 			break;
 		}
 	} else {
+	printf("FUNC2\n"); fflush(stdout);
 		name_plus_offset = NULL;
 		if (bt->flags & BT_SYMBOL_OFFSET) {
 			sp = value_search(req->pc, &offset);
@@ -2378,11 +2397,13 @@ ppc64_print_stack_entry(int frame,
 				name_plus_offset = value_to_symstr(req->pc, buf, bt->radix);
 		}
 
+	printf("FUNC3\n"); fflush(stdout);
 		// @adi in bt, most of the info is this part only
 		fprintf(fp, "%s#%d [%lx] %s at %lx",
 			frame < 10 ? " " : "", frame,
 			req->sp, name_plus_offset ? name_plus_offset : req->name, 
 			req->pc);
+	printf("FUNC4\n"); fflush(stdout);
 		if (module_symbol(req->pc, NULL, &lm, NULL, 0))
 			fprintf(fp, " [%s]", lm->mod_name);
 
@@ -2572,6 +2593,7 @@ ppc64_print_eframe(char *efrm_str, struct ppc64_pt_regs *regs,
 	ppc64_print_nip_lr(regs, 1);
 }
 
+// @adi Point of interest, ppc64_get_dumpfile_stack_frame calls this vmcore_stack_frame, but requires bt->machdep must be initialised (done by get_kdump_regs etc)
 /*
  * For vmcore typically saved with KDump or FADump, get SP and IP values
  * from the saved ptregs.
@@ -2654,6 +2676,7 @@ ppc64_vmcore_stack_frame(struct bt_info *bt_in, ulong *nip, ulong *ksp)
 	return TRUE;
 }
 
+// @adi IMP POINT OF INTEREST: This is what I was looking for, EIP and ESP are set here from the ELF Notes
 /*
  *  Get the starting point for the active cpus in a diskdump/netdump.
  */
@@ -2850,10 +2873,11 @@ static void
 ppc64_get_stack_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 {
 	ulong ksp, nip;
-	
+
 	nip = ksp = 0;
 
 	if (DUMPFILE() && is_task_active(bt->task)) 
+		// @adi This is the one getting run
 		ppc64_get_dumpfile_stack_frame(bt, &nip, &ksp);
 	else
 		get_ppc64_frame(bt, &nip, &ksp);

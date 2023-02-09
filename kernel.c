@@ -2989,6 +2989,7 @@ in_alternate_stack(int cpu, ulong address)
 	return FALSE;
 }
 
+// @adi Point of interest: here we set EIP, ESP, why was I seeing everywhere deep
 /*
  *  Gather the EIP, ESP and stack address for the target task, and passing 
  *  them on to the machine-specific back trace command.
@@ -3062,7 +3063,7 @@ back_trace(struct bt_info *bt)
 		machdep->eframe_search(bt); 
 		return;
 	}
-	
+
 	if (bt->hp) {
 		if (bt->hp->esp && !INSTACK(bt->hp->esp, bt) &&
 		    !in_alternate_stack(bt->tc->processor, bt->hp->esp))

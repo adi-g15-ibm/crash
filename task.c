@@ -6065,6 +6065,8 @@ task_cpu(int processor, char *buf, int verbose)
         return buf;
 }
 
+// @adi In case of DUMPFILE, returns true when the task is the panic thread, I
+// 'think' not for usual things
 /*
  *  Check either the panic_threads[] array on a dump, or the has_cpu flag 
  *  of a task_struct on a live system.  Also account for deprecation of
