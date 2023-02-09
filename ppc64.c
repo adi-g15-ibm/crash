@@ -2303,7 +2303,9 @@ ppc64_dump_frame(int frame,
 	// @ref: this has been copied from back_trace function in kernel.c
 	// this currently reads elf notes and init bt->machdep each time frame is called
 	// instead, if bt->machdep is not null, we can call ppc64_get_dumpfile_stack_frame directly
+	bt->flags |= BT_NO_PRINT_REGS;
 	get_netdump_regs(bt, &ip, &sp);		// even get_kdump_regs ends up here, it calls get_netdump_regs_ppc64
+	bt->flags &= ~BT_NO_PRINT_REGS;
 
 	// either of these `sp` works and stack frame shows same symbol __crash_kexec, that means it's the closest_symbol to both sp
 	// sp = ppc64_get_sp(bt->task) /*0xc0000000556cfb00*/,
@@ -2789,9 +2791,11 @@ ppc64_get_dumpfile_stack_frame(struct bt_info *bt_in, ulong *nip, ulong *ksp)
 		pt_regs = (struct ppc64_pt_regs *)bt->machdep;
 		ur_nip = pt_regs->nip;
 		ur_ksp = pt_regs->gpr[1];
-		/* Print the collected regs for panic task. */
-		ppc64_print_regs(pt_regs);
-		ppc64_print_nip_lr(pt_regs, 1);
+		if ( !(bt->flags & BT_NO_PRINT_REGS) ) {
+		    /* Print the collected regs for panic task. */
+		    ppc64_print_regs(pt_regs);
+		    ppc64_print_nip_lr(pt_regs, 1);
+		}
 	} else if ((pc->flags & KDUMP) ||
 		   ((pc->flags & DISKDUMP) &&
 		    (*diskdump_flags & KDUMP_CMPRS_LOCAL))) {
