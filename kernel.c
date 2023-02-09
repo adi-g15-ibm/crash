@@ -3581,13 +3581,16 @@ void
 cmd_frame(void)
 {
 	// `frame` takes one optional argument as the frame number
-	char* frame_num = args[optind];
+	char* frame_num = args[optind+1];
 
+	printf("Current: %d, frame_num: %s\n", CURRENT_FRAME(), frame_num);
 	if(frame_num) {
 		// TODO: Check for validity
 		// TODO: `gdb` supports "It can be a stack frame number or the
 		// address of the frame"
 		// TODO: Handle the case where this errors
+
+		// @adi for the validity check, I might have to init the registers here
 
 		// set frame number to `frame_num`
 		CURRENT_FRAME() = atoi(frame_num);

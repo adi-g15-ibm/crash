@@ -2278,15 +2278,18 @@ ppc64_dump_frame(int frame,
 		struct bt_info* bt)
 {
 	struct gnu_request* req;
-	ulong newsp;
+    enum emergency_stack_type estype;
+    ulong newpc = 0, newsp, marker;
+    int c = bt->tc->processor;
+    ulong nmi_sp = 0;
+    int eframe_found;
 	ulong lr = 0; /* hack... from ppc64_back_trace, need initial lr reg */
 
 	int frame_num = CURRENT_FRAME();
 
 	// we only need req->pc and req->sp for our purposes
 	req = (struct gnu_request*)GETBUF(sizeof (struct gnu_request));
-	printf("HERE1: %lx\n", req); fflush(stdout);
-	// TODO: Init other fields
+	// @adi Other fields are not required, so not initialising
 	req->task = bt->task;
 
 	ulong ip, sp; // pc is basically ip
@@ -2298,6 +2301,8 @@ ppc64_dump_frame(int frame,
 	//ppc64_get_dumpfile_stack_frame(bt, &ip, &sp);  // problem: requires bt->machdep (pointing to pt_regs to be initialised)
 	// get_netdump_regs_ppc64(bt, &ip, &sp);	// internally calls ppc64_get_dumpfile_stack_frame but after init bt->machdep
 	// @ref: this has been copied from back_trace function in kernel.c
+	// this currently reads elf notes and init bt->machdep each time frame is called
+	// instead, if bt->machdep is not null, we can call ppc64_get_dumpfile_stack_frame directly
 	get_netdump_regs(bt, &ip, &sp);		// even get_kdump_regs ends up here, it calls get_netdump_regs_ppc64
 
 	// either of these `sp` works and stack frame shows same symbol __crash_kexec, that means it's the closest_symbol to both sp
@@ -2305,44 +2310,125 @@ ppc64_dump_frame(int frame,
 	// ip = 0xc000000000270318;
 
 	// @bug sp is fine, ip is the problem
-	printf("HERE2: ip: %lx, sp: %lx\n", ip, sp); fflush(stdout);
+	printf("ppc64_dump_frame: ip: %lx, sp: %lx\n", ip, sp); fflush(stdout);
 
 	// @adi These values ppc64_back_trace_cmd (machdep->back_trace) receives from back_trace (kernel.c), which it gets from ppc64_get_diskdump_regs (called by get_diskdump_regs)
-	bt->instptr = ip;
-	bt->stkptr = sp;
+	// not modifying bt_info
+	// bt->instptr = ip;
+	// bt->stkptr = sp;
 
 	// @adi These values ppc64_back_trace receives from ppc64_back_trace_cmd
-	req->pc = bt->instptr;
-	req->sp = /*ppc64_get_sp(bt->task)*/ bt->stkptr;
+	req->pc = ip;
+	req->sp = sp;
 
-	// TODO: Currently printing for the 0th frame basically
-	// @adi @learning: `*(ulong *)&something` is not same as `something`, I thought since the lhs is ulong, so will use that, but nope, it read an integer or something
-	newsp = *(ulong*)&bt->stackbuf[req->sp - bt->stackbase];
+    // At this point, req->pc, and req->sp point to frame 0
 
-	printf("HERE3: newsp: %lx, stackbuf: %lx[%d]\n", newsp, bt->stackbuf, req->sp - bt->stackbase); fflush(stdout);
+    int cnt = frame_num;
 
-	req->name = closest_symbol(req->pc);
-	if((req->name == NULL) && CRASHDEBUG(1)) {
+    newsp = req->sp;
+    newpc = req->pc;
+    while(cnt --> 0) {
+	    // @adi @learning: `*(ulong *)&something` is not same as `something`, I thought since the lhs is ulong, so will use that, but nope, it read an integer or something
+        newsp = *(ulong *)&bt->stackbuf[newsp - bt->stackbase];
+
+        // if the `newsp` value doesn't point to valid address in stack
+        if(!INSTACK(newsp, bt)) {
+            error(FATAL,
+            "ppc64_dump_frame: current frame numberx (%d) is not valid (likely more than number of frames available)",
+                frame_num);
+            return;
+        }
+
+        // the rest of this while loop is copied from ppc64_back_trace, focused on updating req->pc
+        lr = 0;
+		if (IS_KVADDR(newsp)) {
+			/*
+			 * In 2.4, HW interrupt stack will be used to save
+			 * smp_call_functions symbols. i.e, when the dumping
+			 * CPU is issued IPI call to freeze other CPUS,
+			 */
+			if (INSTACK(newsp, bt) && (newsp + 16 > bt->stacktop))
+				newsp =
+				    *(ulong *)&bt->stackbuf[newsp - bt->stackbase];
+			if (!INSTACK(newsp, bt)) {
+				if ((estype = ppc64_in_emergency_stack(c, newsp, true))) {
+				    if (!nmi_sp && estype == NMI_EMERGENCY_STACK)
+						nmi_sp = newsp;
+					    ppc64_set_bt_emergency_stack(estype, bt);
+				    } else {
+					    /*
+					    * Switch HW interrupt stack or emergency stack
+					    * to process's stack.
+					    */
+					    bt->stackbase = GET_STACKBASE(bt->task);
+					    bt->stacktop = GET_STACKTOP(bt->task);
+					    alter_stackbuf(bt);
+				}
+			}
+
+		    if (IS_KVADDR(newsp) && INSTACK(newsp, bt))
+			    newpc = *(ulong *)&bt->stackbuf[newsp + 16 -
+			        bt->stackbase];
+		}
+
+		if (BT_REFERENCE_FOUND(bt))
+			return;
+
+		eframe_found = FALSE;
+		/*
+		 * Is this frame an execption one?
+		 * In 2.6, 0x7265677368657265 is saved and used
+		 * to determine the execption frame.
+		 */
+	    if (THIS_KERNEL_VERSION < LINUX(2,6,0)) {
+		    if (frame && (newsp - req->sp - STACK_FRAME_OVERHEAD) >=
+			    sizeof(struct ppc64_pt_regs))
+			    eframe_found = TRUE;
+		    else if (STREQ(req->name, ".ret_from_except"))
+			    eframe_found = TRUE;
+		} else if ((newsp - req->sp - STACK_FRAME_OVERHEAD) >=
+			sizeof(struct ppc64_pt_regs)) {
+			readmem(req->sp+0x60, KVADDR, &marker,
+			sizeof(ulong), "stack frame", FAULT_ON_ERROR);
+
+		    if (marker == EXCP_FRAME_MARKER)
+		        eframe_found = TRUE;
+		}
+		if (eframe_found) {
+			char *efrm_str = NULL;
+			struct ppc64_pt_regs regs;
+			readmem(req->sp+STACK_FRAME_OVERHEAD, KVADDR, &regs,
+				sizeof(struct ppc64_pt_regs),
+				"exception frame", FAULT_ON_ERROR);
+
+			efrm_str = ppc64_check_eframe(&regs);
+			if (efrm_str) {
+				lr = regs.link;
+			    newpc = regs.nip;
+		    	newsp = regs.gpr[1];
+	    	}
+    	}
+    }
+
+    req->sp = newsp;
+    req->pc = newpc;
+
+	printf("ppc64_dump_frame: newsp: %lx, stackbuf: %lx[%d]\n", newsp, bt->stackbuf, req->sp - bt->stackbase); fflush(stdout);
+
+	if ((req->name = closest_symbol(req->pc)) == NULL) {
+	    if(CRASHDEBUG(1)) {
 		error(FATAL,
 		"ppc64_dump_frame hit unknown symbol (%lx).\n",
-			req->pc);
+		    req->pc);
+            }
 	}
-
-	printf("HERE4: name: %s\n", req->name); fflush(stdout);
-	// @adi doing this, just because ppc64_back_trace does this, will have
-	// to see again
 
 	bt->flags |= BT_SAVE_LASTSP;
 
-	printf("HERE5. Going to print stack entry\n"); fflush(stdout);
-	// frame: ppc64_dump_frame hit unknown symbol (7fffffff).
 	ppc64_print_stack_entry(frame_num, req, newsp, lr, bt);
-	printf("HERE6. Printed stack entry\n"); fflush(stdout);
 
 	bt->flags |= ~(ulonglong)BT_SAVE_LASTSP;
 
-	// TODO
-	
 	FREEBUF(req);
 }
 
@@ -2374,7 +2460,6 @@ ppc64_print_stack_entry(int frame,
 	char *name_plus_offset;
 	char buf[BUFSIZE];
 
-	printf("FUNC1: val: %d\n", BT_REFERENCE_CHECK(bt)); fflush(stdout);
 	if (BT_REFERENCE_CHECK(bt)) {
 		switch (bt->ref->cmdflags & (BT_REF_SYMBOL|BT_REF_HEXVAL))
 		{
@@ -2389,7 +2474,6 @@ ppc64_print_stack_entry(int frame,
 			break;
 		}
 	} else {
-	printf("FUNC2\n"); fflush(stdout);
 		name_plus_offset = NULL;
 		if (bt->flags & BT_SYMBOL_OFFSET) {
 			sp = value_search(req->pc, &offset);
@@ -2397,13 +2481,11 @@ ppc64_print_stack_entry(int frame,
 				name_plus_offset = value_to_symstr(req->pc, buf, bt->radix);
 		}
 
-	printf("FUNC3\n"); fflush(stdout);
 		// @adi in bt, most of the info is this part only
 		fprintf(fp, "%s#%d [%lx] %s at %lx",
 			frame < 10 ? " " : "", frame,
 			req->sp, name_plus_offset ? name_plus_offset : req->name, 
 			req->pc);
-	printf("FUNC4\n"); fflush(stdout);
 		if (module_symbol(req->pc, NULL, &lm, NULL, 0))
 			fprintf(fp, " [%s]", lm->mod_name);
 
