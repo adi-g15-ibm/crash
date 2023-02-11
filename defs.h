@@ -5834,9 +5834,9 @@ extern char *help_bpf[];
 extern char *help_bt[];
 
 // TODO: can use help from gdb if same usage and behaviour
-static char *help_frame[] = {};
-static char *help_up[] = {};
-static char *help_down[] = {};
+extern char *help_frame[];
+extern char *help_up[];
+extern char *help_down[];
 
 extern char *help_btop[];
 extern char *help_dev[];
