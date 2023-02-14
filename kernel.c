@@ -22,6 +22,7 @@
 #include <libgen.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "xendump.h"
 #if defined(GDB_7_6) || defined(GDB_10_2)
 #define __CONFIG_H__ 1
@@ -3539,9 +3540,9 @@ get_lkcd_regs(struct bt_info *bt, ulong *eip, ulong *esp)
 	machdep->get_stack_frame(bt, eip, esp);
 }
 
-// TODO: This should take a boolean for whether to dump the stack or not
+// NOTE: ensure that sizeof(bt_flags) >= bt_flags, or else lose info
 void
-dump_current_frame(void)
+dump_current_frame(ulonglong bt_flags)
 {
 	// bt_setup is not really needed here, declaring bt_setup, bt,
 	// reference, refptr only for BT_SETUP
@@ -3553,41 +3554,71 @@ dump_current_frame(void)
 	refptr = NULL;
 
 	bt = &bt_info;
-	BZERO(bt, sizeof (struct bt_info));
-	BCOPY(bt, &bt_setup, sizeof(struct bt_info));  // basically copy from bt to
-	                                               // bt_setup, ie. zeroed bt_setup
+	BZERO(&bt_info, sizeof (struct bt_info));
+	BZERO(&bt_setup, sizeof(struct bt_info));
 
 	tc = CURRENT_CONTEXT();
 
 	BT_SETUP(tc);
 
-	// if not initialised yet, fill complete kernel stack into a
-	// buffer
-	fill_stackbuf(bt);
+    bt->flags |= bt_flags;
 
-	// TODO: If frame=0 and register dump requested dump as in
-	// kernel.c:~3093
+	// fill complete kernel stack into a buffer
+	fill_stackbuf(bt);
 
 	// @ref: defs.h sets machine_init to ppc64_init using this macro
 	#ifdef PPC64
 		machdep->dump_frame(CURRENT_FRAME(), bt);
 	#else
-		error(FATAL,
-		"frame/up/down commands are only supported on PPC64 architecture currently");
+        command_not_supported();
 	#endif
 }
 
 void
 cmd_frame(void)
 {
-	// `frame` takes one optional argument as the frame number
-	char* frame_num = args[optind+1];
+	// `frame` takes one optional argument as the frame number, and some options
+	char* frame_num = NULL;
+    int c;
+    ulonglong bt_flags = 0;
 
+    while ((c = getopt(argcnt, args, "fFl")) != EOF) {
+        switch (c) {
+        case 'f':
+            bt_flags |= BT_FULL;
+            break;
+
+        case 'F':
+            if (bt_flags & BT_FULL_SYM_SLAB)  // is 'F' repeated multiple times
+                bt_flags |= BT_FULL_SYM_SLAB2;
+            else
+                bt_flags |= (BT_FULL|BT_FULL_SYM_SLAB);
+
+            break;
+        case 'l':
+			if (NO_LINE_NUMBERS())
+				error(INFO, "line numbers are not available\n");
+			else
+				bt_flags |= BT_LINE_NUMBERS;
+			break;
+
+        default:
+            argerrs++;
+            break;
+        };
+
+        if(argerrs)
+            cmd_usage(pc->curcmd, SYNOPSIS);
+    }
+
+    printf("bt->flags: %llx\n", bt_flags);
+
+    // this way user can enter frame number and options in any order
+    frame_num = args[optind];
 	if(frame_num) {
 		// TODO: Check for validity
 		// TODO: `gdb` supports "It can be a stack frame number or the
 		// address of the frame"
-		// TODO: Handle the case where this errors
 
 		// @adi for the validity check, I might have to init the registers here
 
@@ -3603,7 +3634,7 @@ cmd_frame(void)
 
 	// Whether frame_num given or not, we dump the frame nevertheless, same
 	// as gdb
-	dump_current_frame();
+	dump_current_frame(bt_flags);
 }
 
 void
@@ -3617,7 +3648,8 @@ cmd_up(void)
 	} else {
 		CURRENT_FRAME() += 1;
 
-		dump_current_frame();
+        // no flags set, to use custom flags use frame command
+		dump_current_frame(0);
 	}
 }
 
@@ -3630,7 +3662,8 @@ cmd_down(void)
 	} else {
 		CURRENT_FRAME() -= 1;
 
-		dump_current_frame();
+        // no flags set, to use custom flags use frame command
+		dump_current_frame(0);
 	}
 }
 

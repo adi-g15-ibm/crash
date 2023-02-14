@@ -2323,10 +2323,15 @@ ppc64_dump_frame(int frame,
 
     int cnt = frame_num;
 
+    // to ensure that they don't have garbage value when we do req->sp = newsp
     newsp = req->sp;
     newpc = req->pc;
-    while(cnt --> 0) {
+
+    while (cnt-- >= 0) {
 	    // @adi @learning: `*(ulong *)&something` is not same as `something`, I thought since the lhs is ulong, so will use that, but nope, it read an integer or something
+        req->sp = newsp;
+        req->pc = newpc;
+
         newsp = *(ulong *)&bt->stackbuf[newsp - bt->stackbase];
 
         // if the `newsp` value doesn't point to valid address in stack
@@ -2407,9 +2412,6 @@ ppc64_dump_frame(int frame,
 	    	}
     	}
     }
-
-    req->sp = newsp;
-    req->pc = newpc;
 
 	if ((req->name = closest_symbol(req->pc)) == NULL) {
 	    if(CRASHDEBUG(1)) {
@@ -2530,11 +2532,9 @@ ppc64_print_stack_entry(int frame,
 
 	bt->frameptr = req->sp;
 
-	// @adi -f flag
 	if (bt->flags & BT_FULL) 
 		if (IS_KVADDR(newsp))
 			ppc64_display_full_frame(bt, newsp, fp);
-	// @adi -l flag
 	if (bt->flags & BT_LINE_NUMBERS)
 		ppc64_dump_line_number(req->pc);
 }
