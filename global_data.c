@@ -32,7 +32,6 @@ FILE *fp;
  *  Given that it's consulted so often, "pc" is globally available to
  *  quickly access the structure contents.
  */
-// @adi IMP global symbols like this are accessible to `p` command in gdb
 struct program_context program_context = { 0 };
 struct program_context *pc = &program_context;
 

@@ -156,7 +156,6 @@ static int member_to_datatype(char *, struct datatype_member *, ulong);
 #define DEBUGINFO_ERROR_MESSAGE2 \
 "The namelist argument supplied in this case is a debuginfo file,\nwhich must be accompanied by the kernel file from which it was derived.\n"
 
-// @adi point of interest, might be storing the symbols and thing
 /*
  *  This routine scours the namelist for kernel text and data symbols,
  *  sorts, and stores, them in a static table for quick reference.
@@ -7206,7 +7205,6 @@ cmd_whatis(void)
 	    STREQ(args[optind], "enum"))
 		optind++;
 	else if ((sp = symbol_search(args[optind]))) {
-		// @adi This returns true for function names `machine_kexec`
 		whatis_variable(sp);
 		return;
 	}
@@ -7442,7 +7440,6 @@ process_gdb_output(char *gdb_request, unsigned radix,
 
 	set_temporary_radix(radix, &restore_radix);
 
-	// @adi again a pass through... seems no help from `whatis` and `p`
        	success = gdb_pass_through(gdb_request, NULL, GNU_RETURN_ON_ERROR);
 
 	if (success && (leader || do_load_module_filter)) {
@@ -7851,18 +7848,13 @@ whatis_variable(struct syment *sp)
         open_tmpfile();
         sprintf(buf, "whatis %s", sp->name);
 
-	// @adi This uses GDB PASSTHROUGH request to run the command in `buf`,
-	// and stores the output in file pointed by `fp`
         if (!gdb_pass_through(buf, fp, GNU_RETURN_ON_ERROR)) {
                 close_tmpfile();
                 error(FATAL, "gdb request failed: whatis %s\n", sp->name);
         }
 
-	// @adi GDB internals
         rewind(pc->tmpfile);
 
-	// @adi If the request was successful, the output is in pc->tmpfile / fp
-	// , read the content into `buf`
         while (fgets(buf, BUFSIZE, pc->tmpfile)) {
                 if (STRNEQ(buf, "type = ")) 
 			break;
@@ -7886,8 +7878,6 @@ whatis_variable(struct syment *sp)
 			BCOPY(sp->name, p1, strlen(sp->name));
 		}
 
-		// @adi: for functions etc, gdb outputs the content as `type =
-		// void (struct kimage*)`, we don't want the `type =` part
 		p1 = buf + strlen("type = ");
                 fprintf(fp, "%s;\n", p1);
 	} else {

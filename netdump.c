@@ -106,7 +106,6 @@ map_cpus_to_prstatus(void)
 	FREEBUF(nt_ptr);
 }
 
-// @adi Point of interest, here is where is initialises vmcore_data, (ie. `nd`)
 /*
  *  Determine whether a file is a netdump/diskdump/kdump creation, 
  *  and if TRUE, initialize the vmcore_data structure.
@@ -3829,7 +3828,6 @@ get_netdump_regs_ppc(struct bt_info *bt, ulong *eip, ulong *esp)
 	get_netdump_regs_32(bt, eip, esp);
 }
 
-// @adi Point of interest, get_kdump_regs (in case of elf), calls get_netdum_regs which calls this, and the IP and SP are assigned later by machdep->get_stack_frame
 static void
 get_netdump_regs_ppc64(struct bt_info *bt, ulong *eip, ulong *esp)
 {
@@ -3843,9 +3841,6 @@ get_netdump_regs_ppc64(struct bt_info *bt, ulong *eip, ulong *esp)
 		 * panic task. Whereas in kdump, regs are captured for all 
 		 * CPUs if they responded to an IPI.
 		 */
-		// @adi COME HERE
-		// `nd` is `vmcore_data`, it is initialised in is_netdump, using ELF headers, saved at known places in the vmcore
-		// then we read the NT_PRSTATUS note for the current context's CPU
                 if (nd->num_prstatus_notes > 1) {
 			if (!nd->nt_prstatus_percpu[bt->tc->processor])
 				error(FATAL, 
@@ -3864,8 +3859,6 @@ get_netdump_regs_ppc64(struct bt_info *bt, ulong *eip, ulong *esp)
 		len = sizeof(Elf64_Nhdr);
 		len = roundup(len + note->n_namesz, 4);
 
-		// bt->machdep likely points to after the note's end (4 byte aligned) containing the PR_STATUS (likely process_status) details, and this data contains PID, general purpose registers, etc.
-		// @adi EUREKA !! This bt->machdep (got from ELF note for pr_status) has the pt_regs, and ppc64_get_dumpfile_stack_frame uses pt_regs = bt->machdep
 		bt->machdep = (void *)((char *)note + len + 
 			MEMBER_OFFSET("elf_prstatus", "pr_reg"));
 	}

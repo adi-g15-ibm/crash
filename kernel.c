@@ -22,7 +22,6 @@
 #include <libgen.h>
 #include <ctype.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include "xendump.h"
 #if defined(GDB_7_6) || defined(GDB_10_2)
 #define __CONFIG_H__ 1
@@ -2418,9 +2417,6 @@ generic_dis_filter(ulong value, char *buf, unsigned int output_radix)
  *     -s  displays arguments symbolically.
  */
 
-// @adi For some wierd reason, basically clone_bt_info krta ye h, ki
-// destination/old (bt_setup) me source/new ka backup (bt_info) rkhke
-// source (bt/bt_info) ko new info ke saath populate krdo (using task_context)
 void
 clone_bt_info(struct bt_info *orig, struct bt_info *new,
 	      struct task_context *tc)
@@ -2433,7 +2429,6 @@ clone_bt_info(struct bt_info *orig, struct bt_info *new,
 	new->stacktop = GET_STACKTOP(tc->task);
 }
 
-// @adi GLOBAL VAR use, tt->current passed to clone_bt_info
 #define BT_SETUP(TC)                                          \
 	clone_bt_info(&bt_setup, bt, (TC));         	      \
         if (refptr) {                                         \
@@ -2493,7 +2488,7 @@ cmd_bt(void)
         struct task_context *tc;
 	int subsequent, active, panic;
 	struct stack_hook hook;
-	struct bt_info bt_info, bt_setup, *bt; // @adi bt will just point to bt_info
+	struct bt_info bt_info, bt_setup, *bt;
 	struct reference reference;
 	char *refptr;
 	ulong tgid, task;
@@ -2506,9 +2501,6 @@ cmd_bt(void)
 	refptr = 0;
 	bt = &bt_info;
 
-	// @adi bt_info is zeroed here (gdb shows something random before this),
-	// note that bt_setup is zeroed later (line 2748) with BCOPY(bt, &bt_setup, sizeof..)
-	// both BZERO and BCOPY are basically memset(destination, source, n)
 	BZERO(bt, sizeof(struct bt_info));
 
 	if (kt->flags & USE_OPT_BT)
@@ -2860,8 +2852,6 @@ cmd_bt(void)
 			if (panic)
 				tc = task_to_context(tt->panic_task);
 			else
-				// @adi GLOBAL VAR use, tc = tt->current
-				// @adi panic=0, so this else condition runs
 				tc = CURRENT_CONTEXT();
 			DO_TASK_BACKTRACE();
 		}
@@ -2990,7 +2980,6 @@ in_alternate_stack(int cpu, ulong address)
 	return FALSE;
 }
 
-// @adi Point of interest: here we set EIP, ESP, why was I seeing everywhere deep
 /*
  *  Gather the EIP, ESP and stack address for the target task, and passing 
  *  them on to the machine-specific back trace command.
@@ -3097,25 +3086,6 @@ back_trace(struct bt_info *bt)
 	else if (KDUMP_DUMPFILE())
                 get_kdump_regs(bt, &eip, &esp);
 	else if (DISKDUMP_DUMPFILE())
-		// adi prints the registers at top
-		// R0:  c000000000270264    R1:  c000000055d83b00    R2:  c000000002b12800
-		// R3:  c000000055d83958    R4:  c0000000503d1d00    R5:  0000000000000070
-		// R6:  c000000055d83808    R7:  c0000000503d1d00    R8:  0000000000000000
-		// R9:  c000000008f15800    R10: c0000000503d1d00    R11: 0000000000002000
-		// R12: 0000000000000000    R13: c00000000ffce480    R14: 000001001d8023d0
-		// R15: 000000011d1487b8    R16: 000000011d1494d8    R17: 0000000020000000
-		// R18: 0000000000000000    R19: 000000011d05a920    R20: 000000011d0ee468
-		// R21: 00007fffffa4b624    R22: 000000011d0f1e50    R23: 000000011d1489bc
-		// R24: 0000000000000000    R25: c000000000febb78    R26: c00000000263dd80
-		// R27: c000000002bfc4d0    R28: c000000002b47778    R29: c000000055d83958
-		// R30: c0000000029e5a70    R31: 0000000000000000
-		// NIP: c000000000270318    MSR: 8000000000009033    OR3: 0000000000000000
-		// CTR: 00000000007088ec    LR:  c000000000148984    XER: 0000000000000004
-		// CCR: 0000000028422282    MQ:  0000000000000001    DAR: c000000002b47778
-		// DSISR: 0000000000000001     Syscall Result: 0000000000000001
-		// [NIP  : __crash_kexec+248]
-		// [LR   : panic+384]
-
                 get_diskdump_regs(bt, &eip, &esp);
 	else if (KVMDUMP_DUMPFILE())
                 get_kvmdump_regs(bt, &eip, &esp);
@@ -3242,7 +3212,6 @@ complete_trace:
 	if (CRASHDEBUG(4))
 		dump_bt_info(bt, "back_trace");
 
-	// @adi Points to ppc64_back_trace_cmd, not ppc64_back_trace
 	machdep->back_trace(bt);
 
 	if ((bt->flags & (BT_HARDIRQ|BT_SOFTIRQ)) && restore_stack(bt))  
@@ -3609,7 +3578,6 @@ dump_current_frame(ulonglong bt_flags)
 	// fill complete kernel stack into a buffer
 	fill_stackbuf(bt);
 
-	// @ref: defs.h sets machine_init to ppc64_init using this macro
 	machdep->dump_frame(CURRENT_FRAME(), bt);
 }
 

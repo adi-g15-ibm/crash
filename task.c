@@ -2939,7 +2939,7 @@ add_context(ulong task, char *tp)
         tc->mm_struct = *mm_addr;
         tc->task = task;
         tc->tc_next = NULL;
-	tc->frame = 0;
+        tc->frame = 0;
 
 	/*
 	 *  Fill a tgid_context structure with the data from 
@@ -6066,8 +6066,6 @@ task_cpu(int processor, char *buf, int verbose)
         return buf;
 }
 
-// @adi In case of DUMPFILE, returns true when the task is the panic thread, I
-// 'think' not for usual things
 /*
  *  Check either the panic_threads[] array on a dump, or the has_cpu flag 
  *  of a task_struct on a live system.  Also account for deprecation of

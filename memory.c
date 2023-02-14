@@ -2187,7 +2187,6 @@ raw_data_dump(ulong addr, long count, int symbolic)
 	switch (sizeof(long))
 	{
 	case SIZEOF_32BIT:
-		// @adi basically, wordcnt = ceil(count/SIZEOF_32BIT);
 		wordcnt = count/SIZEOF_32BIT;
 		if (count % SIZEOF_32BIT)
 			wordcnt++;

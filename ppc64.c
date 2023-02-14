@@ -2011,7 +2011,6 @@ ppc64_set_bt_emergency_stack(enum emergency_stack_type type, struct bt_info *bt)
 	}
 }
 
-// @adi Put breakpoint here
 /*
  *  Unroll a kernel stack.
  */
@@ -2036,7 +2035,6 @@ ppc64_back_trace_cmd(struct bt_info *bt)
         req->debug = bt->debug;
         req->task = bt->task;
 
-	// @adi Point of interest, this is where we assign req->pc, req->sp, from bt
         req->pc = bt->instptr;
         req->sp = bt->stkptr;
 
@@ -2051,7 +2049,6 @@ ppc64_back_trace_cmd(struct bt_info *bt)
 			req->sp = ppc64_check_sp_in_HWintrstack(req->sp, bt);
 		print_stack_text_syms(bt, req->sp, req->pc);
 	} else {
-		// @adi meaningless it has no effect after GDB 5.3
         	if (bt->flags & BT_USE_GDB) {
                 	strcpy(req->buf, "backtrace");
                 	gdb_interface(req);
@@ -2130,7 +2127,6 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 	while (INSTACK(req->sp, bt)) {
 		newsp = *(ulong *)&bt->stackbuf[req->sp - bt->stackbase];
 
-		// @adi req->name is the function name
 		if ((req->name = closest_symbol(req->pc)) == NULL) {
 			if (CRASHDEBUG(1)) {
 				error(FATAL,
@@ -2141,14 +2137,6 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 
 		bt->flags |= BT_SAVE_LASTSP;
 
-		// @adi IMP++ this function prints the lines in the `bt`,
-		// basically in the while loop, req->pc and req->sp are
-		// modified, then this ppc64_print_stack_entry does something to
-		// print the frame for corresponding frame.
-		// frame is just a number denoting the number of frames printed
-		// before this
-		// So... req->pc and req->sp should be enough to print a
-		// function's frame na, ie. knowing how big is the frame too ?
 		ppc64_print_stack_entry(frame, req, newsp, lr, bt);
 		bt->flags &= ~(ulonglong)BT_SAVE_LASTSP;
 		lr = 0;	
@@ -2177,7 +2165,6 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 				}
 			}
 
-			// @adi newpc is being assigned here
 			if (IS_KVADDR(newsp) && INSTACK(newsp, bt))
 				newpc = *(ulong *)&bt->stackbuf[newsp + 16 -
 						bt->stackbase];
@@ -2282,44 +2269,22 @@ ppc64_dump_frame(int frame,
     int c = bt->tc->processor;
     ulong nmi_sp = 0;
     int eframe_found;
-	ulong lr = 0; /* hack... from ppc64_back_trace, need initial lr reg */
+	ulong lr = 0;
 
 	int frame_num = CURRENT_FRAME();
 
 	// we only need req->pc and req->sp for our purposes
 	req = (struct gnu_request*)GETBUF(sizeof (struct gnu_request));
-	// @adi Other fields are not required, so not initialising
 	req->task = bt->task;
 
-	ulong ip, sp; // pc is basically ip
+	ulong pc, sp;
 
-	// @adi Wierd: get_kdump_regs is used for ELF which calls get_netdump_regs, else get_diskdump_regs is used for kdump compressed
-	// get_diskdump_regs_ppc64(when kdump format)/get_kdump_regs(when elf format) calls ppc64_get_stack_frame (machdep->get_stack_frame) calls get_ppc64_frame
-	//ppc64_get_stack_frame(bt, &ip, &sp);	// doesn't even set one thing correctly
-	//get_ppc64_frame(bt, &ip, &sp);	// it works the same way for ppc64_get_sp, for sp
-	//ppc64_get_dumpfile_stack_frame(bt, &ip, &sp);  // problem: requires bt->machdep (pointing to pt_regs to be initialised)
-	// get_netdump_regs_ppc64(bt, &ip, &sp);	// internally calls ppc64_get_dumpfile_stack_frame but after init bt->machdep
-	// @ref: this has been copied from back_trace function in kernel.c
-	// this currently reads elf notes and init bt->machdep each time frame is called
-	// instead, if bt->machdep is not null, we can call ppc64_get_dumpfile_stack_frame directly
 	bt->flags |= BT_NO_PRINT_REGS;
-	get_netdump_regs(bt, &ip, &sp);		// even get_kdump_regs ends up here, it calls get_netdump_regs_ppc64
+	get_netdump_regs(bt, &pc, &sp);
 	bt->flags &= ~BT_NO_PRINT_REGS;
 
-	// either of these `sp` works and stack frame shows same symbol __crash_kexec, that means it's the closest_symbol to both sp
-	// sp = ppc64_get_sp(bt->task) /*0xc0000000556cfb00*/,
-	// ip = 0xc000000000270318;
-
-	// @adi These values ppc64_back_trace_cmd (machdep->back_trace) receives from back_trace (kernel.c), which it gets from ppc64_get_diskdump_regs (called by get_diskdump_regs)
-	// not modifying bt_info
-	// bt->instptr = ip;
-	// bt->stkptr = sp;
-
-	// @adi These values ppc64_back_trace receives from ppc64_back_trace_cmd
-	req->pc = ip;
+	req->pc = pc;
 	req->sp = sp;
-
-    // At this point, req->pc, and req->sp point to frame 0
 
     int cnt = frame_num;
 
@@ -2328,7 +2293,6 @@ ppc64_dump_frame(int frame,
     newpc = req->pc;
 
     while (cnt-- >= 0) {
-	    // @adi @learning: `*(ulong *)&something` is not same as `something`, I thought since the lhs is ulong, so will use that, but nope, it read an integer or something
         req->sp = newsp;
         req->pc = newpc;
 
@@ -2430,17 +2394,6 @@ ppc64_dump_frame(int frame,
 	FREEBUF(req);
 }
 
-/* @adi
- *
- * Information required for one frame:
- * 1. gnu_request.{pc,sp (the first address after #0), name, ra}
- * 2. newsp
- * 3. lr
- * 4. bt_info.{flags, ref*, }
- *
- * req->pc, req->sp are enough to print that one line
- *
- * */
 /*
  *  print one entry of a stack trace
  */
@@ -2479,7 +2432,6 @@ ppc64_print_stack_entry(int frame,
 				name_plus_offset = value_to_symstr(req->pc, buf, bt->radix);
 		}
 
-		// @adi in bt, most of the info is this part only
 		fprintf(fp, "%s#%d [%lx] %s at %lx",
 			frame < 10 ? " " : "", frame,
 			req->sp, name_plus_offset ? name_plus_offset : req->name, 
@@ -2487,7 +2439,6 @@ ppc64_print_stack_entry(int frame,
 		if (module_symbol(req->pc, NULL, &lm, NULL, 0))
 			fprintf(fp, " [%s]", lm->mod_name);
 
-		// @adi req->ra is 0 in first and every other frame also
 		if (req->ra) {
 			/*
 			 * Previous frame is an exception one. If the func 
@@ -2506,7 +2457,6 @@ ppc64_print_stack_entry(int frame,
 				return;
 			}
 		}
-		// @adi lr = 0 for me
 		if (lr) {
 			/*
 			 * Link register value for an expection frame.
@@ -2671,7 +2621,6 @@ ppc64_print_eframe(char *efrm_str, struct ppc64_pt_regs *regs,
 	ppc64_print_nip_lr(regs, 1);
 }
 
-// @adi ppc64_get_dumpfile_stack_frame calls only when bt->machdep is not defined, and in that case this also just fails with an error, so no benefit in my case
 /*
  * For vmcore typically saved with KDump or FADump, get SP and IP values
  * from the saved ptregs.
@@ -2754,7 +2703,6 @@ ppc64_vmcore_stack_frame(struct bt_info *bt_in, ulong *nip, ulong *ksp)
 	return TRUE;
 }
 
-// @adi IMP POINT OF INTEREST: This is what I was looking for, EIP and ESP are set here from the ELF Notes
 /*
  *  Get the starting point for the active cpus in a diskdump/netdump.
  */
@@ -2945,11 +2893,6 @@ retry:
 }
 
 
-// @adi Point of interest, in case of dumpfile, requires bt->machdep to be
-// defined, since it doesn't init that
-// else in case it's not a dumpfile, or task is not active, it finds the pt_regs
-// even without ELF notes, rather directly readmem pt_regs from a stack pointer
-// and offset
 /*
  *  Get a stack frame combination of pc and ra from the most relevent spot.
  */
@@ -3013,8 +2956,6 @@ get_ppc64_frame(struct bt_info *bt, ulong *getpc, ulong *getsp)
 	if (!INSTACK(sp, bt))
 		goto out;
 
-    // @adi Point of interest, even without using bt->machdep. instead reading
-    // from some offset from sp to get pt_regs
 	readmem(sp+STACK_FRAME_OVERHEAD, KVADDR, &regs, 
 		sizeof(struct ppc64_pt_regs),
 		"PPC64 pt_regs", FAULT_ON_ERROR);
