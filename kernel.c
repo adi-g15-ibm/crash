@@ -3540,6 +3540,49 @@ get_lkcd_regs(struct bt_info *bt, ulong *eip, ulong *esp)
 	machdep->get_stack_frame(bt, eip, esp);
 }
 
+/*
+ * Check whether a frame number is valid, used by frame/up/down when setting
+ * current frame number*/
+static int
+is_frame_num_valid(int frame)
+{
+    ulong ip, sp;
+	struct bt_info bt_info, bt_setup, *bt;
+	struct task_context* tc;
+	struct reference reference;
+	char* refptr;
+
+	refptr = NULL;
+
+	bt = &bt_info;
+	BZERO(&bt_info, sizeof (struct bt_info));
+	BZERO(&bt_setup, sizeof(struct bt_info));
+
+	tc = CURRENT_CONTEXT();
+
+	BT_SETUP(tc);
+
+    if (frame < 0)
+        return FALSE;
+
+    // get first frame's IP and SP
+    bt->flags |= BT_NO_PRINT_REGS;
+    get_netdump_regs(bt, &ip, &sp);
+    bt->flags &= ~BT_NO_PRINT_REGS;
+
+    // we don't care about final value of newsp, just `sp`
+    while(frame-- > 0) {
+        sp = *(ulong *)&bt->stackbuf[sp - bt->stackbase];
+
+        if(!INSTACK(sp, bt)) {
+            // frame number is not valid
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 // NOTE: ensure that sizeof(bt_flags) >= bt_flags, or else lose info
 void
 dump_current_frame(ulonglong bt_flags)
@@ -3567,20 +3610,21 @@ dump_current_frame(ulonglong bt_flags)
 	fill_stackbuf(bt);
 
 	// @ref: defs.h sets machine_init to ppc64_init using this macro
-	#ifdef PPC64
-		machdep->dump_frame(CURRENT_FRAME(), bt);
-	#else
-        command_not_supported();
-	#endif
+	machdep->dump_frame(CURRENT_FRAME(), bt);
 }
 
 void
 cmd_frame(void)
 {
 	// `frame` takes one optional argument as the frame number, and some options
-	char* frame_num = NULL;
+	int frame_num;
     int c;
     ulonglong bt_flags = 0;
+
+	#ifndef PPC64
+        command_not_supported();
+        return;
+	#endif
 
     while ((c = getopt(argcnt, args, "fFl")) != EOF) {
         switch (c) {
@@ -3613,42 +3657,35 @@ cmd_frame(void)
 
     printf("bt->flags: %llx\n", bt_flags);
 
-    // this way user can enter frame number and options in any order
-    frame_num = args[optind];
-	if(frame_num) {
-		// TODO: Check for validity
-		// TODO: `gdb` supports "It can be a stack frame number or the
-		// address of the frame"
-
-		// @adi for the validity check, I might have to init the registers here
-
-		// set frame number to `frame_num`
-		long n = strtol(frame_num, NULL, 10);
-		if( n<0 ) {
-			error(FATAL, "Passed frame number is invalid.");
-			return;
-		}
-
-		CURRENT_FRAME() = n;
+    // purpose of using args[optind] is to allow passing frame number and
+    // options in any order
+    frame_num = strtol(args[optind], NULL, 10);
+	if( is_frame_num_valid(frame_num) ) {
+		error(FATAL, "Passed frame number is invalid.");
+		return;
 	}
 
-	// Whether frame_num given or not, we dump the frame nevertheless, same
-	// as gdb
+	// set frame number to `frame_num`
+	CURRENT_FRAME() = frame_num;
+
+	// Whether frame_num given or not, we dump the frame nevertheless
 	dump_current_frame(bt_flags);
 }
 
 void
 cmd_up(void)
 {
-	int MAX_FRAME_NUM = 8 /* TODO: Check max frame number */;
+	#ifndef PPC64
+        command_not_supported();
+        return;
+	#endif
 
-	if(CURRENT_FRAME() >= MAX_FRAME_NUM) {
-		// this is the same error gdb gives in this case
+    int frame_num = CURRENT_FRAME() + 1;
+	if( ! is_frame_num_valid(frame_num) ) {
 		error(INFO, "Initial frame selected; you cannot go up.");
 	} else {
-		CURRENT_FRAME() += 1;
+		CURRENT_FRAME() = frame_num;
 
-        // no flags set, to use custom flags use frame command
 		dump_current_frame(0);
 	}
 }
@@ -3656,13 +3693,16 @@ cmd_up(void)
 void
 cmd_down(void)
 {
+    #ifndef PPC64
+        command_not_supported();
+        return;
+	#endif
+
 	if(CURRENT_FRAME() <= 0) {
-		// this is the same error gdb gives in this case
 		error(INFO, "Bottom (innermost) frame selected; you cannot go down.");
 	} else {
 		CURRENT_FRAME() -= 1;
 
-        // no flags set, to use custom flags use frame command
 		dump_current_frame(0);
 	}
 }
