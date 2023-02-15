@@ -7847,14 +7847,12 @@ whatis_variable(struct syment *sp)
 
         open_tmpfile();
         sprintf(buf, "whatis %s", sp->name);
-
         if (!gdb_pass_through(buf, fp, GNU_RETURN_ON_ERROR)) {
                 close_tmpfile();
                 error(FATAL, "gdb request failed: whatis %s\n", sp->name);
         }
 
         rewind(pc->tmpfile);
-
         while (fgets(buf, BUFSIZE, pc->tmpfile)) {
                 if (STRNEQ(buf, "type = ")) 
 			break;
@@ -7877,7 +7875,6 @@ whatis_variable(struct syment *sp)
 			shift_string_right(p1, strlen(sp->name));
 			BCOPY(sp->name, p1, strlen(sp->name));
 		}
-
 		p1 = buf + strlen("type = ");
                 fprintf(fp, "%s;\n", p1);
 	} else {

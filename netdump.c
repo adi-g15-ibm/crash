@@ -3858,7 +3858,6 @@ get_netdump_regs_ppc64(struct bt_info *bt, ulong *eip, ulong *esp)
 
 		len = sizeof(Elf64_Nhdr);
 		len = roundup(len + note->n_namesz, 4);
-
 		bt->machdep = (void *)((char *)note + len + 
 			MEMBER_OFFSET("elf_prstatus", "pr_reg"));
 	}
