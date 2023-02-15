@@ -75,6 +75,15 @@ static ulong pmd_page_vaddr_l4(ulong pmd);
 static int is_opal_context(ulong sp, ulong nip);
 void opalmsg(void);
 
+// Copied from kernel.c
+#define BT_SETUP(TC)                                          \
+	clone_bt_info(&bt_setup, bt, (TC));         	      \
+        if (refptr) {                                         \
+		BZERO(&reference, sizeof(struct reference));  \
+		bt->ref = &reference;                         \
+        	bt->ref->str = refptr;                        \
+	}
+
 static int is_opal_context(ulong sp, ulong nip)
 {
 	uint64_t opal_start, opal_end;
