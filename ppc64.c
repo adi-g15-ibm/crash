@@ -33,6 +33,8 @@ static int ppc64_eframe_search(struct bt_info *);
 static void ppc64_back_trace_cmd(struct bt_info *);
 static void ppc64_back_trace(struct gnu_request *, struct bt_info *);
 static void get_ppc64_frame(struct bt_info *, ulong *, ulong *);
+static int ppc64_is_frame_num_valid(int frame_num);
+static void ppc64_print_stack_frame(int frame_num, struct bt_info* bt);
 static void ppc64_print_stack_entry(int,struct gnu_request *, 
 	ulong, ulong, struct bt_info *);
 static void ppc64_dump_irq(int);
@@ -383,6 +385,8 @@ ppc64_init(int when)
                 machdep->is_uvaddr = generic_is_uvaddr;
 	        machdep->eframe_search = ppc64_eframe_search;
 	        machdep->back_trace = ppc64_back_trace_cmd;
+	        machdep->print_stack_frame = ppc64_print_stack_frame;
+	        machdep->is_frame_num_valid = ppc64_is_frame_num_valid;
 	        machdep->processor_speed = ppc64_processor_speed;
 	        machdep->uvtop = ppc64_uvtop;
 	        machdep->kvtop = ppc64_kvtop;
@@ -2255,6 +2259,184 @@ ppc64_display_full_frame(struct bt_info *bt, ulong nextsp, FILE *ofp)
 }
 
 /*
+ * Check whether a frame number is valid, used by frame/up/down when setting
+ * current frame number*/
+static int
+ppc64_is_frame_num_valid(int frame)
+{
+	ulong ip, sp;
+	struct bt_info bt_info, bt_setup, *bt;
+	struct task_context* tc;
+	struct reference reference;
+	char* refptr;
+
+	refptr = NULL;
+
+	bt = &bt_info;
+	BZERO(&bt_info, sizeof (struct bt_info));
+	BZERO(&bt_setup, sizeof(struct bt_info));
+
+	tc = CURRENT_CONTEXT();
+
+	BT_SETUP(tc);
+
+	if (frame < 0)
+		return FALSE;
+
+	// get first frame's IP and SP
+	bt->flags |= BT_NO_PRINT_REGS;
+	get_netdump_regs(bt, &ip, &sp);
+	bt->flags &= ~BT_NO_PRINT_REGS;
+
+	// we don't care about final value of newsp, just `sp`
+	while(frame-- > 0) {
+		sp = *(ulong *)&bt->stackbuf[sp - bt->stackbase];
+
+		if(!INSTACK(sp, bt)) {
+			// frame number is not valid
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
+static void
+ppc64_print_stack_frame(int frame,
+		struct bt_info* bt)
+{
+	struct gnu_request* req;
+	enum emergency_stack_type estype;
+	ulong newpc = 0, newsp, marker;
+	int c = bt->tc->processor;
+	ulong nmi_sp = 0;
+	int eframe_found;
+	ulong lr = 0;
+
+	int frame_num = CURRENT_FRAME();
+
+	// we only need req->pc and req->sp for our purposes
+	req = (struct gnu_request*)GETBUF(sizeof (struct gnu_request));
+	req->task = bt->task;
+
+	ulong ip, sp;
+
+	bt->flags |= BT_NO_PRINT_REGS;
+	get_netdump_regs(bt, &ip, &sp);
+	bt->flags &= ~BT_NO_PRINT_REGS;
+
+	req->pc = ip;
+	req->sp = sp;
+
+	int cnt = frame_num;
+
+	// to ensure that they don't have garbage value when we do req->sp = newsp
+	newsp = req->sp;
+	newpc = req->pc;
+
+	while (cnt-- >= 0) {
+		req->sp = newsp;
+		req->pc = newpc;
+
+		newsp = *(ulong *)&bt->stackbuf[newsp - bt->stackbase];
+
+		// if the `newsp` value doesn't point to valid address in stack
+		if(!INSTACK(newsp, bt)) {
+			error(FATAL,
+				"ppc64_print_stack_frame: current frame numberx (%d) is not valid (likely more than number of frames available)",
+				frame_num);
+			return;
+		}
+
+		// the rest of this while loop is copied from ppc64_back_trace, focused on updating req->pc
+		lr = 0;
+		if (IS_KVADDR(newsp)) {
+			/*
+			 * In 2.4, HW interrupt stack will be used to save
+			 * smp_call_functions symbols. i.e, when the dumping
+			 * CPU is issued IPI call to freeze other CPUS,
+			 */
+			if (INSTACK(newsp, bt) && (newsp + 16 > bt->stacktop))
+				newsp =
+					*(ulong *)&bt->stackbuf[newsp - bt->stackbase];
+			if (!INSTACK(newsp, bt)) {
+				if ((estype = ppc64_in_emergency_stack(c, newsp, true))) {
+					if (!nmi_sp && estype == NMI_EMERGENCY_STACK)
+						nmi_sp = newsp;
+						ppc64_set_bt_emergency_stack(estype, bt);
+					} else {
+						/*
+						* Switch HW interrupt stack or emergency stack
+						* to process's stack.
+						*/
+						bt->stackbase = GET_STACKBASE(bt->task);
+						bt->stacktop = GET_STACKTOP(bt->task);
+						alter_stackbuf(bt);
+				}
+			}
+
+			if (IS_KVADDR(newsp) && INSTACK(newsp, bt))
+				newpc = *(ulong *)&bt->stackbuf[newsp + 16 -
+					bt->stackbase];
+		}
+
+		if (BT_REFERENCE_FOUND(bt))
+			return;
+
+		eframe_found = FALSE;
+		/*
+		 * Is this frame an execption one?
+		 * In 2.6, 0x7265677368657265 is saved and used
+		 * to determine the execption frame.
+		 */
+		if (THIS_KERNEL_VERSION < LINUX(2,6,0)) {
+			if (frame && (newsp - req->sp - STACK_FRAME_OVERHEAD) >=
+				sizeof(struct ppc64_pt_regs))
+				eframe_found = TRUE;
+			else if (STREQ(req->name, ".ret_from_except"))
+				eframe_found = TRUE;
+		} else if ((newsp - req->sp - STACK_FRAME_OVERHEAD) >=
+			sizeof(struct ppc64_pt_regs)) {
+			readmem(req->sp+0x60, KVADDR, &marker,
+			sizeof(ulong), "stack frame", FAULT_ON_ERROR);
+
+			if (marker == EXCP_FRAME_MARKER)
+				eframe_found = TRUE;
+		}
+		if (eframe_found) {
+			char *efrm_str = NULL;
+			struct ppc64_pt_regs regs;
+			readmem(req->sp+STACK_FRAME_OVERHEAD, KVADDR, &regs,
+				sizeof(struct ppc64_pt_regs),
+				"exception frame", FAULT_ON_ERROR);
+
+			efrm_str = ppc64_check_eframe(&regs);
+			if (efrm_str) {
+				lr = regs.link;
+				newpc = regs.nip;
+				newsp = regs.gpr[1];
+			}
+		}
+	}
+
+	if ((req->name = closest_symbol(req->pc)) == NULL) {
+		if(CRASHDEBUG(1)) {
+		error(FATAL,
+		"ppc64_print_stack_frame hit unknown symbol (%lx).\n",
+			req->pc);
+		}
+	}
+
+	bt->flags |= BT_SAVE_LASTSP;
+
+	ppc64_print_stack_entry(frame_num, req, newsp, lr, bt);
+
+	bt->flags |= ~(ulonglong)BT_SAVE_LASTSP;
+
+	FREEBUF(req);
+}
+
+/*
  *  print one entry of a stack trace
  */
 static void 
@@ -2590,9 +2772,11 @@ ppc64_get_dumpfile_stack_frame(struct bt_info *bt_in, ulong *nip, ulong *ksp)
 		pt_regs = (struct ppc64_pt_regs *)bt->machdep;
 		ur_nip = pt_regs->nip;
 		ur_ksp = pt_regs->gpr[1];
-		/* Print the collected regs for panic task. */
-		ppc64_print_regs(pt_regs);
-		ppc64_print_nip_lr(pt_regs, 1);
+		if ( !(bt->flags & BT_NO_PRINT_REGS) ) {
+		    /* Print the collected regs for panic task. */
+		    ppc64_print_regs(pt_regs);
+		    ppc64_print_nip_lr(pt_regs, 1);
+		}
 	} else if ((pc->flags & KDUMP) ||
 		   ((pc->flags & DISKDUMP) &&
 		    (*diskdump_flags & KDUMP_CMPRS_LOCAL))) {

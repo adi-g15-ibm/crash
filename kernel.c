@@ -3508,6 +3508,141 @@ get_lkcd_regs(struct bt_info *bt, ulong *eip, ulong *esp)
 	machdep->get_stack_frame(bt, eip, esp);
 }
 
+// NOTE: ensure that sizeof(bt_flags) enough to hold all flag
+void
+print_current_frame(ulonglong bt_flags)
+{
+	// bt_setup is not really needed here, declaring bt_setup, bt,
+	// reference, refptr only for BT_SETUP
+	struct bt_info bt_info, bt_setup, *bt;
+	struct task_context* tc;
+	struct reference reference;
+	char* refptr;
+
+	refptr = NULL;
+
+	bt = &bt_info;
+	BZERO(&bt_info, sizeof (struct bt_info));
+	BZERO(&bt_setup, sizeof(struct bt_info));
+
+	tc = CURRENT_CONTEXT();
+
+	BT_SETUP(tc);
+
+	bt->flags |= bt_flags;
+
+	// fill complete kernel stack into a buffer
+	fill_stackbuf(bt);
+
+	machdep->print_stack_frame(CURRENT_FRAME(), bt);
+}
+
+void
+cmd_frame(void)
+{
+	// `frame` takes one optional argument as the frame number, and some options
+	int frame_num;
+	int c;
+	ulonglong bt_flags = 0;
+
+	// If machdep->print_stack_frame is not defined, return early
+	if( (! machdep->print_stack_frame) || (! machdep->is_frame_num_valid) ) {
+		command_not_supported();
+		return;
+	}
+
+	while ((c = getopt(argcnt, args, "fFl")) != EOF) {
+		switch (c) {
+		case 'f':
+			bt_flags |= BT_FULL;
+			break;
+
+		case 'F':
+			if (bt_flags & BT_FULL_SYM_SLAB)  // is 'F' repeated multiple times
+				bt_flags |= BT_FULL_SYM_SLAB2;
+			else
+				bt_flags |= (BT_FULL|BT_FULL_SYM_SLAB);
+			break;
+		case 'l':
+			if (NO_LINE_NUMBERS())
+				error(INFO, "line numbers are not available\n");
+			else
+				bt_flags |= BT_LINE_NUMBERS;
+			break;
+
+		default:
+			argerrs++;
+			break;
+		};
+
+		if(argerrs)
+			cmd_usage(pc->curcmd, SYNOPSIS);
+	}
+
+	printf("bt->flags: %llx\n", bt_flags);
+
+	// purpose of using args[optind] is to allow passing frame number and
+	// options in any order
+	frame_num = strtol(args[optind], NULL, 10);
+	if( machdep->is_frame_num_valid(frame_num) ) {
+		error(FATAL, "Passed frame number is invalid.");
+		return;
+	}
+
+	// set frame number to `frame_num`
+	CURRENT_FRAME() = frame_num;
+
+	// Whether frame_num given or not, we dump the frame nevertheless
+	print_current_frame(bt_flags);
+}
+
+void
+cmd_up(void)
+{
+	struct task_context* tc;
+	int frame_num;
+
+	// If machdep->print_stack_frame is not defined, return early
+	if( (! machdep->print_stack_frame) || (! machdep->is_frame_num_valid) ) {
+		command_not_supported();
+		return;
+	}
+
+	tc = CURRENT_CONTEXT();
+	frame_num = CURRENT_FRAME() + 1;
+	if( ! machdep->is_frame_num_valid(frame_num) ) {
+		error(INFO, "Initial frame selected; you cannot go up.");
+	} else {
+		// CURRENT_FRAME() = frame_num
+		tc->frame = frame_num;
+
+		print_current_frame(0);
+	}
+}
+
+void
+cmd_down(void)
+{
+	struct task_context* tc;
+	int frame_num;
+
+	// If machdep->print_stack_frame is not defined, return early
+	if( ! machdep->print_stack_frame ) {
+		command_not_supported();
+		return;
+	}
+
+	tc = CURRENT_CONTEXT();
+	frame_num = CURRENT_FRAME() - 1;
+	if(frame_num <= 0) {
+		error(INFO, "Bottom (innermost) frame selected; you cannot go down.");
+	} else {
+		// CURRENT_FRAME() -= 1;
+		tc->frame = frame_num;
+
+		print_current_frame(0);
+	}
+}
 
 /*
  *  Store the head of the kernel module list for future use.

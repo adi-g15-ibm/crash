@@ -2293,6 +2293,40 @@ char *help_btop[] = {
 NULL               
 };
 
+char *help_frame[] = {
+"frame",
+"Select and print a stack frame.",
+"[-f|-F|-l] [frame_number]",
+"With no argument, print the 'current' selected stack frame.",
+"A single numerical argument specifies the frame number to select",
+"       -f  display all stack data contained in a frame",
+"       -F[F]  similar to -f, except that the stack data is displayed symbolically",
+"           when appropriate; if the stack data references a slab cache object,",
+"           the name of the slab cache will be displayed in brackets; on ia64,",
+"           the substitution is done to the argument register contents.",
+"           If -F is entered twice, and the stack data references a slab",
+"           object, both the address and the name of the slab cache will be",
+"           displayed in brackets.",
+"       -l  show file and line number of stack trace text location.",
+NULL
+};
+
+char *help_up[] = {
+"up",
+"Select and print stack frame that called this one.",
+"[number_of_frames]",
+"An argument says how many frames up to go.",
+NULL
+};
+
+char *help_down[] = {
+"down",
+"Select and print stack frame called by this one.",
+"[number_of_frames]",
+"An argument says how many frames down to go.",
+NULL
+};
+
 char *help_extend[] = {
 "extend",
 "extend the %s command set",  
