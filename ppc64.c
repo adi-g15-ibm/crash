@@ -33,6 +33,7 @@ static int ppc64_eframe_search(struct bt_info *);
 static void ppc64_back_trace_cmd(struct bt_info *);
 static void ppc64_back_trace(struct gnu_request *, struct bt_info *);
 static void get_ppc64_frame(struct bt_info *, ulong *, ulong *);
+static int ppc64_is_frame_num_valid(int frame_num, struct bt_info* bt);
 static void ppc64_print_stack_frame(int frame_num, struct bt_info* bt);
 static void ppc64_print_stack_entry(int,struct gnu_request *, 
 	ulong, ulong, struct bt_info *);
@@ -385,6 +386,7 @@ ppc64_init(int when)
 	        machdep->eframe_search = ppc64_eframe_search;
 	        machdep->back_trace = ppc64_back_trace_cmd;
 	        machdep->print_stack_frame = ppc64_print_stack_frame;
+	        machdep->is_frame_num_valid = ppc64_is_frame_num_valid;
 	        machdep->processor_speed = ppc64_processor_speed;
 	        machdep->uvtop = ppc64_uvtop;
 	        machdep->kvtop = ppc64_kvtop;
@@ -2256,6 +2258,49 @@ ppc64_display_full_frame(struct bt_info *bt, ulong nextsp, FILE *ofp)
         fprintf(ofp, "\n");
 }
 
+/*
+ * Check whether a frame number is valid, used by frame/up/down when setting
+ * current frame number*/
+static int
+ppc64_is_frame_num_valid(int frame)
+{
+	ulong ip, sp;
+	struct bt_info bt_info, bt_setup, *bt;
+	struct task_context* tc;
+	struct reference reference;
+	char* refptr;
+
+	refptr = NULL;
+
+	bt = &bt_info;
+	BZERO(&bt_info, sizeof (struct bt_info));
+	BZERO(&bt_setup, sizeof(struct bt_info));
+
+	tc = CURRENT_CONTEXT();
+
+	BT_SETUP(tc);
+
+	if (frame < 0)
+		return FALSE;
+
+	// get first frame's IP and SP
+	bt->flags |= BT_NO_PRINT_REGS;
+	get_netdump_regs(bt, &ip, &sp);
+	bt->flags &= ~BT_NO_PRINT_REGS;
+
+	// we don't care about final value of newsp, just `sp`
+	while(frame-- > 0) {
+		sp = *(ulong *)&bt->stackbuf[sp - bt->stackbase];
+
+		if(!INSTACK(sp, bt)) {
+			// frame number is not valid
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
+
 static void
 ppc64_print_stack_frame(int frame,
 		struct bt_info* bt)
@@ -2274,13 +2319,13 @@ ppc64_print_stack_frame(int frame,
 	req = (struct gnu_request*)GETBUF(sizeof (struct gnu_request));
 	req->task = bt->task;
 
-	ulong pc, sp;
+	ulong ip, sp;
 
 	bt->flags |= BT_NO_PRINT_REGS;
-	get_netdump_regs(bt, &pc, &sp);
+	get_netdump_regs(bt, &ip, &sp);
 	bt->flags &= ~BT_NO_PRINT_REGS;
 
-	req->pc = pc;
+	req->pc = ip;
 	req->sp = sp;
 
 	int cnt = frame_num;

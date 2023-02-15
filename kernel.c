@@ -3508,49 +3508,6 @@ get_lkcd_regs(struct bt_info *bt, ulong *eip, ulong *esp)
 	machdep->get_stack_frame(bt, eip, esp);
 }
 
-/*
- * Check whether a frame number is valid, used by frame/up/down when setting
- * current frame number*/
-static int
-is_frame_num_valid(int frame)
-{
-	ulong ip, sp;
-	struct bt_info bt_info, bt_setup, *bt;
-	struct task_context* tc;
-	struct reference reference;
-	char* refptr;
-
-	refptr = NULL;
-
-	bt = &bt_info;
-	BZERO(&bt_info, sizeof (struct bt_info));
-	BZERO(&bt_setup, sizeof(struct bt_info));
-
-	tc = CURRENT_CONTEXT();
-
-	BT_SETUP(tc);
-
-	if (frame < 0)
-		return FALSE;
-
-	// get first frame's IP and SP
-	bt->flags |= BT_NO_PRINT_REGS;
-	get_netdump_regs(bt, &ip, &sp);
-	bt->flags &= ~BT_NO_PRINT_REGS;
-
-	// we don't care about final value of newsp, just `sp`
-	while(frame-- > 0) {
-		sp = *(ulong *)&bt->stackbuf[sp - bt->stackbase];
-
-		if(!INSTACK(sp, bt)) {
-			// frame number is not valid
-			return FALSE;
-		}
-	}
-
-	return TRUE;
-}
-
 // NOTE: ensure that sizeof(bt_flags) enough to hold all flag
 void
 print_current_frame(ulonglong bt_flags)
@@ -3589,7 +3546,7 @@ cmd_frame(void)
 	ulonglong bt_flags = 0;
 
 	// If machdep->print_stack_frame is not defined, return early
-	if( ! machdep->print_stack_frame ) {
+	if( (! machdep->print_stack_frame) || (! machdep->is_frame_num_valid) ) {
 		command_not_supported();
 		return;
 	}
@@ -3627,7 +3584,7 @@ cmd_frame(void)
 	// purpose of using args[optind] is to allow passing frame number and
 	// options in any order
 	frame_num = strtol(args[optind], NULL, 10);
-	if( is_frame_num_valid(frame_num) ) {
+	if( machdep->is_frame_num_valid(frame_num) ) {
 		error(FATAL, "Passed frame number is invalid.");
 		return;
 	}
@@ -3646,14 +3603,14 @@ cmd_up(void)
 	int frame_num;
 
 	// If machdep->print_stack_frame is not defined, return early
-	if( ! machdep->print_stack_frame ) {
+	if( (! machdep->print_stack_frame) || (! machdep->is_frame_num_valid) ) {
 		command_not_supported();
 		return;
 	}
 
 	tc = CURRENT_CONTEXT();
 	frame_num = CURRENT_FRAME() + 1;
-	if( ! is_frame_num_valid(frame_num) ) {
+	if( ! machdep->is_frame_num_valid(frame_num) ) {
 		error(INFO, "Initial frame selected; you cannot go up.");
 	} else {
 		// CURRENT_FRAME() = frame_num
