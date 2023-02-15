@@ -2939,6 +2939,7 @@ add_context(ulong task, char *tp)
         tc->mm_struct = *mm_addr;
         tc->task = task;
         tc->tc_next = NULL;
+        tc->frame = 0;
 
 	/*
 	 *  Fill a tgid_context structure with the data from 
