@@ -2297,7 +2297,7 @@ char *help_frame[] = {
 "frame",
 "Select and print a stack frame.",
 "[-f|-F|-l] [frame_number]",
-"With no argument, print the 'current' selected stack frame.",
+"If no argument[s] passed, print the current stack frame.",
 "A single numerical argument specifies the frame number to select",
 "       -f  display all stack data contained in a frame",
 "       -F[F]  similar to -f, except that the stack data is displayed symbolically",
@@ -2315,7 +2315,7 @@ char *help_up[] = {
 "up",
 "Select and print stack frame that called this one.",
 "[number_of_frames]",
-"An argument says how many frames up to go.",
+"Can be used to move between frames. Optionally takes number of frames to go up.",
 NULL
 };
 
@@ -2323,7 +2323,7 @@ char *help_down[] = {
 "down",
 "Select and print stack frame called by this one.",
 "[number_of_frames]",
-"An argument says how many frames down to go.",
+"Can be used to move between frames. Optionally takes number of frames to go down.",
 NULL
 };
 

@@ -3588,49 +3588,34 @@ is_frame_num_valid(int frame)
 /*
  *  Get registers including EIP, ESP, and pass on to machine-specific
  *  print_stack_frame
- *
- *  NOTE: ensure that sizeof(bt_flags) enough to hold all flag
  */
 void
 print_current_frame(ulonglong bt_flags)
 {
-	// bt_setup is not really needed here, declaring bt_setup, bt,
-	// reference, refptr only for BT_SETUP
-	struct bt_info bt_info, bt_setup, *bt;
+	struct bt_info bt_info, bt_setup;
 	struct task_context* tc;
-	struct reference reference;
-	char* refptr;
 	ulong ip, sp;
 
-	refptr = NULL;
-
-	bt = &bt_info;
-	BZERO(&bt_info, sizeof (struct bt_info));
-	BZERO(&bt_setup, sizeof(struct bt_info));
-
 	tc = CURRENT_CONTEXT();
+	BZERO(&bt_setup, sizeof(struct bt_info));
+	clone_bt_info(&bt_setup, &bt_info, tc);
 
-	BT_SETUP(tc);
+	bt_info.flags |= bt_flags;
+	fill_stackbuf(&bt_info);
+	get_dumpfile_regs(&bt_info, &sp, &ip);
 
-	bt->flags |= bt_flags;
-
-	// fill complete kernel stack into a buffer
-	fill_stackbuf(bt);
-
-	get_dumpfile_regs(bt, &sp, &ip);
-
-	machdep->print_stack_frame(CURRENT_FRAME(), bt);
+	machdep->print_stack_frame(CURRENT_FRAME(), &bt_info);
 }
 
 void
 cmd_frame(void)
 {
-	// `frame` takes one optional argument as the frame number, and some options
+	struct task_context* tc;
 	int frame_num;
 	int c;
 	ulonglong bt_flags = 0;
 
-	// If machdep->print_stack_frame is not defined, return early
+	// If these functions are not defined by arch-specific init code, return early
 	if( (! machdep->print_stack_frame) || (! machdep->is_frame_num_valid) ) {
 		command_not_supported();
 		return;
@@ -3641,7 +3626,6 @@ cmd_frame(void)
 		case 'f':
 			bt_flags |= BT_FULL;
 			break;
-
 		case 'F':
 			if (bt_flags & BT_FULL_SYM_SLAB)  // is 'F' repeated multiple times
 				bt_flags |= BT_FULL_SYM_SLAB2;
@@ -3654,7 +3638,6 @@ cmd_frame(void)
 			else
 				bt_flags |= BT_LINE_NUMBERS;
 			break;
-
 		default:
 			argerrs++;
 			break;
@@ -3664,8 +3647,10 @@ cmd_frame(void)
 			cmd_usage(pc->curcmd, SYNOPSIS);
 	}
 
-	// purpose of using args[optind] is to allow passing frame number and
-	// options in any order
+	tc = CURRENT_CONTEXT();
+
+	/* purpose of using args[optind] is to allow passing frame number and
+	   options in any order */
 	if( args[optind] != NULL ) {
 		frame_num = strtol(args[optind], NULL, 10);
 		if( ! is_frame_num_valid(frame_num) ) {
@@ -3673,11 +3658,9 @@ cmd_frame(void)
 			return;
 		}
 
-		// set frame number to `frame_num`
-		CURRENT_FRAME() = frame_num;
+		tc->frame = frame_num;
 	}
 
-	// Whether frame_num given or not, we dump the frame nevertheless
 	print_current_frame(bt_flags);
 }
 
@@ -3687,7 +3670,7 @@ cmd_up(void)
 	struct task_context* tc;
 	int frame_num;
 
-	// If machdep->print_stack_frame is not defined, return early
+	// If these are not defined by arch-specific init code, return early
 	if( (! machdep->print_stack_frame) || (! machdep->is_frame_num_valid) ) {
 		command_not_supported();
 		return;
@@ -3695,38 +3678,32 @@ cmd_up(void)
 
 	tc = CURRENT_CONTEXT();
 	frame_num = CURRENT_FRAME() + 1;
-	if( ! is_frame_num_valid(frame_num) ) {
-		error(INFO, "Initial frame selected; you cannot go up.");
-	} else {
-		// CURRENT_FRAME() += 1;
+	if( ! is_frame_num_valid(frame_num) )
+		error(FATAL, "Initial frame selected; you cannot go up.");
+	else
 		tc->frame = frame_num;
 
-		print_current_frame(0);
-	}
+	print_current_frame(0);
 }
 
 void
 cmd_down(void)
 {
 	struct task_context* tc;
-	int frame_num;
 
-	// If machdep->print_stack_frame is not defined, return early
+	// If machdep->print_stack_frame is not defined by arch, return early
 	if( ! machdep->print_stack_frame ) {
 		command_not_supported();
 		return;
 	}
 
 	tc = CURRENT_CONTEXT();
-	frame_num = CURRENT_FRAME();
-	if(frame_num <= 0) {
+	if(CURRENT_FRAME() <= 0)
 		error(INFO, "Bottom (innermost) frame selected; you cannot go down.");
-	} else {
-		// CURRENT_FRAME() -= 1;
-		tc->frame = frame_num-1;
+	else
+		tc->frame = CURRENT_FRAME()-1;
 
-		print_current_frame(0);
-	}
+	print_current_frame(0);
 }
 
 /*

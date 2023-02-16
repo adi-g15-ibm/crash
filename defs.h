@@ -5846,11 +5846,9 @@ extern char *help_alias[];
 extern char *help_ascii[];
 extern char *help_bpf[];
 extern char *help_bt[];
-
 extern char *help_frame[];
 extern char *help_up[];
 extern char *help_down[];
-
 extern char *help_btop[];
 extern char *help_dev[];
 extern char *help_dis[];
