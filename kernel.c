@@ -3714,12 +3714,12 @@ cmd_down(void)
 	}
 
 	tc = CURRENT_CONTEXT();
-	frame_num = CURRENT_FRAME() - 1;
+	frame_num = CURRENT_FRAME();
 	if(frame_num <= 0) {
 		error(INFO, "Bottom (innermost) frame selected; you cannot go down.");
 	} else {
 		// CURRENT_FRAME() -= 1;
-		tc->frame = frame_num;
+		tc->frame = frame_num-1;
 
 		print_current_frame(0);
 	}
