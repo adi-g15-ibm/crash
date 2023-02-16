@@ -3664,7 +3664,7 @@ cmd_frame(void)
 	// options in any order
 	if( args[optind] != NULL ) {
 		frame_num = strtol(args[optind], NULL, 10);
-		if( machdep->is_frame_num_valid(frame_num) ) {
+		if( is_frame_num_valid(frame_num) ) {
 			error(FATAL, "Passed frame number is invalid.");
 			return;
 		}
@@ -3691,7 +3691,7 @@ cmd_up(void)
 
 	tc = CURRENT_CONTEXT();
 	frame_num = CURRENT_FRAME() + 1;
-	if( ! machdep->is_frame_num_valid(frame_num) ) {
+	if( ! is_frame_num_valid(frame_num) ) {
 		error(INFO, "Initial frame selected; you cannot go up.");
 	} else {
 		// CURRENT_FRAME() += 1;
