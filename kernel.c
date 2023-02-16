@@ -3579,18 +3579,18 @@ cmd_frame(void)
 			cmd_usage(pc->curcmd, SYNOPSIS);
 	}
 
-	printf("bt->flags: %llx\n", bt_flags);
-
 	// purpose of using args[optind] is to allow passing frame number and
 	// options in any order
-	frame_num = strtol(args[optind], NULL, 10);
-	if( machdep->is_frame_num_valid(frame_num) ) {
-		error(FATAL, "Passed frame number is invalid.");
-		return;
-	}
+	if( args[optind] != NULL ) {
+		frame_num = strtol(args[optind], NULL, 10);
+		if( machdep->is_frame_num_valid(frame_num) ) {
+			error(FATAL, "Passed frame number is invalid.");
+			return;
+		}
 
-	// set frame number to `frame_num`
-	CURRENT_FRAME() = frame_num;
+		// set frame number to `frame_num`
+		CURRENT_FRAME() = frame_num;
+	}
 
 	// Whether frame_num given or not, we dump the frame nevertheless
 	print_current_frame(bt_flags);
@@ -3613,7 +3613,7 @@ cmd_up(void)
 	if( ! machdep->is_frame_num_valid(frame_num) ) {
 		error(INFO, "Initial frame selected; you cannot go up.");
 	} else {
-		// CURRENT_FRAME() = frame_num
+		// CURRENT_FRAME() += 1;
 		tc->frame = frame_num;
 
 		print_current_frame(0);

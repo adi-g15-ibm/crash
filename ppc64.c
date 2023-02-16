@@ -2292,6 +2292,9 @@ ppc64_is_frame_num_valid(int frame)
 	if (frame < 0)
 		return FALSE;
 
+	// fill kernel stack into a buffer
+	fill_stackbuf(bt);
+
 	// get first frame's IP and SP
 	bt->flags |= BT_NO_PRINT_REGS;
 	get_netdump_regs(bt, &ip, &sp);
@@ -2350,7 +2353,7 @@ ppc64_print_stack_frame(int frame,
 		newsp = *(ulong *)&bt->stackbuf[newsp - bt->stackbase];
 
 		// if the `newsp` value doesn't point to valid address in stack
-		if(!INSTACK(newsp, bt)) {
+		if(!INSTACK(req->sp, bt)) {
 			error(FATAL,
 				"ppc64_print_stack_frame: current frame numberx (%d) is not valid (likely more than number of frames available)",
 				frame_num);
