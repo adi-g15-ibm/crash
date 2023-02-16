@@ -3508,7 +3508,85 @@ get_lkcd_regs(struct bt_info *bt, ulong *eip, ulong *esp)
 	machdep->get_stack_frame(bt, eip, esp);
 }
 
-// NOTE: ensure that sizeof(bt_flags) enough to hold all flag
+/*
+ * Generic function that calls dumpfile specific functions to get register
+ * values, and if unknown dumpfile format, then passes on to the machine
+ * specific `machdep->get_stack_frame`
+ */
+static void
+get_dumpfile_regs(struct bt_info* bt, ulong* eip, ulong *esp)
+{
+	// Get SP, IP, and other registers from dumpfile, and don't print registers
+	bt->flags |= BT_NO_PRINT_REGS;
+
+	if (NETDUMP_DUMPFILE())
+		get_netdump_regs(bt, eip, esp);
+	else if (KDUMP_DUMPFILE())
+		get_kdump_regs(bt, eip, esp);
+	else if (DISKDUMP_DUMPFILE())
+		get_diskdump_regs(bt, eip, esp);
+	else if (KVMDUMP_DUMPFILE())
+		get_kvmdump_regs(bt, eip, esp);
+	else if (LKCD_DUMPFILE())
+		get_lkcd_regs(bt, eip, esp);
+	else if (XENDUMP_DUMPFILE())
+		get_xendump_regs(bt, eip, esp);
+	else if (SADUMP_DUMPFILE())
+		get_sadump_regs(bt, eip, esp);
+	else if (VMSS_DUMPFILE())
+		get_vmware_vmss_regs(bt, eip, esp);
+	else if (REMOTE_PAUSED()) {
+		if (!is_task_active(bt->task) || !get_remote_regs(bt, eip, esp))
+			machdep->get_stack_frame(bt, eip, esp);
+	} else
+		machdep->get_stack_frame(bt, eip, esp);
+
+	bt->flags &= ~BT_NO_PRINT_REGS;
+
+	bt->instptr = *eip;
+	bt->stkptr = *esp;
+}
+
+/*
+ *  Get registers including EIP, ESP, and pass on to machine-specific
+ *  is_frame_num_valid command
+ */
+static int
+is_frame_num_valid(int frame)
+{
+	struct bt_info bt_info, bt_setup, *bt;
+	struct task_context* tc;
+	struct reference reference;
+	char* refptr;
+	ulong ip, sp;
+
+	refptr = NULL;
+
+	bt = &bt_info;
+	BZERO(&bt_info, sizeof (struct bt_info));
+	BZERO(&bt_setup, sizeof(struct bt_info));
+
+	tc = CURRENT_CONTEXT();
+
+	BT_SETUP(tc);
+
+	if (frame < 0)
+		return FALSE;
+
+	// fill kernel stack into a buffer
+	fill_stackbuf(bt);
+
+	get_dumpfile_regs(bt, &ip, &sp);
+
+	return machdep->is_frame_num_valid(bt, frame);
+}
+
+/*
+ *  Get registers including EIP, ESP, and pass on to machine-specific
+ *  print_stack_frame
+ *
+ *  NOTE: ensure that sizeof(bt_flags) enough to hold all flag
+ */
 void
 print_current_frame(ulonglong bt_flags)
 {
@@ -3518,6 +3596,7 @@ print_current_frame(ulonglong bt_flags)
 	struct task_context* tc;
 	struct reference reference;
 	char* refptr;
+	ulong ip, sp;
 
 	refptr = NULL;
 
@@ -3533,6 +3612,8 @@ print_current_frame(ulonglong bt_flags)
 
 	// fill complete kernel stack into a buffer
 	fill_stackbuf(bt);
+
+	get_dumpfile_regs(bt, &sp, &ip);
 
 	machdep->print_stack_frame(CURRENT_FRAME(), bt);
 }
@@ -3583,7 +3664,7 @@ cmd_frame(void)
 	// options in any order
 	if( args[optind] != NULL ) {
 		frame_num = strtol(args[optind], NULL, 10);
-		if( machdep->is_frame_num_valid(frame_num) ) {
+		if( is_frame_num_valid(frame_num) ) {
 			error(FATAL, "Passed frame number is invalid.");
 			return;
 		}
@@ -3610,7 +3691,7 @@ cmd_up(void)
 
 	tc = CURRENT_CONTEXT();
 	frame_num = CURRENT_FRAME() + 1;
-	if( ! machdep->is_frame_num_valid(frame_num) ) {
+	if( ! is_frame_num_valid(frame_num) ) {
 		error(INFO, "Initial frame selected; you cannot go up.");
 	} else {
 		// CURRENT_FRAME() += 1;
@@ -3633,12 +3714,12 @@ cmd_down(void)
 	}
 
 	tc = CURRENT_CONTEXT();
-	frame_num = CURRENT_FRAME() - 1;
+	frame_num = CURRENT_FRAME();
 	if(frame_num <= 0) {
 		error(INFO, "Bottom (innermost) frame selected; you cannot go down.");
 	} else {
 		// CURRENT_FRAME() -= 1;
-		tc->frame = frame_num;
+		tc->frame = frame_num-1;
 
 		print_current_frame(0);
 	}
