@@ -33,7 +33,7 @@ static int ppc64_eframe_search(struct bt_info *);
 static void ppc64_back_trace_cmd(struct bt_info *);
 static void ppc64_back_trace(struct gnu_request *, struct bt_info *);
 static void get_ppc64_frame(struct bt_info *, ulong *, ulong *);
-static int ppc64_is_frame_num_valid(int frame_num);
+static int ppc64_is_frame_num_valid(struct bt_info* bt, int frame_num);
 static void ppc64_print_stack_frame(int frame_num, struct bt_info* bt);
 static void ppc64_print_stack_entry(int,struct gnu_request *, 
 	ulong, ulong, struct bt_info *);
@@ -2271,34 +2271,9 @@ ppc64_display_full_frame(struct bt_info *bt, ulong nextsp, FILE *ofp)
  * Check whether a frame number is valid, used by frame/up/down when setting
  * current frame number*/
 static int
-ppc64_is_frame_num_valid(int frame)
+ppc64_is_frame_num_valid(struct bt_info* bt, int frame)
 {
-	ulong ip, sp;
-	struct bt_info bt_info, bt_setup, *bt;
-	struct task_context* tc;
-	struct reference reference;
-	char* refptr;
-
-	refptr = NULL;
-
-	bt = &bt_info;
-	BZERO(&bt_info, sizeof (struct bt_info));
-	BZERO(&bt_setup, sizeof(struct bt_info));
-
-	tc = CURRENT_CONTEXT();
-
-	BT_SETUP(tc);
-
-	if (frame < 0)
-		return FALSE;
-
-	// fill kernel stack into a buffer
-	fill_stackbuf(bt);
-
-	// get first frame's IP and SP
-	bt->flags |= BT_NO_PRINT_REGS;
-	get_netdump_regs(bt, &ip, &sp);
-	bt->flags &= ~BT_NO_PRINT_REGS;
+	ulong sp = bt->stkptr;
 
 	// we don't care about final value of newsp, just `sp`
 	while(frame-- > 0) {
@@ -2331,14 +2306,8 @@ ppc64_print_stack_frame(int frame,
 	req = (struct gnu_request*)GETBUF(sizeof (struct gnu_request));
 	req->task = bt->task;
 
-	ulong ip, sp;
-
-	bt->flags |= BT_NO_PRINT_REGS;
-	get_netdump_regs(bt, &ip, &sp);
-	bt->flags &= ~BT_NO_PRINT_REGS;
-
-	req->pc = ip;
-	req->sp = sp;
+	req->pc = bt->instptr;
+	req->sp = bt->stkptr;
 
 	int cnt = frame_num;
 
