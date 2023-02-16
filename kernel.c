@@ -3668,7 +3668,7 @@ cmd_frame(void)
 	// options in any order
 	if( args[optind] != NULL ) {
 		frame_num = strtol(args[optind], NULL, 10);
-		if( is_frame_num_valid(frame_num) ) {
+		if( ! is_frame_num_valid(frame_num) ) {
 			error(FATAL, "Passed frame number is invalid.");
 			return;
 		}
