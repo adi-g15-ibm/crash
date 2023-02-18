@@ -1079,6 +1079,7 @@ symval_hash_search(ulong value)
 
 	index = SYMVAL_HASH_INDEX(value);
 
+	// @adi `st` is in defs.h, symbol_table_data
 	if (!st->symval_hash[index].val_hash_head) 
 		return NULL;
 
@@ -1090,6 +1091,9 @@ symval_hash_search(ulong value)
 	else
 		sp = st->symval_hash[index].val_hash_head;
 
+	/* @adi The hashtable here is basically a list of list of `syment`s, ie. for
+	 * same index, multiple entries exist, and it's checking in a loop, if
+	 * someone's value matches*/
 	for (splo = NULL; sp; sp = sp->val_hash_next) {
 		if (sp->value == value) {
 			st->symval_hash[index].val_hash_last = sp;
@@ -4991,12 +4995,17 @@ value_search(ulong value, ulong *offset)
         if (!in_ksymbol_range(value))
                 return((struct syment *)NULL);
 
+	/* @adi On ppc64, machdep->value_to_symbol is just
+	 * `generic_machdep_value_to_symbol`, which returns NULL, so this has no
+	 * use for PPC64*/
 	if ((sp = machdep->value_to_symbol(value, offset)))
 		return sp;
 
+	// @adi This is ARM specific, no use for PPC64
 	if (IS_VMALLOC_ADDR(value))
 		goto check_modules;
 
+	// @adi Searching in static hash table for kernel symbol values
 	if ((sp = symval_hash_search(value)) == NULL)
 		sp = st->symtable;
  
@@ -5043,6 +5052,7 @@ value_search(ulong value, ulong *offset)
                 }
         }
 
+	// @adi Last (4th) is to check modules
 check_modules:
 	sp = value_search_module(value, offset);
 
@@ -5175,6 +5185,7 @@ value_to_symstr(ulong value, char *buf, ulong radix)
         return(buf);
 }
 
+// @adi closest symbol is just value_search without the offset required
 /*
  *  For a given value, return the closest (lower-in-value) symbol name.
  */

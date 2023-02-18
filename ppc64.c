@@ -2241,6 +2241,19 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 	}
 }
 
+void my_function(struct bt_info* bt, ulong nextsp) {
+	uint64_t back_chain = *(uint64_t*)bt->stackbuf[bt->sp + 0 - bt->stackbase];
+	uint32_t cr_save_word = *(uint32_t*)bt->stackbuf[bt->sp + 8 - bt->stackbase];
+	uint32_t reserved = *(uint32_t*)bt->stackbuf[bt->sp + 12 - bt->stackbase];
+	uint64_t lr_save_dw = *(uint64_t*)bt->stackbuf[bt->sp + 16 - bt->stackbase];
+	uint64_t toc_ptr_dw = *(uint64_t*)bt->stackbuf[bt->sp + 24 - bt->stackbase];
+
+	printf("bt->frameptr: %lx, bt->sp: %lx, nextsp: %lx\n", bt->frameptr, bt->sp, nextsp);
+	printf("Back Chain (SP+0) : %lx, CR Save Word (SP+8)   : %lx\n", back_chain, cr_save_word);
+	printf("Reserved (SP+12)  : %lx, LR Save Double (SP+16): %lx\n", reserved, lr_save_dw);
+	printf("TOC Pointer Double: %lx\n", toc_ptr_dw);
+}
+
 static void
 ppc64_display_full_frame(struct bt_info *bt, ulong nextsp, FILE *ofp)
 {
@@ -2253,6 +2266,8 @@ ppc64_display_full_frame(struct bt_info *bt, ulong nextsp, FILE *ofp)
 		nextsp =  bt->stacktop;
 
         words = (nextsp - bt->frameptr) / sizeof(ulong);
+
+		my_function(bt, nextsp);
 
         addr = bt->frameptr;
         u_idx = (bt->frameptr - bt->stackbase)/sizeof(ulong);
@@ -2454,7 +2469,7 @@ ppc64_print_stack_entry(int frame,
 			if (sp && offset) 
 				name_plus_offset = value_to_symstr(req->pc, buf, bt->radix);
 		}
-		
+
 		fprintf(fp, "%s#%d [%lx] %s at %lx",
 			frame < 10 ? " " : "", frame,
 			req->sp, name_plus_offset ? name_plus_offset : req->name, 
