@@ -2242,13 +2242,13 @@ ppc64_back_trace(struct gnu_request *req, struct bt_info *bt)
 }
 
 void my_function(struct bt_info* bt, ulong nextsp) {
-	uint64_t back_chain = *(uint64_t*)bt->stackbuf[bt->sp + 0 - bt->stackbase];
-	uint32_t cr_save_word = *(uint32_t*)bt->stackbuf[bt->sp + 8 - bt->stackbase];
-	uint32_t reserved = *(uint32_t*)bt->stackbuf[bt->sp + 12 - bt->stackbase];
-	uint64_t lr_save_dw = *(uint64_t*)bt->stackbuf[bt->sp + 16 - bt->stackbase];
-	uint64_t toc_ptr_dw = *(uint64_t*)bt->stackbuf[bt->sp + 24 - bt->stackbase];
+	uint64_t back_chain = *(uint64_t*)bt->stackbuf[bt->stkptr + 0 - bt->stackbase];
+	uint32_t cr_save_word = *(uint32_t*)bt->stackbuf[bt->stkptr + 8 - bt->stackbase];
+	uint32_t reserved = *(uint32_t*)bt->stackbuf[bt->stkptr + 12 - bt->stackbase];
+	uint64_t lr_save_dw = *(uint64_t*)bt->stackbuf[bt->stkptr + 16 - bt->stackbase];
+	uint64_t toc_ptr_dw = *(uint64_t*)bt->stackbuf[bt->stkptr + 24 - bt->stackbase];
 
-	printf("bt->frameptr: %lx, bt->sp: %lx, nextsp: %lx\n", bt->frameptr, bt->sp, nextsp);
+	printf("bt->frameptr: %lx, bt->stkptr: %lx, nextsp: %lx\n", bt->frameptr, bt->stkptr, nextsp);
 	printf("Back Chain (SP+0) : %lx, CR Save Word (SP+8)   : %lx\n", back_chain, cr_save_word);
 	printf("Reserved (SP+12)  : %lx, LR Save Double (SP+16): %lx\n", reserved, lr_save_dw);
 	printf("TOC Pointer Double: %lx\n", toc_ptr_dw);
