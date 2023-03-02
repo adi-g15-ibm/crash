@@ -22,6 +22,7 @@
 #include <libgen.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "xendump.h"
 #if defined(GDB_7_6) || defined(GDB_10_2)
 #define __CONFIG_H__ 1
@@ -2479,6 +2480,27 @@ clone_bt_info(struct bt_info *orig, struct bt_info *new,
        	}							\
 	pc->flags &= ~IN_FOREACH;				\
 	}
+
+void
+cmd_btgdb(void)
+{
+	struct gnu_request req = {0};
+	char buffer[BUFSIZE];
+
+	BZERO(buffer, BUFSIZE);
+
+	req.command = GNU_PASS_THROUGH;
+	req.flags = 0; // only flag that is considered is GNU_FROM_TTY_OFF
+
+	snprintf(buffer, 3, "bt");
+	req.buf = buffer;
+
+	// int success = gdb_pass_through(req, NULL, GNU_RETURN_ON_ERROR);
+	gdb_interface(&req);
+
+	if (req.flags & GNU_COMMAND_FAILED)
+		error(FATAL, "gdb request failed: %s", req.buf);
+}
 
 void
 cmd_bt(void)

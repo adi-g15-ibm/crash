@@ -74,6 +74,7 @@ struct command_table_entry linux_command_table[] = {
         {"ascii",   cmd_ascii,   help_ascii,   0},
         {"bpf",     cmd_bpf,     help_bpf,     0},
         {"bt",      cmd_bt,      help_bt,      REFRESH_TASK_TABLE},
+		{"btgdb",   cmd_btgdb,   help_btgdb,   REFRESH_TASK_TABLE},
 	{"btop",    cmd_btop,    help_btop,    0},
 	{"dev",     cmd_dev,     help_dev,     0},
 	{"dis",     cmd_dis,     help_dis,     MINIMAL},

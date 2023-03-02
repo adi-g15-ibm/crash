@@ -1906,6 +1906,12 @@ char *help_wr[] = {
 NULL               
 };
 
+char *help_btgdb[] = {
+	"btgdb",
+	"backtrace command passthrough to gdb",
+	NULL
+};
+
 char *help_bt[] = {
 "bt",
 "backtrace",

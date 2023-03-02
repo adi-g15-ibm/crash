@@ -5256,6 +5256,7 @@ void cmd_task(void);         /* task.c */
 void cmd_foreach(void);      /* task.c */
 void cmd_runq(void);         /* task.c */
 void cmd_sig(void);          /* task.c */
+void cmd_btgdb(void);        /* kernel.c */
 void cmd_bt(void);           /* kernel.c */
 void cmd_dis(void);          /* kernel.c */
 void cmd_down(void);         /* kernel.c */
@@ -5832,6 +5833,7 @@ extern char *help_pointer[];
 extern char *help_alias[];
 extern char *help_ascii[];
 extern char *help_bpf[];
+extern char *help_btgdb[];
 extern char *help_bt[];
 extern char *help_frame[];
 extern char *help_up[];
