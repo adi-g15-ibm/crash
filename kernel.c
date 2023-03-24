@@ -3535,7 +3535,7 @@ get_lkcd_regs(struct bt_info *bt, ulong *eip, ulong *esp)
  * values, and if unknown dumpfile format, then passes on to the machine
  * specific `machdep->get_stack_frame`
  */
-static void
+void
 get_dumpfile_regs(struct bt_info* bt, ulong* eip, ulong *esp)
 {
 	// Get SP, IP, and other registers from dumpfile, and don't print registers

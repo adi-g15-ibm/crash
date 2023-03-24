@@ -57,6 +57,7 @@ static void ppc64_set_bt_emergency_stack(enum emergency_stack_type type,
 static char * ppc64_check_eframe(struct ppc64_pt_regs *);
 static void ppc64_print_eframe(char *, struct ppc64_pt_regs *, 
 		struct bt_info *);
+int ppc64_get_cpu_reg(int, int, const char*, int, void*);
 static void parse_cmdline_args(void);
 static int ppc64_paca_percpu_offset_init(int);
 static void ppc64_init_cpu_info(void);
@@ -394,6 +395,7 @@ ppc64_init(int when)
                 machdep->is_uvaddr = generic_is_uvaddr;
 	        machdep->eframe_search = ppc64_eframe_search;
 	        machdep->back_trace = ppc64_back_trace_cmd;
+		machdep->get_cpu_reg = ppc64_get_cpu_reg;
 	        machdep->print_stack_frame = ppc64_print_stack_frame;
 	        machdep->is_frame_num_valid = ppc64_is_frame_num_valid;
 	        machdep->processor_speed = ppc64_processor_speed;
@@ -2639,6 +2641,93 @@ ppc64_print_eframe(char *efrm_str, struct ppc64_pt_regs *regs,
 	fprintf(fp, " %s [%lx] exception frame:\n", efrm_str, regs->trap);
 	ppc64_print_regs(regs);
 	ppc64_print_nip_lr(regs, 1);
+}
+
+int
+ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
+		void *value)
+{
+	struct bt_info bt_info, bt_setup;
+	struct task_context* tc;
+	struct ppc64_pt_regs* pt_regs;
+	ulong ip, sp;
+
+	/* FIXME: Currently only handling registers available in pt_regs:
+	 *
+	 * 0-31:   r0-r31
+	 * 64:     nip/pc
+	 * 65:     msr
+	 *
+	 * 67:     lr
+	 * 68:     ctr
+	 */
+	switch(regno) {
+		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
+		case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+		case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+
+		case 64:
+		case 65:
+		case 67:
+		case 68:
+			break;
+
+		default:
+			// return false if we can't get that register
+			return FALSE;
+	}
+
+	// reusing the get_dumpfile_regs function to get pt regs structure
+	tc = CURRENT_CONTEXT();
+	BZERO(&bt_setup, sizeof(struct bt_info));
+	clone_bt_info(&bt_setup, &bt_info, tc);
+	fill_stackbuf(&bt_info);
+	get_dumpfile_regs(&bt_info, &sp, &ip);
+	pt_regs = (struct ppc64_pt_regs *)bt_info.machdep;
+
+	switch(regno) {
+		case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+		case 8: case 9: case 10: case 11: case 12: case 13: case 14: case 15:
+		case 16: case 17: case 18: case 19: case 20: case 21: case 22: case 23:
+		case 24: case 25: case 26: case 27: case 28: case 29: case 30: case 31:
+			if( size != sizeof(pt_regs->gpr[regno]) )
+				return FALSE;  // size mismatch
+
+			memcpy(value, &pt_regs->gpr[regno], size);
+			return TRUE;
+
+		case 64 /*PC/NIP*/:
+			if( size != sizeof(pt_regs->nip) )
+				return FALSE;  // size mismatch
+
+			memcpy(value, &pt_regs->nip, size);
+			return TRUE;
+
+		case 65 /*MSR*/:
+			if( size != sizeof(pt_regs->msr) )
+				return FALSE;  // size mismatch
+
+			memcpy(value, &pt_regs->msr, size);
+			return TRUE;
+
+		case 67 /*LR*/:
+			if( size != sizeof(pt_regs->link) )
+				return FALSE;  // size mismatch
+
+			memcpy(value, &pt_regs->link, size);
+			return TRUE;
+
+		case 68 /*CTR*/:
+			if( size != sizeof(pt_regs->ctr) )
+				return FALSE;  // size mismatch
+
+			memcpy(value, &pt_regs->ctr, size);
+			return TRUE;
+	}
+
+	// critical error: this should be unreachable due to above switches
+	return FALSE;
 }
 
 /*

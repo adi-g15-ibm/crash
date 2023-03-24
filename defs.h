@@ -5976,6 +5976,7 @@ int load_module_symbols_helper(char *);
 void unlink_module(struct load_module *);
 int check_specified_module_tree(char *, char *);
 int is_system_call(char *, ulong);
+void get_dumpfile_regs(struct bt_info*, ulong*, ulong*);
 void generic_dump_irq(int);
 void generic_get_irq_affinity(int);
 void generic_show_interrupts(int, ulong *);
@@ -6590,6 +6591,7 @@ struct machine_specific {
 
 void ppc64_init(int);
 void ppc64_dump_machdep_table(ulong);
+int  ppc64_get_cpu_reg(int, int, const char*, int, void*);
 #define display_idt_table() \
         error(FATAL, "-d option is not applicable to PowerPC architecture\n")
 #define KSYMS_START     (0x1)
