@@ -55,6 +55,8 @@ static void ppc64_set_bt_emergency_stack(enum emergency_stack_type type,
 static char * ppc64_check_eframe(struct ppc64_pt_regs *);
 static void ppc64_print_eframe(char *, struct ppc64_pt_regs *, 
 		struct bt_info *);
+static int ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
+		  void *value);
 static void parse_cmdline_args(void);
 static int ppc64_paca_percpu_offset_init(int);
 static void ppc64_init_cpu_info(void);
@@ -703,6 +705,8 @@ ppc64_init(int when)
 			if ((ms->hwstackbuf = (char *)malloc(ms->hwstacksize)) == NULL)
 				error(FATAL, "cannot malloc hwirqstack buffer space.");
 		}
+
+		machdep->get_cpu_reg = ppc64_get_cpu_reg;
 
 		ppc64_init_paca_info();
 
@@ -2501,6 +2505,103 @@ ppc64_print_eframe(char *efrm_str, struct ppc64_pt_regs *regs,
 	ppc64_print_nip_lr(regs, 1);
 }
 
+static int
+ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
+		  void *value)
+{
+	struct bt_info bt_info, bt_setup;
+	struct task_context *tc;
+	struct ppc64_pt_regs *pt_regs;
+	ulong ip, sp;
+
+	if (LIVE()) {
+		/* doesn't support reading registers in live dump */
+		return FALSE;
+	}
+
+	/* Currently only handling registers available in ppc64_pt_regs:
+	 *
+	 * 0-31:   r0-r31
+	 * 64:     pc/nip
+	 * 65:     msr
+	 *
+	 * 67:     lr
+	 * 68:     ctr
+	 */
+	switch (regno) {
+	case PPC64_R0_REGNUM ... PPC64_R31_REGNUM:
+
+	case PPC64_PC_REGNUM:
+	case PPC64_MSR_REGNUM:
+	case PPC64_LR_REGNUM:
+	case PPC64_CTR_REGNUM:
+		break;
+
+	default:
+		// return false if we can't get that register
+		if (CRASHDEBUG(1))
+			error(WARNING, "unsupported register, regno=%d\n", regno);
+		return FALSE;
+	}
+
+	tc = CURRENT_CONTEXT();
+	BZERO(&bt_setup, sizeof(struct bt_info));
+	clone_bt_info(&bt_setup, &bt_info, tc);
+	fill_stackbuf(&bt_info);
+
+	// reusing the get_dumpfile_regs function to get pt regs structure
+	get_dumpfile_regs(&bt_info, &sp, &ip);
+	pt_regs = (struct ppc64_pt_regs *)bt_info.machdep;
+
+	if (!pt_regs) {
+		error(WARNING, "pt_regs not available for cpu %d\n", cpu);
+		return FALSE;
+	}
+
+	switch (regno) {
+	case PPC64_R0_REGNUM ... PPC64_R31_REGNUM:
+		if (size != sizeof(pt_regs->gpr[regno]))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->gpr[regno], size);
+		break;
+
+	case PPC64_PC_REGNUM:
+		if (size != sizeof(pt_regs->nip))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->nip, size);
+		break;
+
+	case PPC64_MSR_REGNUM:
+		if (size != sizeof(pt_regs->msr))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->msr, size);
+		break;
+
+	case PPC64_LR_REGNUM:
+		if (size != sizeof(pt_regs->link))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->link, size);
+		break;
+
+	case PPC64_CTR_REGNUM:
+		if (size != sizeof(pt_regs->ctr))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->ctr, size);
+		break;
+	}
+
+	/* free buffer allocated by fill_stackbuf */
+	if (bt_info.stackbuf)
+		FREEBUF(bt_info.stackbuf);
+
+	return TRUE;
+}
+
 /*
  * For vmcore typically saved with KDump or FADump, get SP and IP values
  * from the saved ptregs.
@@ -2613,9 +2714,11 @@ ppc64_get_dumpfile_stack_frame(struct bt_info *bt_in, ulong *nip, ulong *ksp)
 		pt_regs = (struct ppc64_pt_regs *)bt->machdep;
 		ur_nip = pt_regs->nip;
 		ur_ksp = pt_regs->gpr[1];
-		/* Print the collected regs for panic task. */
-		ppc64_print_regs(pt_regs);
-		ppc64_print_nip_lr(pt_regs, 1);
+		if (!(bt->flags & BT_NO_PRINT_REGS)) {
+			/* Print the collected regs for panic task. */
+			ppc64_print_regs(pt_regs);
+			ppc64_print_nip_lr(pt_regs, 1);
+		}
 	} else if ((pc->flags & KDUMP) ||
 		   ((pc->flags & DISKDUMP) &&
 		    (*diskdump_flags & KDUMP_CMPRS_LOCAL))) {
