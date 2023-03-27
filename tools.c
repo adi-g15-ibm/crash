@@ -2077,10 +2077,18 @@ cmd_set(void)
                                 else if (STREQ(args[optind], "on")) {
 					if (pc->flags & MINIMAL_MODE)
 						goto invalid_set_command;
-					else
+					else {
                                         	pc->flags2 |= GDB_CMD_MODE;
-                                } else if (STREQ(args[optind], "off"))
+						#ifdef PPC64
+						machdep->get_cpu_reg = ppc64_get_cpu_reg;
+						#endif
+					}
+                                } else if (STREQ(args[optind], "off")) {
                                         pc->flags2 &= ~GDB_CMD_MODE;
+					#ifdef PPC64
+					machdep->get_cpu_reg = ppc64_get_cpu_reg;
+					#endif
+				}
                                 else if (IS_A_NUMBER(args[optind])) {
                                         value = stol(args[optind],
                                                 FAULT_ON_ERROR, NULL);
