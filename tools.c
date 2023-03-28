@@ -2095,7 +2095,7 @@ cmd_set(void)
 					goto invalid_set_command;
 
 				set_command_prompt(pc->flags2 & GDB_CMD_MODE ?
-					"gdb> " : NULL);
+					"crash-gdb> " : NULL);
                         }
 
                         if (runtime)
