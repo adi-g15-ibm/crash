@@ -1018,6 +1018,8 @@ struct machdep_table {
 	uint64_t memsize;
         int (*eframe_search)(struct bt_info *);
         void (*back_trace)(struct bt_info *);
+	void (*print_stack_frame)(int, struct bt_info *);
+	int (*is_frame_num_valid)(int, struct bt_info *);
         ulong (*processor_speed)(void);
         int (*uvtop)(struct task_context *, ulong, physaddr_t *, int);
         int (*kvtop)(struct task_context *, ulong, physaddr_t *, int);

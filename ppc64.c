@@ -33,6 +33,8 @@ static int ppc64_eframe_search(struct bt_info *);
 static void ppc64_back_trace_cmd(struct bt_info *);
 static void ppc64_back_trace(struct gnu_request *, struct bt_info *);
 static void get_ppc64_frame(struct bt_info *, ulong *, ulong *);
+static int ppc64_is_frame_num_valid(int, struct bt_info *);
+static void ppc64_print_stack_frame(int, struct bt_info *);
 static void ppc64_print_stack_entry(int,struct gnu_request *, 
 	ulong, ulong, struct bt_info *);
 static void ppc64_dump_irq(int);
@@ -383,6 +385,8 @@ ppc64_init(int when)
                 machdep->is_uvaddr = generic_is_uvaddr;
 	        machdep->eframe_search = ppc64_eframe_search;
 	        machdep->back_trace = ppc64_back_trace_cmd;
+		machdep->print_stack_frame = ppc64_print_stack_frame;
+		machdep->is_frame_num_valid = ppc64_is_frame_num_valid;
 	        machdep->processor_speed = ppc64_processor_speed;
 	        machdep->uvtop = ppc64_uvtop;
 	        machdep->kvtop = ppc64_kvtop;
@@ -2252,6 +2256,147 @@ ppc64_display_full_frame(struct bt_info *bt, ulong nextsp, FILE *ofp)
                 addr += sizeof(ulong);
         }
         fprintf(ofp, "\n");
+}
+
+/* Check whether a frame number is valid
+ */
+static int
+ppc64_is_frame_num_valid(int frame_num, struct bt_info *bt)
+{
+	ulong sp = bt->stkptr;
+
+	while (frame_num-- > 0) {
+		sp = *(ulong *)&bt->stackbuf[sp - bt->stackbase];
+
+		if (!INSTACK(sp, bt))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+/* Prints one frame, identified by the frame_num, where frame_num=0 is the
+ * innermost frame (first frame in backtrace)
+ *
+ * It gets the `pc` and `sp` and finally calls `ppc64_print_stack_entry`
+ */
+static void
+ppc64_print_stack_frame(int frame_num, struct bt_info *bt)
+{
+	struct gnu_request req = { 0 };
+	ulong newpc = 0, newsp;
+	ulong eframe_lr = 0;
+	int eframe_found, marker;
+	enum emergency_stack_type estype;
+	int c = bt->tc->processor;
+	ulong nmi_sp = 0;
+
+	req.task = bt->task;
+
+	req.pc = bt->instptr;
+	req.sp = bt->stkptr;
+
+	int cnt = frame_num;
+
+	newsp = req.sp;
+	newpc = req.pc;
+
+	while (cnt-- >= 0) {
+		req.sp = newsp;
+		req.pc = newpc;
+
+		newsp = *(ulong *)&bt->stackbuf[newsp - bt->stackbase];
+
+		if (!INSTACK(req.sp, bt)) {
+			error(FATAL,
+				"%s: current frame numberx (%d) is not valid (likely more than number of frames available)",
+				__func__, frame_num);
+			return;
+		}
+
+		// rest of the loop is copied from ppc64_back_trace, focused on updating req.pc
+		if (IS_KVADDR(newsp)) {
+			/*
+			 * In 2.4, HW interrupt stack will be used to save
+			 * smp_call_functions symbols. i.e, when the dumping
+			 * CPU is issued IPI call to freeze other CPUS,
+			 */
+			if (INSTACK(newsp, bt) && (newsp + 16 > bt->stacktop))
+				newsp =
+					*(ulong *)&bt->stackbuf[newsp - bt->stackbase];
+			if (!INSTACK(newsp, bt)) {
+				estype = ppc64_in_emergency_stack(c, newsp, true);
+				if (estype) {
+					if (!nmi_sp && estype == NMI_EMERGENCY_STACK)
+						nmi_sp = newsp;
+						ppc64_set_bt_emergency_stack(estype, bt);
+					} else {
+						/*
+						 * Switch HW interrupt stack or emergency stack
+						 * to process's stack.
+						 */
+						bt->stackbase = GET_STACKBASE(bt->task);
+						bt->stacktop = GET_STACKTOP(bt->task);
+						alter_stackbuf(bt);
+				}
+			}
+
+			if (IS_KVADDR(newsp) && INSTACK(newsp, bt))
+				newpc = *(ulong *)&bt->stackbuf[newsp + 16 -
+					bt->stackbase];
+		}
+
+		if (BT_REFERENCE_FOUND(bt))
+			return;
+
+		eframe_found = FALSE;
+		/*
+		 * Is this frame an exception one?
+		 * In 2.6, 0x7265677368657265 is saved and used
+		 * to determine the exception frame.
+		 */
+		if (THIS_KERNEL_VERSION < LINUX(2, 6, 0)) {
+			if (frame && (newsp - req->sp - STACK_FRAME_OVERHEAD) >=
+				sizeof(struct ppc64_pt_regs))
+				eframe_found = TRUE;
+			else if (STREQ(req->name, ".ret_from_except"))
+				eframe_found = TRUE;
+		} else if ((newsp - req->sp - STACK_FRAME_OVERHEAD) >=
+			sizeof(struct ppc64_pt_regs)) {
+			readmem(req->sp + 0x60, KVADDR, &marker,
+				sizeof(ulong), "stack frame", FAULT_ON_ERROR);
+
+			if (marker == EXCP_FRAME_MARKER)
+				eframe_found = TRUE;
+		}
+		if (eframe_found) {
+			char *efrm_str = NULL;
+			struct ppc64_pt_regs regs;
+
+			readmem(req->sp + STACK_FRAME_OVERHEAD, KVADDR, &regs,
+				sizeof(struct ppc64_pt_regs),
+				"exception frame", FAULT_ON_ERROR);
+
+			efrm_str = ppc64_check_eframe(&regs);
+			if (efrm_str) {
+				lr = regs.link;
+				newpc = regs.nip;
+				newsp = regs.gpr[1];
+			}
+		}
+	}
+
+	req->name = closest_symbol(req->pc);
+	if (req->name == NULL) {
+		if (CRASHDEBUG(1))
+			error(FATAL, "%s hit unknown symbol (%lx).\n", __func__, req->pc);
+	}
+
+	bt->flags |= BT_SAVE_LASTSP;
+
+	ppc64_print_stack_entry(frame_num, req, newsp, eframe_lr, bt);
+
+	bt->flags |= ~(ulonglong)BT_SAVE_LASTSP;
 }
 
 /*
