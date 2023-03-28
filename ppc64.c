@@ -2590,9 +2590,11 @@ ppc64_get_dumpfile_stack_frame(struct bt_info *bt_in, ulong *nip, ulong *ksp)
 		pt_regs = (struct ppc64_pt_regs *)bt->machdep;
 		ur_nip = pt_regs->nip;
 		ur_ksp = pt_regs->gpr[1];
-		/* Print the collected regs for panic task. */
-		ppc64_print_regs(pt_regs);
-		ppc64_print_nip_lr(pt_regs, 1);
+		if (!(bt->flags & BT_NO_PRINT_REGS)) {
+			/* Print the collected regs for panic task. */
+			ppc64_print_regs(pt_regs);
+			ppc64_print_nip_lr(pt_regs, 1);
+		}
 	} else if ((pc->flags & KDUMP) ||
 		   ((pc->flags & DISKDUMP) &&
 		    (*diskdump_flags & KDUMP_CMPRS_LOCAL))) {
