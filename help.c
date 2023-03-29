@@ -2476,6 +2476,24 @@ char *help_extend[] = {
 NULL               
 };
 
+char *help_frame[] = {
+"frame",
+"Select and print a stack frame.",
+"[-f|-F|-l] [frame_number]",
+"If no argument[s] passed, print the current stack frame.",
+"A single numerical argument specifies the frame number to select",
+"       -f  display all stack data contained in a frame",
+"       -F[F]  similar to -f, except that the stack data is displayed symbolically",
+"           when appropriate; if the stack data references a slab cache object,",
+"           the name of the slab cache will be displayed in brackets; on ia64,",
+"           the substitution is done to the argument register contents.",
+"           If -F is entered twice, and the stack data references a slab",
+"           object, both the address and the name of the slab cache will be",
+"           displayed in brackets.",
+"       -l  show file and line number of stack trace text location.",
+NULL
+};
+
 char *help_mach[] = {
 "mach",
 "machine specific data",    

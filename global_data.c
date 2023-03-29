@@ -82,6 +82,7 @@ struct command_table_entry linux_command_table[] = {
 	{"extend",  cmd_extend,  help_extend,  MINIMAL},
 	{"files",   cmd_files,   help_files,   REFRESH_TASK_TABLE},
 	{"foreach", cmd_foreach, help_foreach, REFRESH_TASK_TABLE},
+	{"frame",   cmd_frame,   help_frame,   REFRESH_TASK_TABLE},
 	{"fuser",   cmd_fuser,   help_fuser,   REFRESH_TASK_TABLE},
 	{"gdb",     cmd_gdb,     help_gdb,     REFRESH_TASK_TABLE},
         {"help",    cmd_help,    help_help,    MINIMAL},

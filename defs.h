@@ -825,6 +825,7 @@ struct kernel_table {                   /* kernel data */
 struct task_context {                     /* context stored for each task */
         ulong task;
 	ulong thread_info;
+	int frame_num;
         ulong pid;
         char comm[TASK_COMM_LEN+1];
 	int processor;
@@ -918,6 +919,7 @@ struct task_table {                      /* kernel/local task table data */
 #define CURRENT_TASK()    (tt->current->task)
 #define CURRENT_PID()     (tt->current->pid)
 #define CURRENT_COMM()    (tt->current->comm)
+#define CURRENT_FRAME()   (tt->current->frame_num)
 #define RUNNING_TASKS()   (tt->running_tasks)
 #define FIRST_CONTEXT()   (tt->context_array)
 
@@ -5269,6 +5271,7 @@ void cmd_runq(void);         /* task.c */
 void cmd_sig(void);          /* task.c */
 void cmd_bt(void);           /* kernel.c */
 void cmd_dis(void);          /* kernel.c */
+void cmd_frame(void);        /* kernel.c */
 void cmd_mod(void);          /* kernel.c */
 void cmd_log(void);          /* kernel.c */
 void cmd_sys(void);          /* kernel.c */
@@ -5841,6 +5844,7 @@ extern char *help_alias[];
 extern char *help_ascii[];
 extern char *help_bpf[];
 extern char *help_bt[];
+extern char *help_frame[];
 extern char *help_btop[];
 extern char *help_dev[];
 extern char *help_dis[];
