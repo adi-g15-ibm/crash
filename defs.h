@@ -825,6 +825,7 @@ struct kernel_table {                   /* kernel data */
 struct task_context {                     /* context stored for each task */
         ulong task;
 	ulong thread_info;
+	int frame_num;
         ulong pid;
         char comm[TASK_COMM_LEN+1];
 	int processor;
@@ -918,6 +919,7 @@ struct task_table {                      /* kernel/local task table data */
 #define CURRENT_TASK()    (tt->current->task)
 #define CURRENT_PID()     (tt->current->pid)
 #define CURRENT_COMM()    (tt->current->comm)
+#define CURRENT_FRAME()   (tt->current->frame_num)
 #define RUNNING_TASKS()   (tt->running_tasks)
 #define FIRST_CONTEXT()   (tt->context_array)
 
@@ -1018,6 +1020,8 @@ struct machdep_table {
 	uint64_t memsize;
         int (*eframe_search)(struct bt_info *);
         void (*back_trace)(struct bt_info *);
+	void (*print_stack_frame)(int, struct bt_info *);
+	int (*is_frame_num_valid)(int, struct bt_info *);
         ulong (*processor_speed)(void);
         int (*uvtop)(struct task_context *, ulong, physaddr_t *, int);
         int (*kvtop)(struct task_context *, ulong, physaddr_t *, int);
@@ -5267,11 +5271,14 @@ void cmd_runq(void);         /* task.c */
 void cmd_sig(void);          /* task.c */
 void cmd_bt(void);           /* kernel.c */
 void cmd_dis(void);          /* kernel.c */
+void cmd_down(void);         /* kernel.c */
+void cmd_frame(void);        /* kernel.c */
 void cmd_mod(void);          /* kernel.c */
 void cmd_log(void);          /* kernel.c */
 void cmd_sys(void);          /* kernel.c */
 void cmd_irq(void);          /* kernel.c */
 void cmd_timer(void);        /* kernel.c */
+void cmd_up(void);           /* kernel.c */
 void cmd_waitq(void);        /* kernel.c */
 void cmd_sym(void);          /* symbols.c */
 void cmd_struct(void);       /* symbols.c */
@@ -5839,9 +5846,11 @@ extern char *help_alias[];
 extern char *help_ascii[];
 extern char *help_bpf[];
 extern char *help_bt[];
+extern char *help_frame[];
 extern char *help_btop[];
 extern char *help_dev[];
 extern char *help_dis[];
+extern char *help_down[];
 extern char *help_eval[];
 extern char *help_exit[];
 extern char *help_extend[];
@@ -5880,6 +5889,7 @@ extern char *help_sys[];
 extern char *help_task[];
 extern char *help_timer[];
 extern char *help_union[];
+extern char *help_up[];
 extern char *help_vm[];
 extern char *help_vtop[];
 extern char *help_waitq[];

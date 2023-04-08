@@ -22,6 +22,7 @@
 #include <libgen.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include "xendump.h"
 #if defined(GDB_7_6) || defined(GDB_10_2)
 #define __CONFIG_H__ 1
@@ -3550,6 +3551,155 @@ get_dumpfile_regs(struct bt_info *bt, ulong *eip, ulong *esp)
 	bt->stkptr = *esp;
 }
 
+/*
+ *  Get registers including EIP, ESP, and pass on to machine-specific
+ *  is_frame_num_valid command
+ */
+static int
+is_frame_num_valid(int frame_num)
+{
+	struct bt_info bt_info, bt_setup = { 0 };
+	ulong ip, sp;
+
+	clone_bt_info(&bt_setup, &bt_info, CURRENT_CONTEXT());
+
+	if (frame_num < 0)
+		return FALSE;
+
+	// fill kernel stack into a buffer
+	fill_stackbuf(&bt_info);
+
+	get_dumpfile_regs(&bt_info, &ip, &sp);
+
+	return machdep->is_frame_num_valid(frame_num, &bt_info);
+}
+
+/*
+ *  Get registers including EIP, ESP, and pass on to machine-specific
+ *  print_stack_frame
+ */
+void
+print_current_frame(ulonglong bt_flags)
+{
+	struct bt_info bt_info, bt_setup = { 0 };
+	struct task_context *tc;
+	ulong ip, sp;
+
+	tc = CURRENT_CONTEXT();
+	clone_bt_info(&bt_setup, &bt_info, tc);
+
+	bt_info.flags |= bt_flags;
+	fill_stackbuf(&bt_info);
+	get_dumpfile_regs(&bt_info, &sp, &ip);
+
+	machdep->print_stack_frame(CURRENT_FRAME(), &bt_info);
+}
+
+void
+cmd_frame(void)
+{
+	struct task_context *tc;
+	int frame_num;
+	int c;
+	ulonglong bt_flags = 0;
+
+	// If these functions are not defined by arch-specific init code, return early
+	if (!machdep->print_stack_frame || !machdep->is_frame_num_valid) {
+		command_not_supported();
+		return;
+	}
+
+	while ((c = getopt(argcnt, args, "fFl")) != EOF) {
+		switch (c) {
+		case 'f':
+			bt_flags |= BT_FULL;
+			break;
+		case 'F':
+			if (bt_flags & BT_FULL_SYM_SLAB)  // is 'F' repeated multiple times
+				bt_flags |= BT_FULL_SYM_SLAB2;
+			else
+				bt_flags |= (BT_FULL | BT_FULL_SYM_SLAB);
+			break;
+		case 'l':
+			if (NO_LINE_NUMBERS())
+				error(INFO, "line numbers are not available\n");
+			else
+				bt_flags |= BT_LINE_NUMBERS;
+			break;
+		default:
+			argerrs++;
+			break;
+		};
+
+		if (argerrs)
+			cmd_usage(pc->curcmd, SYNOPSIS);
+	}
+
+	tc = CURRENT_CONTEXT();
+
+	/* purpose of using args[optind] is to allow passing frame number and
+	 *  options in any order
+	 */
+	if (args[optind]) {
+		frame_num = strtol(args[optind], NULL, 10);
+		if (!is_frame_num_valid(frame_num)) {
+			error(FATAL, "Passed frame number is invalid.");
+			return;
+		}
+
+		tc->frame_num = frame_num;
+	}
+
+	print_current_frame(bt_flags);
+}
+
+void
+cmd_up(void)
+{
+	struct task_context *tc;
+	int frame_num;
+
+	if (!machdep->print_stack_frame || !machdep->is_frame_num_valid) {
+		command_not_supported();
+		return;
+	}
+	tc = CURRENT_CONTEXT();
+	if (args[optind + 1])
+		frame_num = CURRENT_FRAME() + strtol(args[optind + 1], NULL, 10);
+	else
+		frame_num = CURRENT_FRAME() + 1;
+	if (!is_frame_num_valid(frame_num)) {
+		error(FATAL, "Initial frame selected; you cannot go up.");
+		return;
+	}
+
+	tc->frame_num = frame_num;
+	print_current_frame(0);
+}
+
+void
+cmd_down(void)
+{
+	struct task_context *tc;
+	int frame_num;
+
+	if (!machdep->print_stack_frame) {
+		command_not_supported();
+		return;
+	}
+	tc = CURRENT_CONTEXT();
+	if (args[optind + 1])
+		frame_num = CURRENT_FRAME() - strtol(args[optind + 1], NULL, 10);
+	else
+		frame_num = CURRENT_FRAME() - 1;
+	if (CURRENT_FRAME() <= 0) {
+		error(INFO, "Bottom (innermost) frame selected; you cannot go down.");
+		return;
+	}
+
+	tc->frame_num = frame_num;
+	print_current_frame(0);
+}
 
 /*
  *  Store the head of the kernel module list for future use.
