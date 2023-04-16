@@ -6588,6 +6588,7 @@ void
 set_cpu(int cpu)
 {
 	ulong task;
+	struct gnu_request req = { 0 };
 
 	if (cpu >= kt->cpus)
 		error(FATAL, "invalid cpu number: system has only %d cpu%s\n", 
@@ -6601,6 +6602,8 @@ set_cpu(int cpu)
 	else
 		error(FATAL, "cannot determine active task on cpu %ld\n", cpu);
 
+	gdb->buf = "thread ${cpu+1}";
+	gdb_interface(req);
 	show_context(CURRENT_CONTEXT());
 }
 
