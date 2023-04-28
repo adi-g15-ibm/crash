@@ -16,6 +16,7 @@
  */
 
 #include "defs.h"
+#include <assert.h>
 #include <elf.h>
 #if defined(GDB_7_6) || defined(GDB_10_2)
 #define __CONFIG_H__ 1

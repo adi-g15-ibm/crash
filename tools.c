@@ -17,6 +17,7 @@
 
 #include "defs.h"
 #include <ctype.h>
+#include <time.h>
 
 #ifdef VALGRIND
 #include <valgrind/valgrind.h>
@@ -6575,6 +6576,7 @@ option_not_supported(int c)
 
 static int please_wait_len = 0;
 
+clock_t please_wait_timer;
 void
 please_wait(char *s)
 {
@@ -6594,6 +6596,7 @@ please_wait(char *s)
 	pc->flags |= PLEASE_WAIT;
 
         please_wait_len = sprintf(buf, "\rplease wait... (%s)", s);
+	please_wait_timer = clock();
 	fprintf(fp, "%s", buf);
         fflush(fp);
 }
@@ -6606,9 +6609,10 @@ please_wait_done(void)
 
 	pc->flags &= ~PLEASE_WAIT;
 
-	fprintf(fp, "\r");
-	pad_line(fp, please_wait_len, ' ');
-	fprintf(fp, "\r");
+	//fprintf(fp, "\r");
+	//pad_line(fp, please_wait_len, ' ');
+	//fprintf(fp, "\r");
+	fprintf(fp, "Last please wait took: %lfs\n", (double)(clock() - please_wait_timer)/(1.0f*CLOCKS_PER_SEC));
 	fflush(fp);
 }
 

@@ -20,6 +20,7 @@
 #include <curses.h>
 #include <getopt.h>
 #include <sys/prctl.h>
+#include <time.h>
 
 static void setup_environment(int, char **);
 static int is_external_command(void);
@@ -729,6 +730,8 @@ main(int argc, char **argv)
  *  will be set on re-entrancy, the initialization routines won't 
  *  be called.  This can be avoided by always making gdb ignore SIGINT.
  */
+static clock_t global_time;
+static clock_t block_time;
 void
 main_loop(void)
 {
@@ -763,11 +766,14 @@ main_loop(void)
 
 	}
 
+  global_time = clock();
+
         if (!(pc->flags & GDB_INIT)) {
 		gdb_session_init();
 		machdep_init(POST_RELOC);
 		show_untrusted_files();
 		kdump_backup_region_init();
+
 		if (XEN_HYPER_MODE()) {
 #ifdef XEN_HYPERVISOR_ARCH
 			machdep_init(POST_GDB);
@@ -777,21 +783,71 @@ main_loop(void)
         		error(FATAL, XEN_HYPERVISOR_NOT_SUPPORTED);
 #endif
 		} else if (!(pc->flags & MINIMAL_MODE)) {
+		
+		block_time = clock();
 			read_in_kernel_config(IKCFG_INIT);
+
+		fprintf(stdout, "read_in_kernel_config part in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
 			kernel_init();
+		fprintf(stdout, "kernel_init part in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
 			machdep_init(POST_GDB);
+		fprintf(stdout, "machine_init(POST_GDB) part in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
         		vm_init();
+		fprintf(stdout, "vm_init part in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
 			machdep_init(POST_VM);
+		fprintf(stdout, "machdep_init(POST_VM) part in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
         		module_init();
+		fprintf(stdout, "module_init in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
         		help_init();
+		fprintf(stdout, "help_init in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
         		task_init();
+		fprintf(stdout, "task_init in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
         		vfs_init();
+		fprintf(stdout, "vfs_init in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
 			net_init();
+		fprintf(stdout, "net_init in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
 			dev_init();
+		fprintf(stdout, "dev_init in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
+		block_time = clock();
+
+
 			machdep_init(POST_INIT);
+		fprintf(stdout, "machdep_init in !MINIMAL_MODE in %s:\tTook %lfs\n", __func__, (double)( clock() - block_time )/(CLOCKS_PER_SEC*1.0f));
 		}
 	} else
 		SIGACTION(SIGINT, restart, &pc->sigaction, NULL);
+
+  fprintf(stdout, "!GDB_INIT part in %s:\tTook %lfs\n", __func__, (double)( clock() - global_time )/(CLOCKS_PER_SEC*1.0f));
+  global_time = clock();
 
         /*
          *  Display system statistics and current context.
@@ -811,6 +867,9 @@ main_loop(void)
                 	fprintf(fp, "\n");
 		}
         }
+
+  fprintf(stdout, "Display stats and context part in %s:\tTook %lfs\n", __func__, (double)( clock() - global_time )/(CLOCKS_PER_SEC*1.0f));
+  global_time = clock();
 
 	if (pc->flags & MINIMAL_MODE)
             error(NOTE, 
@@ -834,6 +893,7 @@ main_loop(void)
 	 *  in the global args[] array.  exec_command() figures out what to 
          *  do with the parsed line.
 	 */
+	exit(0);
 	while (TRUE) {
 		process_command_line();
 		exec_command();
