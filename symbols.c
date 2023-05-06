@@ -1888,7 +1888,7 @@ store_module_symbols_v2(ulong total, int mods_installed)
 		lm->mod_ext_symcnt = mcnt;
 		lm->mod_init_module_ptr = ULONG(modbuf + 
 			MODULE_OFFSET2(module_module_init, rx));
-		if (VALID_MEMBER(module_percpu))
+		if (DIRECT_OFFSET_UNCHECKED(module_percpu) >= 0)
 			lm->mod_percpu = ULONG(modbuf + OFFSET(module_percpu));
 		if (THIS_KERNEL_VERSION >= LINUX(2,6,27)) {
 			lm->mod_etext_guess = lm->mod_base +
@@ -12027,28 +12027,28 @@ add_symbol_file_kallsyms(struct load_module *lm, struct gnu_request *req)
 		MEMBER_OFFSET_INIT(attribute_owner,
 			"attribute", "owner");
 
-		if (VALID_MEMBER(module_sect_attrs_attrs) &&
-		    VALID_MEMBER(module_sect_attr_mattr) &&
-		    VALID_MEMBER(module_attribute_attr) &&
-		    VALID_MEMBER(module_sect_attrs_nsections))
+		if (DIRECT_OFFSET_UNCHECKED(module_sect_attrs_attrs) >= 0 &&
+		    DIRECT_OFFSET_UNCHECKED(module_sect_attr_mattr) >= 0 &&
+		    DIRECT_OFFSET_UNCHECKED(module_attribute_attr) >= 0 &&
+		    DIRECT_OFFSET_UNCHECKED(module_sect_attrs_nsections) >= 0)
 			st->flags |= MODSECT_V3;
-		else if (VALID_MEMBER(module_sect_attrs_attrs) &&
-		    VALID_MEMBER(module_sect_attr_mattr) &&
-		    VALID_MEMBER(module_attribute_attr))
+		else if (DIRECT_OFFSET_UNCHECKED(module_sect_attrs_attrs) >= 0 &&
+		    DIRECT_OFFSET_UNCHECKED(module_sect_attr_mattr) >= 0 &&
+		    DIRECT_OFFSET_UNCHECKED(module_attribute_attr) >= 0)
 			st->flags |= MODSECT_V2;
-		else if (VALID_MEMBER(module_sect_attr_attr) &&
-		    VALID_MEMBER(module_sections_attrs))
+		else if (DIRECT_OFFSET_UNCHECKED(module_sect_attr_attr) >= 0 &&
+		    DIRECT_OFFSET_UNCHECKED(module_sections_attrs) >= 0)
 			st->flags |= MODSECT_V1;
 		else
 			st->flags |= MODSECT_UNKNOWN;
 
 		if ((st->flags & MODSECT_UNKNOWN) || 
 		    !VALID_STRUCT(module_sect_attr) ||
-		    (INVALID_MEMBER(attribute_owner) && 
+		    (DIRECT_OFFSET_UNCHECKED(attribute_owner) == INVALID_OFFSET && 
 		     (st->flags & (MODSECT_V1|MODSECT_V2))) ||
-		    INVALID_MEMBER(module_sect_attrs) ||
-		    INVALID_MEMBER(module_sect_attr_name) ||
-		    INVALID_MEMBER(module_sect_attr_address)) {
+		    DIRECT_OFFSET_UNCHECKED(module_sect_attrs) == INVALID_OFFSET ||
+		    DIRECT_OFFSET_UNCHECKED(module_sect_attr_name) == INVALID_OFFSET ||
+		    DIRECT_OFFSET_UNCHECKED(module_sect_attr_address) == INVALID_OFFSET) {
 			if (CRASHDEBUG(1)) 
 				error(WARNING, 
 				    "module section data structures "
@@ -13348,8 +13348,8 @@ init_module_function(ulong vaddr)
 	struct load_module *lm;
 
 	if (((kt->flags & (KMOD_V1|KMOD_V2)) == KMOD_V1) ||
-	    INVALID_MEMBER(module_init_text_size) ||
-	    INVALID_MEMBER(module_module_init))
+	    DIRECT_OFFSET_UNCHECKED(module_init_text_size) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(module_module_init) == INVALID_OFFSET)
 		return NULL;
 
         for (i = 0; i < st->mods_installed; i++) {

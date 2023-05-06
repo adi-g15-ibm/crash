@@ -861,12 +861,12 @@ gather_in_memory_unwind_tables(void)
 	MEMBER_OFFSET_INIT(unwind_table_name, "unwind_table", "name");
 
 	if (INVALID_SIZE(unwind_table) ||
-	    INVALID_MEMBER(unwind_table_core) ||
-	    INVALID_MEMBER(unwind_table_init) ||
-	    INVALID_MEMBER(unwind_table_address) ||
-	    INVALID_MEMBER(unwind_table_size) ||
-	    INVALID_MEMBER(unwind_table_link) ||
-	    INVALID_MEMBER(unwind_table_name)) {
+	    DIRECT_OFFSET_UNCHECKED(unwind_table_core) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(unwind_table_init) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(unwind_table_address) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(unwind_table_size) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(unwind_table_link) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(unwind_table_name) == INVALID_OFFSET) {
 		if (CRASHDEBUG(1)) 
 			error(NOTE, 
 	    "unwind_table structure has changed, or does not exist in this kernel\n");

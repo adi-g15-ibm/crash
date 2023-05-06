@@ -141,7 +141,7 @@ ipcs_init(void)
 			"vfs_inode");
 	MEMBER_OFFSET_INIT(shmem_inode_info_swapped, "shmem_inode_info",
 			"swapped");
-	if (INVALID_MEMBER(shmem_inode_info_swapped))
+	if (DIRECT_OFFSET_UNCHECKED(shmem_inode_info_swapped) == INVALID_OFFSET)
 		ANON_MEMBER_OFFSET_INIT(shmem_inode_info_swapped,
 				"shmem_inode_info", "swapped");
 	MEMBER_OFFSET_INIT(shm_file_data_file, "shm_file_data", "file");
@@ -192,7 +192,7 @@ ipcs_init(void)
 		ipcs_table.shm_f_op_huge_addr = -1;
 	}
 
-	if (VALID_MEMBER(idr_layer_ary) && 
+	if (DIRECT_OFFSET_UNCHECKED(idr_layer_ary) >= 0 && 
 	    get_array_length("idr_layer.ary", NULL, 0) > 64)
 		ipcs_table.idr_bits = 8;
 	else if (BITS32())
@@ -202,7 +202,7 @@ ipcs_init(void)
 	else
 		error(FATAL, "machdep->bits is not 32 or 64");
 
-	if (VALID_MEMBER(idr_idr_rt)) {
+	if (DIRECT_OFFSET_UNCHECKED(idr_idr_rt) >= 0) {
 		if (STREQ(MEMBER_TYPE_NAME("idr", "idr_rt"), "xarray"))
 			ipcs_table.init_flags |= IDR_XARRAY;
 		else {
@@ -367,7 +367,7 @@ dump_shared_memory(int specified, ulong specified_value, int verbose, ulong task
 
 	dump_shm = dump_shm_info;
 
-	if (VALID_MEMBER(kern_ipc_perm_id)) {
+	if (DIRECT_OFFSET_UNCHECKED(kern_ipc_perm_id) >= 0) {
 		ipc_search = ipc_search_idr;
 	} else {
 		ipc_search = ipc_search_array;
@@ -442,7 +442,7 @@ dump_semaphore_arrays(int specified, ulong specified_value, int verbose, ulong t
 
 	dump_sem = dump_sem_info;
 	
-	if (VALID_MEMBER(kern_ipc_perm_id)) {
+	if (DIRECT_OFFSET_UNCHECKED(kern_ipc_perm_id) >= 0) {
 		ipc_search = ipc_search_idr;
 	} else {
 		ipc_search = ipc_search_array;
@@ -501,7 +501,7 @@ dump_message_queues(int specified, ulong specified_value, int verbose, ulong tas
 
 	dump_msg = dump_msg_info;
 	
-	if (VALID_MEMBER(kern_ipc_perm_id)) {
+	if (DIRECT_OFFSET_UNCHECKED(kern_ipc_perm_id) >= 0) {
 		ipc_search = ipc_search_idr;
 	} else {
 		ipc_search = ipc_search_array;
@@ -556,7 +556,7 @@ ipc_search_array(ulong ipc_ids_p, int specified, ulong specified_value, int (*fn
 	}
 
 	array = (ulong *)GETBUF(sizeof(ulong *) * (max_id + 1));
-	if (VALID_MEMBER(ipc_id_ary_p))
+	if (DIRECT_OFFSET_UNCHECKED(ipc_id_ary_p) >= 0)
 		readmem(entries_p + OFFSET(ipc_id_ary_p), KVADDR, array,
 			sizeof(ulong *) * (max_id + 1), "ipc_id_ary.p",
 			FAULT_ON_ERROR);
@@ -613,7 +613,7 @@ ipc_search_idr(ulong ipc_ids_p, int specified, ulong specified_value, int (*fn)(
 		return 0;
 	}
 
-	if (VALID_MEMBER(idr_idr_rt)) {
+	if (DIRECT_OFFSET_UNCHECKED(idr_idr_rt) >= 0) {
 		switch (ipcs_table.init_flags & (IDR_RADIX|IDR_XARRAY))
 		{
 		case IDR_RADIX: 
@@ -677,7 +677,7 @@ idr_find(ulong idp, int id)
 	if (!idr_layer_p)
 		return 0;
 
-	if (VALID_MEMBER(idr_layer_layer)) {
+	if (DIRECT_OFFSET_UNCHECKED(idr_layer_layer) >= 0) {
 		readmem(idr_layer_p + OFFSET(idr_layer_layer), KVADDR,
 			&layer,	sizeof(int), "idr_layer.layer",
 			FAULT_ON_ERROR);
@@ -892,7 +892,7 @@ get_shm_info(struct shm_info *shm_info, ulong shp, int id)
 
 	shm_info->key = INT(buf + OFFSET(shmid_kernel_shm_perm) +
 			OFFSET(kern_ipc_perm_key));
-	if (VALID_MEMBER(shmid_kernel_id))
+	if (DIRECT_OFFSET_UNCHECKED(shmid_kernel_id) >= 0)
 		shm_info->shmid = INT(buf + OFFSET(shmid_kernel_id));
 	else
 		shm_info->shmid = INT(buf +
@@ -951,9 +951,9 @@ get_sem_info(struct sem_info *sem_info, ulong shp, int id)
 	sem_info->key = INT(buf + OFFSET(sem_array_sem_perm) +
 			OFFSET(kern_ipc_perm_key));
 
-	if (VALID_MEMBER(sem_array_sem_id))
+	if (DIRECT_OFFSET_UNCHECKED(sem_array_sem_id) >= 0)
 		sem_info->semid = INT(buf + OFFSET(sem_array_sem_id));
-	else if (VALID_MEMBER(kern_ipc_perm_id))
+	else if (DIRECT_OFFSET_UNCHECKED(kern_ipc_perm_id) >= 0)
 		sem_info->semid = INT(buf + OFFSET(sem_array_sem_perm) +
 				OFFSET(kern_ipc_perm_id));
 	else {
@@ -996,9 +996,9 @@ get_msg_info(struct msg_info *msg_info, ulong shp, int id)
 	msg_info->key = INT(buf + OFFSET(msg_queue_q_perm) +
 			OFFSET(kern_ipc_perm_key));
 
-	if (VALID_MEMBER(msg_queue_q_id))
+	if (DIRECT_OFFSET_UNCHECKED(msg_queue_q_id) >= 0)
 		msg_info->msgid = INT(buf + OFFSET(msg_queue_q_id));
-	else if (VALID_MEMBER(kern_ipc_perm_id))
+	else if (DIRECT_OFFSET_UNCHECKED(kern_ipc_perm_id) >= 0)
 		msg_info->msgid = INT(buf + OFFSET(msg_queue_q_perm) +
 				OFFSET(kern_ipc_perm_id));
 	else {

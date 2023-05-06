@@ -2288,10 +2288,10 @@ x86_uvtop(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbose)
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_cr3)) 
+	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) >= 0) 
                 	pgd = (ulong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no cr3 or active_mm?\n");
 
                 	readmem(tc->task + OFFSET(task_struct_active_mm), 
@@ -2423,10 +2423,10 @@ x86_uvtop_xen_wpt(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int v
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_cr3)) 
+	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) >= 0) 
                 	pgd = (ulong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no cr3 or active_mm?\n");
 
                 	readmem(tc->task + OFFSET(task_struct_active_mm), 
@@ -2588,10 +2588,10 @@ x86_uvtop_PAE(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbo
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_cr3)) 
+	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) >= 0) 
                 	pgd = (ulonglong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no cr3 or active_mm?\n");
 
                 	readmem(tc->task + OFFSET(task_struct_active_mm), 
@@ -2738,10 +2738,10 @@ x86_uvtop_xen_wpt_PAE(struct task_context *tc, ulong vaddr, physaddr_t *paddr, i
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_cr3)) 
+	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) >= 0) 
                 	pgd = (ulonglong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no cr3 or active_mm?\n");
 
                 	readmem(tc->task + OFFSET(task_struct_active_mm), 
@@ -3477,7 +3477,7 @@ x86_get_task_pgd(ulong task)
 
 	offset = OFFSET_OPTION(task_struct_thread, task_struct_tss);
 
-	if (INVALID_MEMBER(thread_struct_cr3))
+	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) == INVALID_OFFSET)
 		error(FATAL, 
 		    "cr3 does not exist in this kernel's thread_struct\n"); 
 
@@ -3716,11 +3716,11 @@ x86_get_pc(struct bt_info *bt)
 	ulong eip, inactive_task_frame;
 
 	if (tt->flags & THREAD_INFO) {
-		if (VALID_MEMBER(task_struct_thread_eip))
+		if (DIRECT_OFFSET_UNCHECKED(task_struct_thread_eip) >= 0)
 			readmem(bt->task + OFFSET(task_struct_thread_eip), KVADDR,
 				&eip, sizeof(void *), 
 				"thread_struct eip", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(inactive_task_frame_ret_addr)) {
+		else if (DIRECT_OFFSET_UNCHECKED(inactive_task_frame_ret_addr) >= 0) {
 			readmem(bt->task + OFFSET(task_struct_thread_esp), KVADDR,
 				&inactive_task_frame, sizeof(void *),
 				"task_struct.inactive_task_frame", FAULT_ON_ERROR);
@@ -3753,7 +3753,7 @@ x86_get_sp(struct bt_info *bt)
                 readmem(bt->task + OFFSET(task_struct_thread_esp), KVADDR,
                         &ksp, sizeof(void *),
                         "thread_struct esp", FAULT_ON_ERROR);
-		if (VALID_MEMBER(inactive_task_frame_ret_addr))
+		if (DIRECT_OFFSET_UNCHECKED(inactive_task_frame_ret_addr) >= 0)
 			ksp += OFFSET(inactive_task_frame_ret_addr);
                 return ksp;
 	} 
@@ -5478,8 +5478,8 @@ x86_xendump_panic_task(struct xendump_data *xd)
 	ulong task;
 
 
-	if (INVALID_MEMBER(vcpu_guest_context_user_regs) ||
-	    INVALID_MEMBER(cpu_user_regs_esp))
+	if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(cpu_user_regs_esp) == INVALID_OFFSET)
 		return NO_TASK;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
@@ -5527,9 +5527,9 @@ x86_get_xendump_regs(struct xendump_data *xd, struct bt_info *bt, ulong *eip, ul
 	ulong task, xeip, xesp;
 	off_t offset;
 
-        if (INVALID_MEMBER(vcpu_guest_context_user_regs) ||
-            INVALID_MEMBER(cpu_user_regs_eip) ||
-            INVALID_MEMBER(cpu_user_regs_esp))
+        if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
+            DIRECT_OFFSET_UNCHECKED(cpu_user_regs_eip) == INVALID_OFFSET ||
+            DIRECT_OFFSET_UNCHECKED(cpu_user_regs_esp) == INVALID_OFFSET)
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +

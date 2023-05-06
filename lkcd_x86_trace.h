@@ -35,7 +35,7 @@
 
 #define TASK_STRUCT_SZ  (SIZE(task_struct))
 #define KL_PAGE_OFFSET  (machdep->kvbase)
-#define LINUX_2_2_X(KL_LINUX_RELEASE) (VALID_MEMBER(task_struct_tss))
+#define LINUX_2_2_X(KL_LINUX_RELEASE) (DIRECT_OFFSET_UNCHECKED(task_struct_tss) >= 0)
 #define KLE_PRINT_TRACE_ERROR  KLE_INVALID_KERNELSTACK
 
 typedef struct syment syment_t;

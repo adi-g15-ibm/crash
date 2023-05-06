@@ -542,7 +542,7 @@ s390_cpu_of_task(unsigned long task)
 {
 	int cpu;
 
-       if(VALID_MEMBER(task_struct_processor)){
+       if(DIRECT_OFFSET_UNCHECKED(task_struct_processor) >= 0){
                 /* linux 2.4 */
                 readmem(task + OFFSET(task_struct_processor),KVADDR,
                         &cpu, sizeof(cpu), "task_struct_processor",

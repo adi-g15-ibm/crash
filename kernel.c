@@ -241,7 +241,7 @@ kernel_init()
 			RETURN_ON_ERROR);
 	else if (symbol_exists("init_uts_ns")) {
 		long offset = sizeof(int);
-		if (VALID_MEMBER(uts_namespace_name))
+		if (DIRECT_OFFSET_UNCHECKED(uts_namespace_name) >= 0)
 			offset = OFFSET(uts_namespace_name);
 
 		readmem(symbol_value("init_uts_ns") + offset,
@@ -339,7 +339,7 @@ kernel_init()
 	/*
 	 * 'cpu' does not exist in 'struct rq'.
 	 */
-	if (VALID_MEMBER(runqueue_cpu) &&
+	if (DIRECT_OFFSET_UNCHECKED(runqueue_cpu) >= 0 &&
 	    (get_array_length("runqueue.cpu", NULL, 0) > 0)) {
 		MEMBER_OFFSET_INIT(cpu_s_curr, "cpu_s", "curr");
 		MEMBER_OFFSET_INIT(cpu_s_idle, "cpu_s", "idle");
@@ -690,7 +690,7 @@ kernel_init()
 
 	STRUCT_SIZE_INIT(kallsyms_header, "kallsyms_header");
 
-	if (VALID_MEMBER(module_kallsyms_start) &&
+	if (DIRECT_OFFSET_UNCHECKED(module_kallsyms_start) >= 0 &&
 	    VALID_SIZE(kallsyms_header)) {
         	MEMBER_OFFSET_INIT(kallsyms_header_sections,
 			"kallsyms_header", "sections");
@@ -723,7 +723,7 @@ kernel_init()
 
 	MEMBER_OFFSET_INIT(module_num_symtab, "module", "num_symtab");
 
-	if (VALID_MEMBER(module_num_symtab)) {
+	if (DIRECT_OFFSET_UNCHECKED(module_num_symtab) >= 0) {
 		MEMBER_OFFSET_INIT(module_symtab, "module", "symtab");
 		MEMBER_OFFSET_INIT(module_strtab, "module", "strtab");
 			
@@ -731,7 +731,7 @@ kernel_init()
 			kt->flags |= KALLSYMS_V2;
 	}
 
-	if (INVALID_MEMBER(module_num_symtab) && 
+	if (DIRECT_OFFSET_UNCHECKED(module_num_symtab) == INVALID_OFFSET && 
 	    MEMBER_EXISTS("module", "core_kallsyms")) {
 		ASSIGN_OFFSET(module_num_symtab) =
 			MEMBER_OFFSET("module", "core_kallsyms") +
@@ -798,16 +798,16 @@ kernel_init()
 	MEMBER_OFFSET_INIT(hrtimer_node, "hrtimer", "node");
 	MEMBER_OFFSET_INIT(hrtimer_list, "hrtimer", "list");
 	MEMBER_OFFSET_INIT(hrtimer_expires, "hrtimer", "expires");
-	if (INVALID_MEMBER(hrtimer_expires))
+	if (DIRECT_OFFSET_UNCHECKED(hrtimer_expires) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(hrtimer_expires, "hrtimer", "_expires");
-	if (INVALID_MEMBER(hrtimer_expires)) {
+	if (DIRECT_OFFSET_UNCHECKED(hrtimer_expires) == INVALID_OFFSET) {
 		MEMBER_OFFSET_INIT(timerqueue_head_next, 
 			"timerqueue_head", "next");
 		MEMBER_OFFSET_INIT(timerqueue_node_expires, 
 			"timerqueue_node", "expires");
 		MEMBER_OFFSET_INIT(timerqueue_node_node, 
 			"timerqueue_node", "node");
-		if (INVALID_MEMBER(timerqueue_head_next)) {
+		if (DIRECT_OFFSET_UNCHECKED(timerqueue_head_next) == INVALID_OFFSET) {
 			MEMBER_OFFSET_INIT(timerqueue_head_rb_root,
 				"timerqueue_head", "rb_root");
 			MEMBER_OFFSET_INIT(rb_root_cached_rb_leftmost,
@@ -818,13 +818,13 @@ kernel_init()
 	MEMBER_OFFSET_INIT(hrtimer_function, "hrtimer", "function");
 
 	MEMBER_OFFSET_INIT(ktime_t_tv64, "ktime", "tv64");
-	if (INVALID_MEMBER(ktime_t_tv64))
+	if (DIRECT_OFFSET_UNCHECKED(ktime_t_tv64) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(ktime_t_tv64, "ktime_t", "tv64");
 	MEMBER_OFFSET_INIT(ktime_t_sec, "ktime", "sec");
-	if (INVALID_MEMBER(ktime_t_sec))
+	if (DIRECT_OFFSET_UNCHECKED(ktime_t_sec) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(ktime_t_sec, "ktime_t", "sec");
 	MEMBER_OFFSET_INIT(ktime_t_nsec, "ktime", "nsec");
-	if (INVALID_MEMBER(ktime_t_nsec))
+	if (DIRECT_OFFSET_UNCHECKED(ktime_t_nsec) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(ktime_t_nsec, "ktime_t", "nsec");
 
 	if (kt->source_tree)
@@ -4260,11 +4260,11 @@ show_module_taint_4_10(void)
 	ulong tnts_addr;
 	char *modbuf;
 
-	if (INVALID_MEMBER(module_taints)) {
+	if (DIRECT_OFFSET_UNCHECKED(module_taints) == INVALID_OFFSET) {
 		MEMBER_OFFSET_INIT(module_taints, "module", "taints");
 		STRUCT_SIZE_INIT(taint_flag, "taint_flag");
 		MEMBER_OFFSET_INIT(tnt_true, "taint_flag", "true");
-		if (INVALID_MEMBER(tnt_true))
+		if (DIRECT_OFFSET_UNCHECKED(tnt_true) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(tnt_true, "taint_flag", "c_true");
 		MEMBER_OFFSET_INIT(tnt_mod, "taint_flag", "module");
 	}
@@ -4369,8 +4369,8 @@ show_module_taint(void)
 		return;
 	}
 
-	if (INVALID_MEMBER(module_taints) &&
-	    INVALID_MEMBER(module_license_gplok)) {
+	if (DIRECT_OFFSET_UNCHECKED(module_taints) == INVALID_OFFSET &&
+	    DIRECT_OFFSET_UNCHECKED(module_license_gplok) == INVALID_OFFSET) {
 		MEMBER_OFFSET_INIT(module_taints, "module", "taints");
 		MEMBER_OFFSET_INIT(module_license_gplok, 
 			"module", "license_gplok");
@@ -4381,8 +4381,8 @@ show_module_taint(void)
 		MEMBER_OFFSET_INIT(tnt_false, "tnt", "false");
 	}
 
-	if (INVALID_MEMBER(module_taints) &&
-	    INVALID_MEMBER(module_license_gplok))
+	if (DIRECT_OFFSET_UNCHECKED(module_taints) == INVALID_OFFSET &&
+	    DIRECT_OFFSET_UNCHECKED(module_license_gplok) == INVALID_OFFSET)
 		option_not_supported('t');
 
 	modbuf = GETBUF(SIZE(module));
@@ -4393,14 +4393,14 @@ show_module_taint(void)
 		readmem(lm->module_struct, KVADDR, modbuf, SIZE(module),
 			"module struct", FAULT_ON_ERROR);
 
-		taints = VALID_MEMBER(module_taints) ?
+		taints = DIRECT_OFFSET_UNCHECKED(module_taints) >= 0 ?
 			UINT(modbuf + OFFSET(module_taints)) : 0;
-		license_gplok = VALID_MEMBER(module_license_gplok) ? 
+		license_gplok = DIRECT_OFFSET_UNCHECKED(module_license_gplok) >= 0 ? 
 			INT(modbuf + OFFSET(module_license_gplok)) : 0;
-		gpgsig_ok = VALID_MEMBER(module_gpgsig_ok) ?
+		gpgsig_ok = DIRECT_OFFSET_UNCHECKED(module_gpgsig_ok) >= 0 ?
 			INT(modbuf + OFFSET(module_gpgsig_ok)) : 1;
 
-		if (VALID_MEMBER(module_license_gplok) || taints || !gpgsig_ok) {
+		if (DIRECT_OFFSET_UNCHECKED(module_license_gplok) >= 0 || taints || !gpgsig_ok) {
 			found++;
 			maxnamelen = strlen(lm->mod_name) > maxnamelen ?
 				strlen(lm->mod_name) : maxnamelen;
@@ -4426,7 +4426,7 @@ show_module_taint(void)
 
 	fprintf(fp, "%s  %s\n",
 		mkstring(buf2, maxnamelen, LJUST, "NAME"),
-		VALID_MEMBER(module_taints) ? "TAINTS" : "LICENSE_GPLOK");
+		DIRECT_OFFSET_UNCHECKED(module_taints) >= 0 ? "TAINTS" : "LICENSE_GPLOK");
 
 	for (i = 0; i < st->mods_installed; i++) {
 
@@ -4437,14 +4437,14 @@ show_module_taint(void)
 		readmem(lm->module_struct, KVADDR, modbuf, SIZE(module),
 			"module struct", FAULT_ON_ERROR);
 
-		taints = VALID_MEMBER(module_taints) ?
+		taints = DIRECT_OFFSET_UNCHECKED(module_taints) >= 0 ?
 			UINT(modbuf + OFFSET(module_taints)) : 0;
-		license_gplok = VALID_MEMBER(module_license_gplok) ? 
+		license_gplok = DIRECT_OFFSET_UNCHECKED(module_license_gplok) >= 0 ? 
 			INT(modbuf + OFFSET(module_license_gplok)) : 0;
-		gpgsig_ok = VALID_MEMBER(module_gpgsig_ok) ?
+		gpgsig_ok = DIRECT_OFFSET_UNCHECKED(module_gpgsig_ok) >= 0 ?
 			INT(modbuf + OFFSET(module_gpgsig_ok)) : 1;
 
-		if (INVALID_MEMBER(module_license_gplok)) {
+		if (DIRECT_OFFSET_UNCHECKED(module_license_gplok) == INVALID_OFFSET) {
 			if (!taints && gpgsig_ok)
 				continue;
 		}
@@ -4473,7 +4473,7 @@ show_module_taint(void)
 			}
 		}
 
-		if (VALID_MEMBER(module_gpgsig_ok) && !gpgsig_ok) {
+		if (DIRECT_OFFSET_UNCHECKED(module_gpgsig_ok) >= 0 && !gpgsig_ok) {
 			buf1[bx++] = '(';
 			buf1[bx++] = 'U';
 			buf1[bx++] = ')';
@@ -4487,7 +4487,7 @@ show_module_taint(void)
 		else
 			fprintf(fp, "%s  %x%s\n", mkstring(buf2, maxnamelen,
 				LJUST, lm->mod_name), 
-				VALID_MEMBER(module_taints) ? 
+				DIRECT_OFFSET_UNCHECKED(module_taints) >= 0 ? 
 				taints : license_gplok, buf1);
 	}
 
@@ -5272,7 +5272,7 @@ dump_log_entry(char *logptr, int msg_flags)
 	ilen = level = 0;
 	text_len = USHORT(logptr + OFFSET(log_text_len));
 	dict_len = USHORT(logptr + OFFSET(log_dict_len));
-	if (VALID_MEMBER(log_level)) {
+	if (DIRECT_OFFSET_UNCHECKED(log_level) >= 0) {
 		/*
 		 *  Initially a "u16 level", then a "u8 level:3"
 		 */
@@ -5281,7 +5281,7 @@ dump_log_entry(char *logptr, int msg_flags)
 		else
 			level = UCHAR(logptr + OFFSET(log_level));
 	} else {
-		if (VALID_MEMBER(log_flags_level))
+		if (DIRECT_OFFSET_UNCHECKED(log_flags_level) >= 0)
 			level = UCHAR(logptr + OFFSET(log_flags_level));
 		else if (msg_flags & SHOW_LOG_LEVEL)
 			msg_flags &= ~SHOW_LOG_LEVEL;
@@ -5382,11 +5382,11 @@ dump_variable_length_record_log(int msg_flags)
 		 * searching for a panic message.
 		 */
 		if (INVALID_SIZE(log) ||
-		    INVALID_MEMBER(log_ts_nsec) ||
-		    INVALID_MEMBER(log_len) ||
-		    INVALID_MEMBER(log_text_len) ||
-		    INVALID_MEMBER(log_dict_len) ||
-		    (INVALID_MEMBER(log_level) && INVALID_MEMBER(log_flags_level)) ||
+		    DIRECT_OFFSET_UNCHECKED(log_ts_nsec) == INVALID_OFFSET ||
+		    DIRECT_OFFSET_UNCHECKED(log_len) == INVALID_OFFSET ||
+		    DIRECT_OFFSET_UNCHECKED(log_text_len) == INVALID_OFFSET ||
+		    DIRECT_OFFSET_UNCHECKED(log_dict_len) == INVALID_OFFSET ||
+		    (DIRECT_OFFSET_UNCHECKED(log_level) == INVALID_OFFSET && DIRECT_OFFSET_UNCHECKED(log_flags_level) == INVALID_OFFSET) ||
 		    !kernel_symbol_exists("log_buf_len") ||
 		    !kernel_symbol_exists("log_buf")) {
 			error(WARNING, "\nlog buf data structure(s) have changed\n");
@@ -6456,8 +6456,8 @@ cmd_irq(void)
 			        else if (symbol_exists("bh_base") &&
 			            symbol_exists("irq_stat") &&
 			            symbol_exists("softirq_vec") &&
-				    VALID_MEMBER(irq_cpustat_t___softirq_active)
-                        	    && VALID_MEMBER(irq_cpustat_t___softirq_mask))
+				    DIRECT_OFFSET_UNCHECKED(irq_cpustat_t___softirq_active) >= 0
+                        	    && DIRECT_OFFSET_UNCHECKED(irq_cpustat_t___softirq_mask) >= 0)
 			                kt->display_bh = display_bh_3;
 				else if (get_symbol_type("softirq_vec", NULL, NULL) == 
 				    TYPE_CODE_ARRAY)
@@ -6484,9 +6484,9 @@ cmd_irq(void)
 			if (!machdep->get_irq_affinity)
 				option_not_supported(c);
 
-			if (INVALID_MEMBER(irq_data_affinity) &&
-			    INVALID_MEMBER(irq_common_data_affinity) &&
-			    INVALID_MEMBER(irq_desc_t_affinity))
+			if (DIRECT_OFFSET_UNCHECKED(irq_data_affinity) == INVALID_OFFSET &&
+			    DIRECT_OFFSET_UNCHECKED(irq_common_data_affinity) == INVALID_OFFSET &&
+			    DIRECT_OFFSET_UNCHECKED(irq_desc_t_affinity) == INVALID_OFFSET)
 				option_not_supported(c);
 
 			if ((nr_irqs = machdep->nr_irqs) == 0)
@@ -6730,15 +6730,15 @@ generic_dump_irq(int irq)
 	}
 
 	if (irq_desc_addr) {
-		if (VALID_MEMBER(irq_desc_t_status))
+		if (DIRECT_OFFSET_UNCHECKED(irq_desc_t_status) >= 0)
 			readmem(irq_desc_addr + OFFSET(irq_desc_t_status), 
 				KVADDR, &status, sizeof(int), "irq_desc status",
 				FAULT_ON_ERROR);
-		if (VALID_MEMBER(irq_desc_t_handler))
+		if (DIRECT_OFFSET_UNCHECKED(irq_desc_t_handler) >= 0)
 		        readmem(irq_desc_addr + OFFSET(irq_desc_t_handler), 
 				KVADDR, &handler, sizeof(long), "irq_desc handler",
 				FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_desc_t_chip))
+		else if (DIRECT_OFFSET_UNCHECKED(irq_desc_t_chip) >= 0)
 		        readmem(irq_desc_addr + OFFSET(irq_desc_t_chip), KVADDR,
 	        	        &handler, sizeof(long), "irq_desc chip",
 				FAULT_ON_ERROR);
@@ -6793,11 +6793,11 @@ generic_dump_irq(int irq)
 		fprintf(fp, "%lx\n", handler);
 
 	if (handler) {
-		if (VALID_MEMBER(hw_interrupt_type_typename))
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_typename) >= 0)
 	        	readmem(handler+OFFSET(hw_interrupt_type_typename),
 				KVADDR,	&tmp1, sizeof(void *),
         	        	"hw_interrupt_type typename", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_typename))
+		else if (DIRECT_OFFSET_UNCHECKED(irq_chip_typename) >= 0)
 	        	readmem(handler+OFFSET(irq_chip_typename),
 				KVADDR,	&tmp1, sizeof(void *),
                 		"hw_interrupt_type typename", FAULT_ON_ERROR);
@@ -6808,11 +6808,11 @@ generic_dump_irq(int irq)
 			fprintf(fp, "\"%s\"", buf);
 		fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_startup))
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_startup) >= 0)
 			readmem(handler+OFFSET(hw_interrupt_type_startup),
 				KVADDR,	&tmp1, sizeof(void *),
 				"hw_interrupt_type startup", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_startup))
+		else if (DIRECT_OFFSET_UNCHECKED(irq_chip_startup) >= 0)
 			readmem(handler+OFFSET(irq_chip_startup),
 				KVADDR,	&tmp1, sizeof(void *),
 				"hw_interrupt_type startup", FAULT_ON_ERROR);
@@ -6826,11 +6826,11 @@ generic_dump_irq(int irq)
                                 	value_to_symstr(tmp2, buf, 0));
 		fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_shutdown))
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_shutdown) >= 0)
 	                readmem(handler+OFFSET(hw_interrupt_type_shutdown),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type shutdown", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_shutdown))
+		else if (DIRECT_OFFSET_UNCHECKED(irq_chip_shutdown) >= 0)
 	                readmem(handler+OFFSET(irq_chip_shutdown),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type shutdown", FAULT_ON_ERROR);
@@ -6845,7 +6845,7 @@ generic_dump_irq(int irq)
                                         value_to_symstr(tmp2, buf, 0));
                 fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_handle)) {
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_handle) >= 0) {
 	                readmem(handler+OFFSET(hw_interrupt_type_handle), 
 				KVADDR,
 	                        &tmp1, sizeof(void *),
@@ -6862,11 +6862,11 @@ generic_dump_irq(int irq)
 	                fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(hw_interrupt_type_enable))
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_enable) >= 0)
 	                readmem(handler+OFFSET(hw_interrupt_type_enable),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type enable", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_enable))
+		else if (DIRECT_OFFSET_UNCHECKED(irq_chip_enable) >= 0)
 	                readmem(handler+OFFSET(irq_chip_enable),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type enable", FAULT_ON_ERROR);
@@ -6880,11 +6880,11 @@ generic_dump_irq(int irq)
                                         value_to_symstr(tmp2, buf, 0));
                 fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_disable))
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_disable) >= 0)
 	                readmem(handler+OFFSET(hw_interrupt_type_disable),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type disable", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_disable))
+		else if (DIRECT_OFFSET_UNCHECKED(irq_chip_disable) >= 0)
 	                readmem(handler+OFFSET(irq_chip_disable),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type disable", FAULT_ON_ERROR);
@@ -6898,7 +6898,7 @@ generic_dump_irq(int irq)
                                         value_to_symstr(tmp2, buf, 0));
                 fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_ack)) {
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_ack) >= 0) {
                 	readmem(handler+OFFSET(hw_interrupt_type_ack), KVADDR,
                         	&tmp1, sizeof(void *),
                         	"hw_interrupt_type ack", FAULT_ON_ERROR);
@@ -6912,7 +6912,7 @@ generic_dump_irq(int irq)
                                 	fprintf(fp, "<%s>",
                                         	value_to_symstr(tmp2, buf, 0));
                 	fprintf(fp, "\n");
-		} else if (VALID_MEMBER(irq_chip_ack)) {
+		} else if (DIRECT_OFFSET_UNCHECKED(irq_chip_ack) >= 0) {
                 	readmem(handler+OFFSET(irq_chip_ack), KVADDR,
                         	&tmp1, sizeof(void *),
                         	"irq_chip ack", FAULT_ON_ERROR);
@@ -6928,7 +6928,7 @@ generic_dump_irq(int irq)
                 	fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(irq_chip_mask)) {
+		if (DIRECT_OFFSET_UNCHECKED(irq_chip_mask) >= 0) {
 			readmem(handler+OFFSET(irq_chip_mask), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip mask", FAULT_ON_ERROR);
@@ -6944,7 +6944,7 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 		
-		if (VALID_MEMBER(irq_chip_mask_ack)) {
+		if (DIRECT_OFFSET_UNCHECKED(irq_chip_mask_ack) >= 0) {
 			readmem(handler+OFFSET(irq_chip_mask_ack), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip mask_ack", FAULT_ON_ERROR);
@@ -6960,7 +6960,7 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(irq_chip_unmask)) {
+		if (DIRECT_OFFSET_UNCHECKED(irq_chip_unmask) >= 0) {
 			readmem(handler+OFFSET(irq_chip_unmask), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip unmask", FAULT_ON_ERROR);
@@ -6976,7 +6976,7 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(irq_chip_eoi)) {
+		if (DIRECT_OFFSET_UNCHECKED(irq_chip_eoi) >= 0) {
 			readmem(handler+OFFSET(irq_chip_eoi), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip eoi", FAULT_ON_ERROR);
@@ -6992,7 +6992,7 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(hw_interrupt_type_end)) {
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_end) >= 0) {
                 	readmem(handler+OFFSET(hw_interrupt_type_end), KVADDR,
                         	&tmp1, sizeof(void *),
                         	"hw_interrupt_type end", FAULT_ON_ERROR);
@@ -7006,7 +7006,7 @@ generic_dump_irq(int irq)
                                         fprintf(fp, "<%s>",
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
-		} else if (VALID_MEMBER(irq_chip_end)) {
+		} else if (DIRECT_OFFSET_UNCHECKED(irq_chip_end) >= 0) {
                 	readmem(handler+OFFSET(irq_chip_end), KVADDR,
                         	&tmp1, sizeof(void *),
                         	"irq_chip end", FAULT_ON_ERROR);
@@ -7022,7 +7022,7 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(hw_interrupt_type_set_affinity)) {
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_set_affinity) >= 0) {
                 	readmem(handler+OFFSET(hw_interrupt_type_set_affinity),
 				KVADDR, &tmp1, sizeof(void *),
                         	"hw_interrupt_type set_affinity", 
@@ -7037,7 +7037,7 @@ generic_dump_irq(int irq)
                                         fprintf(fp, "<%s>",
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
-		} else if (VALID_MEMBER(irq_chip_set_affinity)) {
+		} else if (DIRECT_OFFSET_UNCHECKED(irq_chip_set_affinity) >= 0) {
                 	readmem(handler+OFFSET(irq_chip_set_affinity),
 				KVADDR, &tmp1, sizeof(void *),
                         	"irq_chip set_affinity",
@@ -7053,7 +7053,7 @@ generic_dump_irq(int irq)
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
 		}
-		if (VALID_MEMBER(irq_chip_retrigger)) {
+		if (DIRECT_OFFSET_UNCHECKED(irq_chip_retrigger) >= 0) {
 			readmem(handler+OFFSET(irq_chip_retrigger), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip retrigger", FAULT_ON_ERROR);
@@ -7068,7 +7068,7 @@ generic_dump_irq(int irq)
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
 		}
-		if (VALID_MEMBER(irq_chip_set_type)) {
+		if (DIRECT_OFFSET_UNCHECKED(irq_chip_set_type) >= 0) {
 			readmem(handler+OFFSET(irq_chip_set_type), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip set_type", FAULT_ON_ERROR);
@@ -7083,7 +7083,7 @@ generic_dump_irq(int irq)
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
 		}
-		if (VALID_MEMBER(irq_chip_set_wake)) {
+		if (DIRECT_OFFSET_UNCHECKED(irq_chip_set_wake) >= 0) {
 			readmem(handler+OFFSET(irq_chip_set_wake), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip set wake", FAULT_ON_ERROR);
@@ -7133,7 +7133,7 @@ do_linked_action:
                         "irqaction flags", FAULT_ON_ERROR);
                 fprintf(fp, "            flags: %lx\n", value);
 
-		if (VALID_MEMBER(irqaction_mask)) {
+		if (DIRECT_OFFSET_UNCHECKED(irqaction_mask) >= 0) {
 			readmem(action+OFFSET(irqaction_mask), KVADDR,
 				&tmp1, sizeof(void *),
 				"irqaction mask", FAULT_ON_ERROR);
@@ -7248,10 +7248,10 @@ generic_get_irq_affinity(int irq)
 		len = DIV_ROUND_UP(kt->cpus, BITS_PER_LONG) * sizeof(ulong);
 
 	affinity = (ulong *)GETBUF(len);
-	if (VALID_MEMBER(irq_common_data_affinity))
+	if (DIRECT_OFFSET_UNCHECKED(irq_common_data_affinity) >= 0)
 		tmp_addr = irq_desc_addr + OFFSET(irq_desc_irq_common_data)
 				+ OFFSET(irq_common_data_affinity);
-	else if (VALID_MEMBER(irq_data_affinity))
+	else if (DIRECT_OFFSET_UNCHECKED(irq_data_affinity) >= 0)
 		tmp_addr = irq_desc_addr + \
 			   OFFSET(irq_data_affinity);
 	else
@@ -7355,17 +7355,17 @@ generic_show_interrupts(int irq, ulong *cpus)
 			        sizeof(kstat_irqs), "kstat_irqs",
 			        FAULT_ON_ERROR);
 	}
-	if (VALID_MEMBER(irq_desc_t_handler))
+	if (DIRECT_OFFSET_UNCHECKED(irq_desc_t_handler) >= 0)
 		readmem(irq_desc_addr + OFFSET(irq_desc_t_handler),
 		        KVADDR, &handler, sizeof(long), "irq_desc handler",
 		        FAULT_ON_ERROR);
-	else if (VALID_MEMBER(irq_desc_t_chip))
+	else if (DIRECT_OFFSET_UNCHECKED(irq_desc_t_chip) >= 0)
 		readmem(irq_desc_addr + OFFSET(irq_desc_t_chip), KVADDR,
 		        &handler, sizeof(long), "irq_desc chip",
 		        FAULT_ON_ERROR);
-	else if (VALID_MEMBER(irq_data_chip)) {
+	else if (DIRECT_OFFSET_UNCHECKED(irq_data_chip) >= 0) {
 		tmp = irq_desc_addr + OFFSET(irq_data_chip);
-		if (VALID_MEMBER(irq_desc_irq_data))
+		if (DIRECT_OFFSET_UNCHECKED(irq_desc_irq_data) >= 0)
 			tmp += OFFSET(irq_desc_irq_data);
 		readmem(tmp, KVADDR, &handler, sizeof(long), "irq_data chip",
 			FAULT_ON_ERROR);
@@ -7382,7 +7382,7 @@ generic_show_interrupts(int irq, ulong *cpus)
 	}
 
 	if (handler != UNINITIALIZED) {
-		if (VALID_MEMBER(hw_interrupt_type_typename)) {
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_typename) >= 0) {
 			readmem(handler+OFFSET(hw_interrupt_type_typename),
 			        KVADDR,	&tmp, sizeof(void *),
 			        "hw_interrupt_type typename", FAULT_ON_ERROR);
@@ -7391,7 +7391,7 @@ generic_show_interrupts(int irq, ulong *cpus)
 			if (read_string(tmp, buf, BUFSIZE-1))
 				fprintf(fp, "%14s", buf);
 		}
-		else if (VALID_MEMBER(irq_chip_typename)) {
+		else if (DIRECT_OFFSET_UNCHECKED(irq_chip_typename) >= 0) {
 			readmem(handler+OFFSET(irq_chip_typename),
 			        KVADDR,	&tmp, sizeof(void *),
 			        "hw_interrupt_type typename", FAULT_ON_ERROR);
@@ -7400,7 +7400,7 @@ generic_show_interrupts(int irq, ulong *cpus)
 			if (read_string(tmp, buf, BUFSIZE-1))
 				fprintf(fp, "%8s", buf);
 			BZERO(buf1, BUFSIZE);
-			if (VALID_MEMBER(irq_desc_t_name))
+			if (DIRECT_OFFSET_UNCHECKED(irq_desc_t_name) >= 0)
 				readmem(irq_desc_addr+OFFSET(irq_desc_t_name),
 				        KVADDR,	&tmp1, sizeof(void *),
 				        "irq_desc name", FAULT_ON_ERROR);
@@ -7776,7 +7776,7 @@ dump_hrtimer_clock_base(const void *hrtimer_bases, const int num)
 	get_uptime(NULL, &current_time);
 
 	offset = 0;
-	if (VALID_MEMBER(hrtimer_clock_base_offset))
+	if (DIRECT_OFFSET_UNCHECKED(hrtimer_clock_base_offset) >= 0)
 		offset = ktime_to_ns(base + OFFSET(hrtimer_clock_base_offset));
 	now = current_time * (1000000000LL / machdep->hz) + offset;
 
@@ -7829,20 +7829,20 @@ next_one:
 	i = 0;
 
 	/* get the first node */
-	if (VALID_MEMBER(hrtimer_base_pending))
+	if (DIRECT_OFFSET_UNCHECKED(hrtimer_base_pending) >= 0)
 		readmem((ulong)(base + OFFSET(hrtimer_base_pending) -
 			OFFSET(hrtimer_list) + OFFSET(hrtimer_node)),
 			KVADDR, &curr, sizeof(curr), "hrtimer_base pending",
 			FAULT_ON_ERROR);
-	else if (VALID_MEMBER(hrtimer_base_first))
+	else if (DIRECT_OFFSET_UNCHECKED(hrtimer_base_first) >= 0)
 		readmem((ulong)(base + OFFSET(hrtimer_base_first)),
 			KVADDR, &curr, sizeof(curr), "hrtimer_base first",
 			FAULT_ON_ERROR);
-	else if (VALID_MEMBER(hrtimer_clock_base_first))
+	else if (DIRECT_OFFSET_UNCHECKED(hrtimer_clock_base_first) >= 0)
 		readmem((ulong)(base + OFFSET(hrtimer_clock_base_first)),
 			KVADDR,	&curr, sizeof(curr), "hrtimer_clock_base first",
 			FAULT_ON_ERROR);
-	else if (VALID_MEMBER(timerqueue_head_next))
+	else if (DIRECT_OFFSET_UNCHECKED(timerqueue_head_next) >= 0)
 		readmem((ulong)(base + OFFSET(hrtimer_clock_base_active) +
 				OFFSET(timerqueue_head_next)),
 			KVADDR, &curr, sizeof(curr), "hrtimer_clock base",
@@ -7917,7 +7917,7 @@ next_one:
 
 	/* print timers */
 	for (t = 0; t < timer_cnt; t++) {
-		if (VALID_MEMBER(timerqueue_node_node))
+		if (DIRECT_OFFSET_UNCHECKED(timerqueue_node_node) >= 0)
 			timer = (void *)(timer_list[t] -
 				OFFSET(timerqueue_node_node) -
 				OFFSET(hrtimer_node));
@@ -7941,7 +7941,7 @@ get_expires_len(const int timer_cnt, const ulong *timer_list, ulonglong now, con
 	if (!timer_cnt)
 		return len;
 
-	if (VALID_MEMBER(timerqueue_node_node))
+	if (DIRECT_OFFSET_UNCHECKED(timerqueue_node_node) >= 0)
 		last_timer = (void *)(timer_list[timer_cnt - 1] -
 			OFFSET(timerqueue_node_node) -
 			OFFSET(hrtimer_node));
@@ -7951,14 +7951,14 @@ get_expires_len(const int timer_cnt, const ulong *timer_list, ulonglong now, con
 
 	if (getsoft == 1) {
 		/* soft expires exist*/
-		if (VALID_MEMBER(hrtimer_softexpires)) {
+		if (DIRECT_OFFSET_UNCHECKED(hrtimer_softexpires) >= 0) {
 			softexpires = ktime_to_ns(last_timer + 
 				OFFSET(hrtimer_softexpires));
 			sprintf(buf, "%lld", softexpires);
 			len = strlen(buf);
 		}
 	} else {
-		if (VALID_MEMBER(hrtimer_expires))
+		if (DIRECT_OFFSET_UNCHECKED(hrtimer_expires) >= 0)
 			expires = ktime_to_ns(last_timer + OFFSET(hrtimer_expires));
 		else
 			expires = ktime_to_ns(last_timer + OFFSET(hrtimer_node) +
@@ -7993,18 +7993,18 @@ print_timer(const void *timer, ulonglong now)
 		return;
 	}
 
-	if (VALID_MEMBER(hrtimer_expires))
+	if (DIRECT_OFFSET_UNCHECKED(hrtimer_expires) >= 0)
 		expires = ktime_to_ns(timer + OFFSET(hrtimer_expires));
 	else
 		expires = ktime_to_ns(timer + OFFSET(hrtimer_node) +
 			OFFSET(timerqueue_node_expires));
 
-	if (VALID_MEMBER(hrtimer_softexpires)) {
+	if (DIRECT_OFFSET_UNCHECKED(hrtimer_softexpires) >= 0) {
 		softexpires = ktime_to_ns(timer + OFFSET(hrtimer_softexpires));
 		sprintf(buf1, "%lld-%lld", softexpires, expires);
 	}
 
-	if (VALID_MEMBER(hrtimer_softexpires)) {
+	if (DIRECT_OFFSET_UNCHECKED(hrtimer_softexpires) >= 0) {
 		softexpires = ktime_to_ns(timer + OFFSET(hrtimer_softexpires));
 		sprintf(buf1, "%lld", softexpires);
 		fprintf(fp, "%s  ",
@@ -8041,10 +8041,10 @@ ktime_to_ns(const void *ktime)
 	if (!accessible((ulong)ktime)) 
 		return ns;
 
-	if (VALID_MEMBER(ktime_t_tv64)) {
+	if (DIRECT_OFFSET_UNCHECKED(ktime_t_tv64) >= 0) {
 		readmem((ulong)ktime + OFFSET(ktime_t_tv64), KVADDR, &ns,
 			sizeof(ns), "ktime_t tv64", QUIET|RETURN_ON_ERROR);
-	} else if (VALID_MEMBER(ktime_t_sec) && VALID_MEMBER(ktime_t_nsec)) {
+	} else if (DIRECT_OFFSET_UNCHECKED(ktime_t_sec) >= 0 && DIRECT_OFFSET_UNCHECKED(ktime_t_nsec) >= 0) {
 		uint32_t sec, nsec;
 
 		sec = 0;
@@ -8844,9 +8844,9 @@ do_timer_list(ulong vec_kvaddr,
 			tdx++;
 	}
 
-        if (VALID_MEMBER(timer_list_list))
+        if (DIRECT_OFFSET_UNCHECKED(timer_list_list) >= 0)
 		sz = SIZE(list_head) * size;
-	else if (VALID_MEMBER(timer_list_entry))
+	else if (DIRECT_OFFSET_UNCHECKED(timer_list_entry) >= 0)
 		sz = SIZE(list_head) * size;
 	else 
 		sz = sizeof(ulong) * size;
@@ -8854,17 +8854,17 @@ do_timer_list(ulong vec_kvaddr,
         readmem(vec_kvaddr, KVADDR, vec, sz, "timer_list vec array",
                 FAULT_ON_ERROR);
 
-	if (VALID_MEMBER(timer_list_list)) {
+	if (DIRECT_OFFSET_UNCHECKED(timer_list_list) >= 0) {
 		offset = OFFSET(timer_list_list);
 		goto new_timer_list_format;
 	}
 
-	if (VALID_MEMBER(timer_list_entry)) {
+	if (DIRECT_OFFSET_UNCHECKED(timer_list_entry) >= 0) {
 		offset = OFFSET(timer_list_entry);
 		goto new_timer_list_format;
 	}
 
-	if (VALID_MEMBER(timer_list_next))
+	if (DIRECT_OFFSET_UNCHECKED(timer_list_next) >= 0)
 		offset = OFFSET(timer_list_next);
 	else
 		error(FATAL, "no timer_list next, list, or entry members?\n");
@@ -10815,18 +10815,18 @@ get_xtime(struct timespec *date)
 	struct syment *sp;
 	uint64_t xtime_sec;
 
-	if (VALID_MEMBER(timekeeper_xtime) &&
+	if (DIRECT_OFFSET_UNCHECKED(timekeeper_xtime) >= 0 &&
 	    (sp = kernel_symbol_search("timekeeper"))) {
                 readmem(sp->value + OFFSET(timekeeper_xtime), KVADDR, 
 			date, sizeof(struct timespec),
                         "timekeeper xtime", RETURN_ON_ERROR);
-	} else if (VALID_MEMBER(timekeeper_xtime_sec) &&
+	} else if (DIRECT_OFFSET_UNCHECKED(timekeeper_xtime_sec) >= 0 &&
 	    (sp = kernel_symbol_search("timekeeper"))) {
                 readmem(sp->value + OFFSET(timekeeper_xtime_sec), KVADDR, 
 			&xtime_sec, sizeof(uint64_t),
                         "timekeeper xtime_sec", RETURN_ON_ERROR);
 		date->tv_sec = (__time_t)xtime_sec;
-	} else if (VALID_MEMBER(timekeeper_xtime_sec) &&
+	} else if (DIRECT_OFFSET_UNCHECKED(timekeeper_xtime_sec) >= 0 &&
 	    (sp = kernel_symbol_search("shadow_timekeeper"))) {
                 readmem(sp->value + OFFSET(timekeeper_xtime_sec), KVADDR, 
 			&xtime_sec, sizeof(uint64_t),
@@ -11304,18 +11304,18 @@ show_kernel_taints(char *buf, int verbose)
 	} else if (VALID_STRUCT(taint_flag) ||
 	    (kernel_symbol_exists("taint_flags") && STRUCT_EXISTS("taint_flag"))) {
 		if (!(VALID_STRUCT(taint_flag) &&
-					VALID_MEMBER(tnt_true) && VALID_MEMBER(tnt_false))) {
+					DIRECT_OFFSET_UNCHECKED(tnt_true) >= 0 && DIRECT_OFFSET_UNCHECKED(tnt_false) >= 0)) {
 			STRUCT_SIZE_INIT(taint_flag, "taint_flag");
 			MEMBER_OFFSET_INIT(tnt_true, "taint_flag", "true");
 			MEMBER_OFFSET_INIT(tnt_false, "taint_flag", "false");
-			if (INVALID_MEMBER(tnt_true)) {
+			if (DIRECT_OFFSET_UNCHECKED(tnt_true) == INVALID_OFFSET) {
 				MEMBER_OFFSET_INIT(tnt_true, "taint_flag", "c_true");
 				MEMBER_OFFSET_INIT(tnt_false, "taint_flag", "c_false");
 			}
 		}
 
 		if (!(pc->flags & RUNTIME)) {
-			if (INVALID_MEMBER(tnt_true) || INVALID_MEMBER(tnt_false) ||
+			if (DIRECT_OFFSET_UNCHECKED(tnt_true) == INVALID_OFFSET || DIRECT_OFFSET_UNCHECKED(tnt_false) == INVALID_OFFSET ||
 					!kernel_symbol_exists("tainted_mask"))
 				return;
 		}
@@ -11702,15 +11702,15 @@ dump_printk_safe_seq_buf(int msg_flags)
 		MEMBER_OFFSET_INIT(printk_safe_seq_buf_buffer,
 			"printk_safe_seq_buf", "buffer");
 
-		if (!INVALID_MEMBER(printk_safe_seq_buf_buffer)) {
+		if (!DIRECT_OFFSET_UNCHECKED(printk_safe_seq_buf_buffer) == INVALID_OFFSET) {
 			MEMBER_SIZE_INIT(printk_safe_seq_buf_buffer,
 				"printk_safe_seq_buf", "buffer");
 		}
 	}
 
-	if (INVALID_MEMBER(printk_safe_seq_buf_len) ||
-	    INVALID_MEMBER(printk_safe_seq_buf_message_lost) ||
-	    INVALID_MEMBER(printk_safe_seq_buf_buffer) ||
+	if (DIRECT_OFFSET_UNCHECKED(printk_safe_seq_buf_len) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(printk_safe_seq_buf_message_lost) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(printk_safe_seq_buf_buffer) == INVALID_OFFSET ||
 	    INVALID_SIZE(printk_safe_seq_buf_buffer)) {
 		if (msg_flags & SHOW_LOG_SAFE)
 			error(INFO, "-s not supported with this kernel version\n");

@@ -494,15 +494,15 @@ x86_64_init(int when)
 		MEMBER_OFFSET_INIT(thread_struct_rip, "thread_struct", "rip");
 		MEMBER_OFFSET_INIT(thread_struct_rsp, "thread_struct", "rsp");
 		MEMBER_OFFSET_INIT(thread_struct_rsp0, "thread_struct", "rsp0");
-		if (INVALID_MEMBER(thread_struct_rip))
+		if (DIRECT_OFFSET_UNCHECKED(thread_struct_rip) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(thread_struct_rip, "thread_struct", "ip");
-		if (INVALID_MEMBER(thread_struct_rsp))
+		if (DIRECT_OFFSET_UNCHECKED(thread_struct_rsp) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(thread_struct_rsp, "thread_struct", "sp");
-		if (INVALID_MEMBER(thread_struct_rsp0))
+		if (DIRECT_OFFSET_UNCHECKED(thread_struct_rsp0) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(thread_struct_rsp0, "thread_struct", "sp0");
 		STRUCT_SIZE_INIT(tss_struct, "tss_struct");
 		MEMBER_OFFSET_INIT(tss_struct_ist, "tss_struct", "ist");
-		if (INVALID_MEMBER(tss_struct_ist)) {
+		if (DIRECT_OFFSET_UNCHECKED(tss_struct_ist) == INVALID_OFFSET) {
 			long x86_tss_offset, ist_offset;
 			x86_tss_offset = MEMBER_OFFSET("tss_struct", "x86_tss");
 			ist_offset = MEMBER_OFFSET("x86_hw_tss", "ist");
@@ -513,17 +513,17 @@ x86_64_init(int when)
 		}
 		MEMBER_OFFSET_INIT(user_regs_struct_rip,
 			"user_regs_struct", "rip");
-		if (INVALID_MEMBER(user_regs_struct_rip))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rip) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rip,
 				"user_regs_struct", "ip");
 		MEMBER_OFFSET_INIT(user_regs_struct_rsp,
 			"user_regs_struct", "rsp");
-		if (INVALID_MEMBER(user_regs_struct_rsp))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rsp) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rsp,
 				"user_regs_struct", "sp");
 		MEMBER_OFFSET_INIT(user_regs_struct_eflags,
 			"user_regs_struct", "eflags");
-		if (INVALID_MEMBER(user_regs_struct_eflags))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_eflags) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_eflags,
 				"user_regs_struct", "flags");
 		MEMBER_OFFSET_INIT(user_regs_struct_cs,
@@ -532,37 +532,37 @@ x86_64_init(int when)
 			"user_regs_struct", "ss");
 		MEMBER_OFFSET_INIT(user_regs_struct_rax,
 			"user_regs_struct", "rax");
-		if (INVALID_MEMBER(user_regs_struct_rax))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rax) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rax,
 				"user_regs_struct", "ax");
 		MEMBER_OFFSET_INIT(user_regs_struct_rbx,
 			"user_regs_struct", "rbx");
-		if (INVALID_MEMBER(user_regs_struct_rbx))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rbx) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rbx,
 				"user_regs_struct", "bx");
 		MEMBER_OFFSET_INIT(user_regs_struct_rcx,
 			"user_regs_struct", "rcx");
-		if (INVALID_MEMBER(user_regs_struct_rcx))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rcx) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rcx,
 				"user_regs_struct", "cx");
 		MEMBER_OFFSET_INIT(user_regs_struct_rdx,
 			"user_regs_struct", "rdx");
-		if (INVALID_MEMBER(user_regs_struct_rdx))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rdx) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rdx,
 				"user_regs_struct", "dx");
 		MEMBER_OFFSET_INIT(user_regs_struct_rsi,
 			"user_regs_struct", "rsi");
-		if (INVALID_MEMBER(user_regs_struct_rsi))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rsi) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rsi,
 				"user_regs_struct", "si");
 		MEMBER_OFFSET_INIT(user_regs_struct_rdi,
 			"user_regs_struct", "rdi");
-		if (INVALID_MEMBER(user_regs_struct_rdi))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rdi) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rdi,
 				"user_regs_struct", "di");
 		MEMBER_OFFSET_INIT(user_regs_struct_rbp,
 			"user_regs_struct", "rbp");
-		if (INVALID_MEMBER(user_regs_struct_rbp))
+		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rbp) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rbp,
 				"user_regs_struct", "bp");
 		MEMBER_OFFSET_INIT(user_regs_struct_r8,
@@ -1199,7 +1199,7 @@ x86_64_cpu_pda_init(void)
 				break;
 		}
 
-		if (VALID_MEMBER(x8664_pda_level4_pgt)) {
+		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_level4_pgt) >= 0) {
 			level4_pgt = ULONG(cpu_pda_buf + OFFSET(x8664_pda_level4_pgt));
 			if (!VALID_LEVEL4_PGT_ADDR(level4_pgt))
 				break;
@@ -1209,7 +1209,7 @@ x86_64_cpu_pda_init(void)
 			break;
 		cpus++;
 
-		if (VALID_MEMBER(x8664_pda_data_offset)) {
+		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_data_offset) >= 0) {
 			data_offset = ULONG(cpu_pda_buf + 
 				OFFSET(x8664_pda_data_offset));
                         kt->__per_cpu_offset[i] = data_offset;
@@ -3909,7 +3909,7 @@ in_exception_stack:
 	    (STREQ(rip_symbol, "thread_return") || 
 	     STREQ(rip_symbol, "schedule") || 
 	     STREQ(rip_symbol, "__schedule"))) {
-		if ((machdep->flags & ORC) && VALID_MEMBER(inactive_task_frame_ret_addr)) {
+		if ((machdep->flags & ORC) && DIRECT_OFFSET_UNCHECKED(inactive_task_frame_ret_addr) >= 0) {
 			/*
 			 * %rsp should have the address of inactive_task_frame, so
 			 * skip the registers before ret_addr to adjust rsp.
@@ -5326,7 +5326,7 @@ x86_64_get_sp(struct bt_info *bt)
 			OFFSET(thread_struct_rsp), KVADDR,
                         &rsp, sizeof(void *),
                         "thread_struct rsp", FAULT_ON_ERROR);
-		if ((machdep->flags & ORC) && VALID_MEMBER(inactive_task_frame_bp)) {
+		if ((machdep->flags & ORC) && DIRECT_OFFSET_UNCHECKED(inactive_task_frame_bp) >= 0) {
 			readmem(rsp + OFFSET(inactive_task_frame_bp), KVADDR, &bt->bptr,
 				sizeof(void *), "inactive_task_frame.bp", FAULT_ON_ERROR);
 		}
@@ -5347,7 +5347,7 @@ x86_64_get_pc(struct bt_info *bt)
 {
         ulong offset, rip;
 
-	if (INVALID_MEMBER(thread_struct_rip))
+	if (DIRECT_OFFSET_UNCHECKED(thread_struct_rip) == INVALID_OFFSET)
 		return machdep->machspec->thread_return;
 
         if (tt->flags & THREAD_INFO) {
@@ -5735,7 +5735,7 @@ x86_64_get_smp_cpus(void)
 			if (!CPU_PDA_READ(i, cpu_pda_buf))
 				break;
 		}
-		if (VALID_MEMBER(x8664_pda_level4_pgt)) {
+		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_level4_pgt) >= 0) {
 			level4_pgt = ULONG(cpu_pda_buf + OFFSET(x8664_pda_level4_pgt));
 			if (!VALID_LEVEL4_PGT_ADDR(level4_pgt))
 				break;
@@ -6414,10 +6414,10 @@ x86_64_ORC_init(void)
 	/*
 	 *  Nice to have, but not required. 
 	 */
-	if (VALID_MEMBER(module_arch) &&
-	    VALID_MEMBER(mod_arch_specific_num_orcs) &&
-	    VALID_MEMBER(mod_arch_specific_orc_unwind_ip) &&
-	    VALID_MEMBER(mod_arch_specific_orc_unwind)) {
+	if (DIRECT_OFFSET_UNCHECKED(module_arch) >= 0 &&
+	    DIRECT_OFFSET_UNCHECKED(mod_arch_specific_num_orcs) >= 0 &&
+	    DIRECT_OFFSET_UNCHECKED(mod_arch_specific_orc_unwind_ip) >= 0 &&
+	    DIRECT_OFFSET_UNCHECKED(mod_arch_specific_orc_unwind) >= 0) {
 		orc->module_ORC = TRUE;
 	} else {
 		orc->module_ORC = FALSE;
@@ -7664,8 +7664,8 @@ x86_64_xendump_panic_task(struct xendump_data *xd)
 	off_t offset;
 	ulong task;
 
-	if (INVALID_MEMBER(vcpu_guest_context_user_regs) ||
-	    INVALID_MEMBER(cpu_user_regs_esp))
+	if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
+	    DIRECT_OFFSET_UNCHECKED(cpu_user_regs_esp) == INVALID_OFFSET)
 		return NO_TASK;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
@@ -7715,9 +7715,9 @@ x86_64_get_xendump_regs(struct xendump_data *xd, struct bt_info *bt, ulong *rip,
 	char *rip_symbol;
 	int cpu;
 
-        if (INVALID_MEMBER(vcpu_guest_context_user_regs) ||
-            INVALID_MEMBER(cpu_user_regs_rip) ||
-            INVALID_MEMBER(cpu_user_regs_rsp))
+        if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
+            DIRECT_OFFSET_UNCHECKED(cpu_user_regs_rip) == INVALID_OFFSET ||
+            DIRECT_OFFSET_UNCHECKED(cpu_user_regs_rsp) == INVALID_OFFSET)
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
@@ -9072,8 +9072,8 @@ GART_init(void)
 	MEMBER_OFFSET_INIT(resource_end, "resource", "end");
 
 	if (VALID_STRUCT(resource) && 
-	    VALID_MEMBER(resource_start) && 
-	    VALID_MEMBER(resource_end)) {
+	    DIRECT_OFFSET_UNCHECKED(resource_start) >= 0 && 
+	    DIRECT_OFFSET_UNCHECKED(resource_end) >= 0) {
 		if (!readmem(sp->value, KVADDR, resource,
 		    SIZE(resource), "GART resource", RETURN_ON_ERROR))
 			return;

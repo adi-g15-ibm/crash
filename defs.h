@@ -2455,15 +2455,14 @@ struct array_table {
  *  in the offset table, size table or array_table.
  */
 #define OFFSET(X)	   (OFFSET_verify(offset_table.X, (char *)__FUNCTION__, __FILE__, __LINE__, #X))
+#define DIRECT_OFFSET_UNCHECKED(X) (offset_table.X)
 #define MODULE_OFFSET(X,Y) (PAX_MODULE_SPLIT() ? OFFSET(Y) : OFFSET(X))
 #define MODULE_OFFSET2(X,T) MODULE_OFFSET(X, X##_##T)
 #define SIZE(X)            (SIZE_verify(size_table.X, (char *)__FUNCTION__, __FILE__, __LINE__, #X))
 #define INVALID_OFFSET     (-1)
-#define INVALID_MEMBER(X)  (offset_table.X == INVALID_OFFSET)
 #define INVALID_SIZE(X)    (size_table.X == -1)
 #define VALID_SIZE(X)      (size_table.X >= 0)
 #define VALID_STRUCT(X)    (size_table.X >= 0)
-#define VALID_MEMBER(X)    (offset_table.X >= 0)
 #define ARRAY_LENGTH(X)    (array_table.X)
 #define ASSIGN_OFFSET(X)   (offset_table.X)
 #define ASSIGN_SIZE(X)     (size_table.X)

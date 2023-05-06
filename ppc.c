@@ -615,10 +615,10 @@ ppc_uvtop(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbose)
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_pg_tables)) 
+	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_pg_tables) >= 0) 
                 	pgd = (ulong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no pg_tables or active_mm?\n");
 
                 	readmem(tc->task + OFFSET(task_struct_active_mm), 
@@ -874,10 +874,10 @@ ppc_get_task_pgd(ulong task)
 	long offset;
 	ulong pg_tables;
 
-        offset = VALID_MEMBER(task_struct_thread) ?
+        offset = DIRECT_OFFSET_UNCHECKED(task_struct_thread) >= 0 ?
                 OFFSET(task_struct_thread) : OFFSET(task_struct_tss);
 
-	if (INVALID_MEMBER(thread_struct_pg_tables))
+	if (DIRECT_OFFSET_UNCHECKED(thread_struct_pg_tables) == INVALID_OFFSET)
 		error(FATAL, 
 		   "pg_tables does not exist in this kernel's thread_struct\n"); 
 	offset += OFFSET(thread_struct_pg_tables);
@@ -1479,11 +1479,11 @@ get_ppc_frame(struct bt_info *bt, ulong *getpc, ulong *getsp)
 	task = bt->task;
 	stack = (ulong *)bt->stackbuf;
 
-        if ((tt->flags & THREAD_INFO) && VALID_MEMBER(task_struct_thread_ksp)) 
+        if ((tt->flags & THREAD_INFO) && DIRECT_OFFSET_UNCHECKED(task_struct_thread_ksp) >= 0) 
                 readmem(task + OFFSET(task_struct_thread_ksp), KVADDR,
                         &sp, sizeof(void *),
                         "thread_struct ksp", FAULT_ON_ERROR);
-	else if (VALID_MEMBER(task_struct_tss_ksp)) 
+	else if (DIRECT_OFFSET_UNCHECKED(task_struct_tss_ksp) >= 0) 
                 sp = stack[OFFSET(task_struct_tss_ksp)/sizeof(long)];
 	else 
                 sp = stack[OFFSET(task_struct_thread_ksp)/sizeof(long)];
@@ -1585,7 +1585,7 @@ static void ppc_dump_irq(int irq)
 		} else
 			fprintf(fp, "%lx\n", addr);
 
-		if (VALID_MEMBER(hw_interrupt_type_handle)) {
+		if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_handle) >= 0) {
 	                /* handle */
 	                readmem(ctl + OFFSET(hw_interrupt_type_handle), 
 				KVADDR, &addr, sizeof(ulong), 

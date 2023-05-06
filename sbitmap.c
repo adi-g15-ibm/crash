@@ -110,7 +110,7 @@ static unsigned int __sbitmap_weight(const struct sbitmap_context *sc, bool set)
 			word = ULONG(sbitmap_word_buf + w_word_off);
 			weight += bitmap_weight(word, depth);
 		} else {
-			if (VALID_MEMBER(sbitmap_word_cleared))
+			if (DIRECT_OFFSET_UNCHECKED(sbitmap_word_cleared) >= 0)
 				cleared = ULONG(sbitmap_word_buf + OFFSET(sbitmap_word_cleared));
 			else
 				cleared = 0;
@@ -132,7 +132,7 @@ static unsigned int sbitmap_weight(const struct sbitmap_context *sc)
 
 static unsigned int sbitmap_cleared(const struct sbitmap_context *sc)
 {
-	if (VALID_MEMBER(sbitmap_word_cleared)) /* 5.0 and later */
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_word_cleared) >= 0) /* 5.0 and later */
 		return __sbitmap_weight(sc, false);
 
 	return 0;
@@ -173,7 +173,7 @@ static void sbitmap_bitmap_show(const struct sbitmap_context *sc)
 		}
 
 		word = ULONG(sbitmap_word_buf + w_word_off);
-		if (VALID_MEMBER(sbitmap_word_cleared))
+		if (DIRECT_OFFSET_UNCHECKED(sbitmap_word_cleared) >= 0)
 			cleared = ULONG(sbitmap_word_buf + OFFSET(sbitmap_word_cleared));
 		else
 			cleared = 0;
@@ -251,7 +251,7 @@ static void __sbitmap_for_each_set(const struct sbitmap_context *sc,
 		}
 
 		w_word = ULONG(sbitmap_word_buf + w_word_off);
-		if (VALID_MEMBER(sbitmap_word_cleared))
+		if (DIRECT_OFFSET_UNCHECKED(sbitmap_word_cleared) >= 0)
 			w_cleared = ULONG(sbitmap_word_buf + OFFSET(sbitmap_word_cleared));
 		else
 			w_cleared = 0;
@@ -306,14 +306,14 @@ static void sbitmap_queue_show(const struct sbitmap_queue_context *sqc,
 
 	fprintf(fp, "depth = %u\n", sc->depth);
 	fprintf(fp, "busy = %u\n", sbitmap_weight(sc) - sbitmap_cleared(sc));
-	if (VALID_MEMBER(sbitmap_word_cleared)) /* 5.0 and later */
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_word_cleared) >= 0) /* 5.0 and later */
 		fprintf(fp, "cleared = %u\n", sbitmap_cleared(sc));
 	fprintf(fp, "bits_per_word = %u\n", 1U << sc->shift);
 	fprintf(fp, "map_nr = %u\n", sc->map_nr);
 
-	if (VALID_MEMBER(sbitmap_queue_alloc_hint))
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_queue_alloc_hint) >= 0)
 		alloc_hint_addr = sqc->alloc_hint;
-	else if (VALID_MEMBER(sbitmap_alloc_hint)) /* 5.13 and later */
+	else if (DIRECT_OFFSET_UNCHECKED(sbitmap_alloc_hint) >= 0) /* 5.13 and later */
 		alloc_hint_addr = sc->alloc_hint;
 
 	fputs("alloc_hint = {", fp);
@@ -335,13 +335,13 @@ static void sbitmap_queue_show(const struct sbitmap_queue_context *sqc,
 
 	fprintf(fp, "wake_batch = %u\n", sqc->wake_batch);
 	fprintf(fp, "wake_index = %d\n", sqc->wake_index);
-	if (VALID_MEMBER(sbitmap_queue_ws_active)) /* 5.0 and later */
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_queue_ws_active) >= 0) /* 5.0 and later */
 		fprintf(fp, "ws_active = %d\n", sqc->ws_active);
 
 	sbq_wait_state_size = SIZE(sbq_wait_state);
 	wait_cnt_off = OFFSET(sbq_wait_state_wait_cnt);
 	wait_off = OFFSET(sbq_wait_state_wait);
-	if (VALID_MEMBER(wait_queue_head_head)) /* 4.13 and later */
+	if (DIRECT_OFFSET_UNCHECKED(wait_queue_head_head) >= 0) /* 4.13 and later */
 		list_head_off = OFFSET(wait_queue_head_head);
 	else
 		list_head_off = OFFSET(__wait_queue_head_task_list);
@@ -369,12 +369,12 @@ static void sbitmap_queue_show(const struct sbitmap_queue_context *sqc,
 
 	FREEBUF(sbq_wait_state_buf);
 
-	if (VALID_MEMBER(sbitmap_queue_round_robin))
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_queue_round_robin) >= 0)
 		fprintf(fp, "round_robin = %d\n", sqc->round_robin);
-	else if (VALID_MEMBER(sbitmap_round_robin)) /* 5.13 and later */
+	else if (DIRECT_OFFSET_UNCHECKED(sbitmap_round_robin) >= 0) /* 5.13 and later */
 		fprintf(fp, "round_robin = %d\n", sc->round_robin);
 
-	if (VALID_MEMBER(sbitmap_queue_min_shallow_depth)) /* 4.18 and later */
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_queue_min_shallow_depth) >= 0) /* 4.18 and later */
 		fprintf(fp, "min_shallow_depth = %u\n", sqc->min_shallow_depth);
 }
 
@@ -390,16 +390,16 @@ static void sbitmap_queue_context_load(ulong addr, struct sbitmap_queue_context 
 		error(FATAL, "cannot read sbitmap_queue\n");
 	}
 
-	if (VALID_MEMBER(sbitmap_queue_alloc_hint))
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_queue_alloc_hint) >= 0)
 		sqc->alloc_hint = ULONG(sbitmap_queue_buf + OFFSET(sbitmap_queue_alloc_hint));
 	sqc->wake_batch = UINT(sbitmap_queue_buf + OFFSET(sbitmap_queue_wake_batch));
 	sqc->wake_index = INT(sbitmap_queue_buf + OFFSET(sbitmap_queue_wake_index));
 	sqc->ws_addr = ULONG(sbitmap_queue_buf + OFFSET(sbitmap_queue_ws));
-	if (VALID_MEMBER(sbitmap_queue_ws_active))
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_queue_ws_active) >= 0)
 		sqc->ws_active = INT(sbitmap_queue_buf + OFFSET(sbitmap_queue_ws_active));
-	if (VALID_MEMBER(sbitmap_queue_round_robin))
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_queue_round_robin) >= 0)
 		sqc->round_robin = BOOL(sbitmap_queue_buf + OFFSET(sbitmap_queue_round_robin));
-	if (VALID_MEMBER(sbitmap_queue_min_shallow_depth))
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_queue_min_shallow_depth) >= 0)
 		sqc->min_shallow_depth = UINT(sbitmap_queue_buf + OFFSET(sbitmap_queue_min_shallow_depth));
 
 	FREEBUF(sbitmap_queue_buf);
@@ -419,9 +419,9 @@ void sbitmap_context_load(ulong addr, struct sbitmap_context *sc)
 	sc->shift = UINT(sbitmap_buf + OFFSET(sbitmap_shift));
 	sc->map_nr = UINT(sbitmap_buf + OFFSET(sbitmap_map_nr));
 	sc->map_addr = ULONG(sbitmap_buf + OFFSET(sbitmap_map));
-	if (VALID_MEMBER(sbitmap_alloc_hint))
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_alloc_hint) >= 0)
 		sc->alloc_hint = ULONG(sbitmap_buf + OFFSET(sbitmap_alloc_hint));
-	if (VALID_MEMBER(sbitmap_round_robin))
+	if (DIRECT_OFFSET_UNCHECKED(sbitmap_round_robin) >= 0)
 		sc->round_robin = BOOL(sbitmap_buf + OFFSET(sbitmap_round_robin));
 
 	FREEBUF(sbitmap_buf);

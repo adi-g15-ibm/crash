@@ -3484,10 +3484,10 @@ get_netdump_regs_x86_64(struct bt_info *bt, ulong *ripp, ulong *rspp)
 		regs_size = VALID_STRUCT(user_regs_struct) ?
 			SIZE(user_regs_struct) : 
 			sizeof(struct x86_64_user_regs_struct);
-		rsp_offset = VALID_MEMBER(user_regs_struct_rsp) ?
+		rsp_offset = DIRECT_OFFSET_UNCHECKED(user_regs_struct_rsp) >= 0 ?
 			OFFSET(user_regs_struct_rsp) : 
 			offsetof(struct x86_64_user_regs_struct, rsp);
-		rip_offset = VALID_MEMBER(user_regs_struct_rip) ?
+		rip_offset = DIRECT_OFFSET_UNCHECKED(user_regs_struct_rip) >= 0 ?
 			OFFSET(user_regs_struct_rip) :
                         offsetof(struct x86_64_user_regs_struct, rip);
 

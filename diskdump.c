@@ -2708,7 +2708,7 @@ zram_init(void)
 	MEMBER_OFFSET_INIT(zram_mempoll, "zram", "mem_pool");
 	MEMBER_OFFSET_INIT(zram_compressor, "zram", "compressor");
 	MEMBER_OFFSET_INIT(zram_table_flag, "zram_table_entry", "flags");
-	if (INVALID_MEMBER(zram_table_flag))
+	if (DIRECT_OFFSET_UNCHECKED(zram_table_flag) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(zram_table_flag, "zram_table_entry", "value");
 	STRUCT_SIZE_INIT(zram_table_entry, "zram_table_entry");
 }
@@ -2887,9 +2887,9 @@ try_zram_decompress(ulonglong pte_val, unsigned char *buf, ulong len, ulonglong 
 	ulong zram, zram_table_entry, sector, index, entry, flags, size,
 		outsize, off;
 
-	if (INVALID_MEMBER(zram_compressor)) {
+	if (DIRECT_OFFSET_UNCHECKED(zram_compressor) == INVALID_OFFSET) {
 		zram_init();
-		if (INVALID_MEMBER(zram_compressor)) {
+		if (DIRECT_OFFSET_UNCHECKED(zram_compressor) == INVALID_OFFSET) {
 			error(WARNING,
 			      "Some pages are swapped out to zram. "
 			      "Please run mod -s zram.\n");

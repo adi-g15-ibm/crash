@@ -2274,7 +2274,7 @@ get_alpha_frame(struct bt_info *bt, ulong *getpc, ulong *getsp)
 		readmem(bt->tc->thread_info, KVADDR, &ksp, sizeof(ulong),
                 	"thread_info pcb ksp", FAULT_ON_ERROR);
 		sp = ksp;
-	} else if (VALID_MEMBER(task_struct_tss_ksp))
+	} else if (DIRECT_OFFSET_UNCHECKED(task_struct_tss_ksp) >= 0)
                 ksp = sp = stack[OFFSET(task_struct_tss_ksp)/sizeof(long)];
 	else 
                 ksp = sp = stack[OFFSET(task_struct_thread_ksp)/sizeof(long)];

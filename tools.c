@@ -4624,13 +4624,13 @@ int do_radix_tree_traverse(ulong ptr, int is_root, struct radix_tree_ops *ops)
 	char path[BUFSIZE];
 
 	if (!VALID_STRUCT(radix_tree_root) || !VALID_STRUCT(radix_tree_node) ||
-	    ((!VALID_MEMBER(radix_tree_root_height) ||
-	      !VALID_MEMBER(radix_tree_root_rnode) ||
-	      !VALID_MEMBER(radix_tree_node_slots) ||
+	    ((DIRECT_OFFSET_UNCHECKED(radix_tree_root_height) < 0 ||
+	      DIRECT_OFFSET_UNCHECKED(radix_tree_root_rnode) < 0 ||
+	      DIRECT_OFFSET_UNCHECKED(radix_tree_node_slots) < 0 ||
 	      !ARRAY_LENGTH(height_to_maxindex)) &&
-	     (!VALID_MEMBER(radix_tree_root_rnode) ||
-	      !VALID_MEMBER(radix_tree_node_shift) ||
-	      !VALID_MEMBER(radix_tree_node_slots) ||
+	     (DIRECT_OFFSET_UNCHECKED(radix_tree_root_rnode) < 0 ||
+	      DIRECT_OFFSET_UNCHECKED(radix_tree_node_shift) < 0 ||
+	      DIRECT_OFFSET_UNCHECKED(radix_tree_node_slots) < 0 ||
 	      !ARRAY_LENGTH(height_to_maxnodes))))
 		error(FATAL, "radix trees do not exist or have changed "
 			"their format\n");
@@ -4657,11 +4657,11 @@ int do_radix_tree_traverse(ulong ptr, int is_root, struct radix_tree_ops *ops)
 		if (node_p & RADIX_TREE_INTERNAL_NODE)
 			node_p &= ~RADIX_TREE_INTERNAL_NODE;
 
-		if (VALID_MEMBER(radix_tree_node_height)) {
+		if (DIRECT_OFFSET_UNCHECKED(radix_tree_node_height) >= 0) {
 			readmem(node_p + OFFSET(radix_tree_node_height), KVADDR,
 				&height, sizeof(uint), "radix_tree_node height",
 				FAULT_ON_ERROR);
-		} else if (VALID_MEMBER(radix_tree_node_shift)) {
+		} else if (DIRECT_OFFSET_UNCHECKED(radix_tree_node_shift) >= 0) {
 			readmem(node_p + OFFSET(radix_tree_node_shift), KVADDR,
 				&shift, sizeof(shift), "radix_tree_node shift",
 				FAULT_ON_ERROR);
@@ -4672,7 +4672,7 @@ int do_radix_tree_traverse(ulong ptr, int is_root, struct radix_tree_ops *ops)
 		if (height > max_height)
 			goto error_height;
 	} else {
-		if (VALID_MEMBER(radix_tree_root_height)) {
+		if (DIRECT_OFFSET_UNCHECKED(radix_tree_root_height) >= 0) {
 			readmem(ptr + OFFSET(radix_tree_root_height), KVADDR, &height,
 				sizeof(uint), "radix_tree_root height", FAULT_ON_ERROR);
 		}
@@ -4683,7 +4683,7 @@ int do_radix_tree_traverse(ulong ptr, int is_root, struct radix_tree_ops *ops)
 		if (node_p & RADIX_TREE_INTERNAL_NODE)
 			node_p &= ~RADIX_TREE_INTERNAL_NODE;
 
-		if (is_internal && VALID_MEMBER(radix_tree_node_shift)) {
+		if (is_internal && DIRECT_OFFSET_UNCHECKED(radix_tree_node_shift) >= 0) {
 			readmem(node_p + OFFSET(radix_tree_node_shift), KVADDR, &shift,
 				sizeof(shift), "radix_tree_node shift", FAULT_ON_ERROR);
 			height = (shift / RADIX_TREE_MAP_SHIFT) + 1;
@@ -4776,9 +4776,9 @@ do_xarray_traverse(ulong ptr, int is_root, struct xarray_ops *ops)
 	char path[BUFSIZE];
 
 	if (!VALID_STRUCT(xarray) || !VALID_STRUCT(xa_node) ||
-	      !VALID_MEMBER(xarray_xa_head) ||
-	      !VALID_MEMBER(xa_node_slots) ||
-	      !VALID_MEMBER(xa_node_shift)) 
+	      DIRECT_OFFSET_UNCHECKED(xarray_xa_head) < 0 ||
+	      DIRECT_OFFSET_UNCHECKED(xa_node_slots) < 0 ||
+	      DIRECT_OFFSET_UNCHECKED(xa_node_shift) < 0) 
 		error(FATAL, 
 			"xarray facility does not exist or has changed its format\n");
 
@@ -4798,7 +4798,7 @@ do_xarray_traverse(ulong ptr, int is_root, struct xarray_ops *ops)
 		if ((node_p & XARRAY_TAG_MASK) == XARRAY_TAG_INTERNAL)
 			node_p &= ~XARRAY_TAG_MASK;
 
-		if (VALID_MEMBER(xa_node_shift)) {
+		if (DIRECT_OFFSET_UNCHECKED(xa_node_shift) >= 0) {
 			readmem(node_p + OFFSET(xa_node_shift), KVADDR,
 				&shift, sizeof(shift), "xa_node shift",
 				FAULT_ON_ERROR);
@@ -4813,7 +4813,7 @@ do_xarray_traverse(ulong ptr, int is_root, struct xarray_ops *ops)
 		if (node_p & XARRAY_TAG_MASK)
 			node_p &= ~XARRAY_TAG_MASK;
 
-		if (is_internal && VALID_MEMBER(xa_node_shift)) {
+		if (is_internal && DIRECT_OFFSET_UNCHECKED(xa_node_shift) >= 0) {
 			readmem(node_p + OFFSET(xa_node_shift), KVADDR, &shift,
 				sizeof(shift), "xa_node shift", FAULT_ON_ERROR);
 			height = (shift / XA_CHUNK_SHIFT) + 1;
@@ -4992,8 +4992,8 @@ do_rbtree(struct tree_data *td)
 	ulong start;
 	char pos[BUFSIZE];
 
-	if (!VALID_MEMBER(rb_root_rb_node) || !VALID_MEMBER(rb_node_rb_left) ||
-	    !VALID_MEMBER(rb_node_rb_right))
+	if (DIRECT_OFFSET_UNCHECKED(rb_root_rb_node) < 0 || DIRECT_OFFSET_UNCHECKED(rb_node_rb_left) < 0 ||
+	    DIRECT_OFFSET_UNCHECKED(rb_node_rb_right) < 0)
 		error(FATAL, "red-black trees do not exist or have changed "
 			"their format\n");
 
@@ -6943,13 +6943,13 @@ percpu_counter_sum_positive(ulong fbc)
 	ulong addr;
 	long ret;
 
-	if (INVALID_MEMBER(percpu_counter_count))
+	if (DIRECT_OFFSET_UNCHECKED(percpu_counter_count) == INVALID_OFFSET)
 		return 0;
 
 	readmem(fbc + OFFSET(percpu_counter_count), KVADDR, &ret,
 		sizeof(long long), "percpu_counter.count", FAULT_ON_ERROR);
 
-	if (INVALID_MEMBER(percpu_counter_counters)) /* !CONFIG_SMP */
+	if (DIRECT_OFFSET_UNCHECKED(percpu_counter_counters) == INVALID_OFFSET) /* !CONFIG_SMP */
 		return (ret < 0) ? 0 : ret;
 
 	readmem(fbc + OFFSET(percpu_counter_counters), KVADDR, &addr,

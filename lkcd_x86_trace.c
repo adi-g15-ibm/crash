@@ -1454,7 +1454,7 @@ userspace_return(kaddr_t frame, struct bt_info *bt)
 	ulong esp0, eframe_addr; 
 	uint32_t *stkptr, *eframeptr;
 	
-	if (INVALID_MEMBER(task_struct_thread) ||
+	if (DIRECT_OFFSET_UNCHECKED(task_struct_thread) == INVALID_OFFSET ||
 	    (((esp0 = MEMBER_OFFSET("thread_struct", "esp0")) < 0) &&
              ((esp0 = MEMBER_OFFSET("thread_struct", "sp0")) < 0)))
 		eframe_addr = bt->stacktop - SIZE(pt_regs);
@@ -2049,7 +2049,7 @@ eframe_address(sframe_t *frmp, struct bt_info *bt)
 	ulong esp0, pt;
 
 	if (!(frmp->flag & SET_EX_FRAME_ADDR) ||
-	    INVALID_MEMBER(task_struct_thread) || 
+	    DIRECT_OFFSET_UNCHECKED(task_struct_thread) == INVALID_OFFSET || 
 	    (((esp0 = MEMBER_OFFSET("thread_struct", "esp0")) < 0) &&
 	     ((esp0 = MEMBER_OFFSET("thread_struct", "sp0")) < 0)))
 		return frmp->asp;

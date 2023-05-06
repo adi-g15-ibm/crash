@@ -819,7 +819,7 @@ ia64_processor_speed(void)
 
 	if (!machdep->machspec->cpu_data_address ||
 	    !VALID_STRUCT(cpuinfo_ia64) ||
-	    !VALID_MEMBER(cpuinfo_ia64_proc_freq))
+	    DIRECT_OFFSET_UNCHECKED(cpuinfo_ia64_proc_freq) < 0)
 		return (machdep->mhz = mhz);
 
 	if (symbol_exists("bootstrap_processor"))
@@ -2946,13 +2946,13 @@ ia64_post_init(void)
 		}
 	
 	        if (ms->cpu_data_address) {
-	            	if (VALID_MEMBER(cpuinfo_ia64_unimpl_va_mask))
+	            	if (DIRECT_OFFSET_UNCHECKED(cpuinfo_ia64_unimpl_va_mask) >= 0)
 	       			readmem(ms->cpu_data_address +
 	                		OFFSET(cpuinfo_ia64_unimpl_va_mask),
 	                		KVADDR, &ms->unimpl_va_mask, 
 					sizeof(ulong),
 	                		"unimpl_va_mask", FAULT_ON_ERROR);
-	            	if (VALID_MEMBER(cpuinfo_ia64_unimpl_pa_mask))
+	            	if (DIRECT_OFFSET_UNCHECKED(cpuinfo_ia64_unimpl_pa_mask) >= 0)
 	                        readmem(ms->cpu_data_address +
 	                                OFFSET(cpuinfo_ia64_unimpl_pa_mask),
 	                                KVADDR, &ms->unimpl_pa_mask, 
