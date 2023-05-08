@@ -1205,7 +1205,7 @@ ia64_get_thread_ksp(ulong task)
                 	&ksp, sizeof(void *),
                 	"vcpu thread ksp", FAULT_ON_ERROR);
 	} else {
-        	readmem(task + OFFSET(task_struct_thread_ksp), KVADDR,
+        	readmem(task + TASK_OFFSET(task_struct_thread_ksp), KVADDR,
                 	&ksp, sizeof(void *),
                 	"thread_struct ksp", FAULT_ON_ERROR);
 	}

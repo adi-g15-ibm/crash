@@ -933,7 +933,7 @@ s390_get_stack_frame(struct bt_info *bt, ulong *eip, ulong *esp)
 			ksp = ULONG(lowcore + MEMBER_OFFSET(lc_struct,
 				"gpregs_save_area") + (15 * S390_WORD_SIZE));
 		} else {
-			readmem(bt->task + OFFSET(task_struct_thread_ksp),
+			readmem(bt->task + TASK_OFFSET(task_struct_thread_ksp),
 				KVADDR, &ksp, sizeof(void *),
 				"thread_struct ksp", FAULT_ON_ERROR);
 		}

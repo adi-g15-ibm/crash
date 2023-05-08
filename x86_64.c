@@ -718,10 +718,6 @@ x86_64_init(int when)
 			}
                         MEMBER_OFFSET_INIT(vcpu_guest_context_user_regs,
                                 "vcpu_guest_context", "user_regs");
-			ASSIGN_OFFSET(cpu_user_regs_rsp) = 
-				MEMBER_OFFSET("cpu_user_regs", "ss") - sizeof(ulong);
-			ASSIGN_OFFSET(cpu_user_regs_rip) = 
-				MEMBER_OFFSET("cpu_user_regs", "cs") - sizeof(ulong);
                 }
 		x86_64_irq_eframe_link_init();
 		x86_64_irq_stack_gap_init();
@@ -7663,14 +7659,14 @@ x86_64_xendump_panic_task(struct xendump_data *xd)
 	ulong rsp;
 	off_t offset;
 	ulong task;
+	off_t cpu_user_regs_rsp = MEMBER_OFFSET("cpu_user_regs", "ss") - sizeof(ulong);
 
 	if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
 	    DIRECT_OFFSET_UNCHECKED(cpu_user_regs_esp) == INVALID_OFFSET)
 		return NO_TASK;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) +
-		(off_t)OFFSET(cpu_user_regs_rsp);
+                (off_t)OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rsp;
 
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
 		return NO_TASK;
@@ -7714,23 +7710,23 @@ x86_64_get_xendump_regs(struct xendump_data *xd, struct bt_info *bt, ulong *rip,
 	struct syment *sp;
 	char *rip_symbol;
 	int cpu;
+	off_t cpu_user_regs_rsp = MEMBER_OFFSET("cpu_user_regs", "ss") - sizeof(ulong);
+	off_t cpu_user_regs_rip = MEMBER_OFFSET("cpu_user_regs", "cs") - sizeof(ulong);
 
         if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
-            DIRECT_OFFSET_UNCHECKED(cpu_user_regs_rip) == INVALID_OFFSET ||
-            DIRECT_OFFSET_UNCHECKED(cpu_user_regs_rsp) == INVALID_OFFSET)
+            cpu_user_regs_rip == INVALID_OFFSET ||
+            cpu_user_regs_rsp == INVALID_OFFSET)
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) +
-                (off_t)OFFSET(cpu_user_regs_rsp);
+                (off_t)OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rsp;
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
                 goto generic;
         if (read(xd->xfd, &xrsp, sizeof(ulong)) != sizeof(ulong))
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) +
-                (off_t)OFFSET(cpu_user_regs_rip);
+                (off_t)OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rip;
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
                 goto generic;
         if (read(xd->xfd, &xrip, sizeof(ulong)) != sizeof(ulong))

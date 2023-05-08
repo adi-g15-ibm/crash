@@ -1479,14 +1479,14 @@ get_ppc_frame(struct bt_info *bt, ulong *getpc, ulong *getsp)
 	task = bt->task;
 	stack = (ulong *)bt->stackbuf;
 
-        if ((tt->flags & THREAD_INFO) && DIRECT_OFFSET_UNCHECKED(task_struct_thread_ksp) >= 0) 
-                readmem(task + OFFSET(task_struct_thread_ksp), KVADDR,
+        if ((tt->flags & THREAD_INFO) && TASK_OFFSET_UNCHECKED(task_struct_thread_ksp) >= 0) 
+                readmem(task + TASK_OFFSET(task_struct_thread_ksp), KVADDR,
                         &sp, sizeof(void *),
                         "thread_struct ksp", FAULT_ON_ERROR);
-	else if (DIRECT_OFFSET_UNCHECKED(task_struct_tss_ksp) >= 0) 
-                sp = stack[OFFSET(task_struct_tss_ksp)/sizeof(long)];
+	else if (TASK_OFFSET_UNCHECKED(task_struct_tss_ksp) >= 0) 
+                sp = stack[TASK_OFFSET(task_struct_tss_ksp)/sizeof(long)];
 	else 
-                sp = stack[OFFSET(task_struct_thread_ksp)/sizeof(long)];
+                sp = stack[TASK_OFFSET(task_struct_thread_ksp)/sizeof(long)];
 
 	if (!INSTACK(sp, bt))
 		goto out;

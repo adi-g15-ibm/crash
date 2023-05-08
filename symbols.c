@@ -8815,30 +8815,30 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "         task_struct_active_mm: %ld\n",
 		OFFSET(task_struct_active_mm));
 	fprintf(fp, "           task_struct_tss_eip: %ld\n", 
-		OFFSET(task_struct_tss_eip));
+		TASK_OFFSET(task_struct_tss_eip));
 	fprintf(fp, "           task_struct_tss_esp: %ld\n", 
-		OFFSET(task_struct_tss_esp));
+		TASK_OFFSET(task_struct_tss_esp));
 	fprintf(fp, "           task_struct_tss_ksp: %ld\n", 
-		OFFSET(task_struct_tss_ksp));
+		TASK_OFFSET(task_struct_tss_ksp));
         fprintf(fp, "        task_struct_thread_eip: %ld\n",
-                OFFSET(task_struct_thread_eip));
+                TASK_OFFSET(task_struct_thread_eip));
 	fprintf(fp, "        inactive_task_frame_bp: %ld\n", OFFSET(inactive_task_frame_bp));
 	fprintf(fp, "  inactive_task_frame_ret_addr: %ld\n",
 		OFFSET(inactive_task_frame_ret_addr));
         fprintf(fp, "        task_struct_thread_esp: %ld\n",
-                OFFSET(task_struct_thread_esp));
+                TASK_OFFSET(task_struct_thread_esp));
         fprintf(fp, "        task_struct_thread_ksp: %ld\n",
-                OFFSET(task_struct_thread_ksp));
+                TASK_OFFSET(task_struct_thread_ksp));
         fprintf(fp, "      task_struct_thread_reg29: %ld\n",
-                OFFSET(task_struct_thread_reg29));
+                TASK_OFFSET(task_struct_thread_reg29));
         fprintf(fp, "      task_struct_thread_reg31: %ld\n",
-                OFFSET(task_struct_thread_reg31));
+                TASK_OFFSET(task_struct_thread_reg31));
 	fprintf(fp, " task_struct_thread_context_fp: %ld\n",
-		OFFSET(task_struct_thread_context_fp));
+		TASK_OFFSET(task_struct_thread_context_fp));
 	fprintf(fp, " task_struct_thread_context_sp: %ld\n",
-		OFFSET(task_struct_thread_context_sp));
+		TASK_OFFSET(task_struct_thread_context_sp));
 	fprintf(fp, " task_struct_thread_context_pc: %ld\n",
-		OFFSET(task_struct_thread_context_pc));
+		TASK_OFFSET(task_struct_thread_context_pc));
 	fprintf(fp, "         task_struct_processor: %ld\n", 
 		OFFSET(task_struct_processor));
 	fprintf(fp, "            task_struct_p_pptr: %ld\n",
@@ -9274,8 +9274,6 @@ dump_offset_table(char *spec, ulong makestruct)
         	OFFSET(kallsyms_section_size));
         fprintf(fp, "     kallsyms_section_name_off: %ld\n",
         	OFFSET(kallsyms_section_name_off));
-        fprintf(fp, "           kernel_symbol_value: %ld\n",
-        	OFFSET(kernel_symbol_value));
 	fprintf(fp, "                 module_taints: %ld\n",
 		OFFSET(module_taints));
 	fprintf(fp, "          module_license_gplok: %ld\n",
@@ -9293,10 +9291,6 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(page_next_hash));
 	fprintf(fp, "                     page_list: %ld\n", 
 		OFFSET(page_list));
-	fprintf(fp, "                page_list_next: %ld\n", 
-		OFFSET(page_list_next));
-	fprintf(fp, "                page_list_prev: %ld\n", 
-		OFFSET(page_list_prev));
 	fprintf(fp, "                    page_inode: %ld\n", 
 		OFFSET(page_inode));
 	fprintf(fp, "                   page_offset: %ld\n", 
@@ -10255,8 +10249,6 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(tss_struct_ist));
 	fprintf(fp, "   mem_section_section_mem_map: %ld\n",
 		OFFSET(mem_section_section_mem_map));
-	fprintf(fp, "   mem_section_pageblock_flags: %ld\n",
-		OFFSET(mem_section_pageblock_flags));
 	fprintf(fp, "              memory_block_dev: %ld\n",
 		OFFSET(memory_block_dev));
 	fprintf(fp, "              memory_block_nid: %ld\n",
@@ -10274,10 +10266,6 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(cpu_user_regs_eip));
 	fprintf(fp, "             cpu_user_regs_esp: %ld\n",
 		OFFSET(cpu_user_regs_esp));
-	fprintf(fp, "             cpu_user_regs_rip: %ld\n",
-		OFFSET(cpu_user_regs_rip));
-	fprintf(fp, "             cpu_user_regs_rsp: %ld\n",
-		OFFSET(cpu_user_regs_rsp));
 	fprintf(fp, "             unwind_table_core: %ld\n",
 		OFFSET(unwind_table_core));
 	fprintf(fp, "             unwind_table_init: %ld\n",
@@ -10329,8 +10317,6 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(s390_lowcore_psw_save_area));
 	fprintf(fp, "   s390_stack_frame_back_chain: %ld\n",
 		OFFSET(s390_stack_frame_back_chain));
-	fprintf(fp, "          s390_stack_frame_r14: %ld\n",
-		OFFSET(s390_stack_frame_r14));
 
 	fprintf(fp, "           cpu_context_save_r7: %ld\n",
 		OFFSET(cpu_context_save_r7));
@@ -10419,8 +10405,6 @@ dump_offset_table(char *spec, ulong makestruct)
 		OFFSET(request_queue_rq));
 	fprintf(fp, "          request_queue_mq_ops: %ld\n",
 		OFFSET(request_queue_mq_ops));
-	fprintf(fp, "       request_queue_queue_ctx: %ld\n",
-		OFFSET(request_queue_queue_ctx));
 	fprintf(fp, "    request_queue_queue_hw_ctx: %ld\n",
 		OFFSET(request_queue_queue_hw_ctx));
 	fprintf(fp, "    request_queue_nr_hw_queues: %ld\n",

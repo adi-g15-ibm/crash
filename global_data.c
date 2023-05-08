@@ -136,5 +136,6 @@ struct extension_table *extension_table = NULL;
  *  is a shortcut used by get_array_length().
  */
 struct offset_table offset_table = { 0 };
+struct task_offset_table task_offset_table = { 0 };
 struct size_table size_table = { 0 };
 struct array_table array_table = { 0 };

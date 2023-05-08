@@ -674,11 +674,11 @@ riscv64_stackframe_init(void)
 		error(FATAL,
 		      "cannot determine thread_struct offsets\n");
 
-	ASSIGN_OFFSET(task_struct_thread_context_pc) =
+	ASSIGN_TASK_OFFSET(task_struct_thread_context_pc) =
 		task_struct_thread + thread_reg_ra;
-	ASSIGN_OFFSET(task_struct_thread_context_sp) =
+	ASSIGN_TASK_OFFSET(task_struct_thread_context_sp) =
 		task_struct_thread + thread_reg_sp;
-	ASSIGN_OFFSET(task_struct_thread_context_fp) =
+	ASSIGN_TASK_OFFSET(task_struct_thread_context_fp) =
 		task_struct_thread + thread_reg_fp;
 }
 
@@ -871,19 +871,19 @@ riscv64_get_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 	if (!bt->tc || !(tt->flags & THREAD_INFO))
 		return FALSE;
 
-	if (!readmem(bt->task + OFFSET(task_struct_thread_context_pc),
+	if (!readmem(bt->task + TASK_OFFSET(task_struct_thread_context_pc),
 		     KVADDR, pcp, sizeof(*pcp),
 		     "thread_struct.ra",
 		     RETURN_ON_ERROR))
 		return FALSE;
 
-	if (!readmem(bt->task + OFFSET(task_struct_thread_context_sp),
+	if (!readmem(bt->task + TASK_OFFSET(task_struct_thread_context_sp),
 		     KVADDR, spp, sizeof(*spp),
 		     "thread_struct.sp",
 		     RETURN_ON_ERROR))
 		return FALSE;
 
-	if (!readmem(bt->task + OFFSET(task_struct_thread_context_fp),
+	if (!readmem(bt->task + TASK_OFFSET(task_struct_thread_context_fp),
 		     KVADDR, &bt->frameptr, sizeof(bt->frameptr),
 		     "thread_struct.fp",
 		     RETURN_ON_ERROR))

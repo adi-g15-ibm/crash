@@ -197,13 +197,13 @@ task_init(void)
 			"thread_struct", "esp");
 		ksp_offset = MEMBER_OFFSET_INIT(thread_struct_ksp, 
 			"thread_struct", "ksp");
-	        ASSIGN_OFFSET(task_struct_tss_eip) = 
+	        ASSIGN_TASK_OFFSET(task_struct_tss_eip) = 
 			(eip_offset == INVALID_OFFSET) ? 
 			INVALID_OFFSET : tss_offset + eip_offset;
-	        ASSIGN_OFFSET(task_struct_tss_esp) = 
+	        ASSIGN_TASK_OFFSET(task_struct_tss_esp) = 
 			(esp_offset == INVALID_OFFSET) ?
 			INVALID_OFFSET : tss_offset + esp_offset;
-                ASSIGN_OFFSET(task_struct_tss_ksp) = 
+                ASSIGN_TASK_OFFSET(task_struct_tss_ksp) = 
 			(ksp_offset == INVALID_OFFSET) ?
                         INVALID_OFFSET : tss_offset + ksp_offset;
 
@@ -239,13 +239,13 @@ task_init(void)
 				"thread_struct", "sp");
 		ksp_offset = MEMBER_OFFSET_INIT(thread_struct_ksp,
 			"thread_struct", "ksp");
-	        ASSIGN_OFFSET(task_struct_thread_eip) = 
+	        ASSIGN_TASK_OFFSET(task_struct_thread_eip) = 
 		    (eip_offset == INVALID_OFFSET) ? 
 			INVALID_OFFSET : thread_offset + eip_offset;
-	        ASSIGN_OFFSET(task_struct_thread_esp) = 
+	        ASSIGN_TASK_OFFSET(task_struct_thread_esp) = 
 		    (esp_offset == INVALID_OFFSET) ?
 			INVALID_OFFSET : thread_offset + esp_offset;
-	        ASSIGN_OFFSET(task_struct_thread_ksp) = 
+	        ASSIGN_TASK_OFFSET(task_struct_thread_ksp) = 
 		    (ksp_offset == INVALID_OFFSET) ?
 			INVALID_OFFSET : thread_offset + ksp_offset;
 	
@@ -4436,16 +4436,16 @@ task_pointer_string(struct task_context *tc, ulong do_kstackp, char *buf)
 
 		if (is_task_active(tc->task)) {
 			bt->stkptr = 0;
-		} else if (DIRECT_OFFSET_UNCHECKED(task_struct_thread_esp) >= 0) {
-        		readmem(tc->task + OFFSET(task_struct_thread_esp), 
+		} else if (TASK_OFFSET_UNCHECKED(task_struct_thread_esp) >= 0) {
+        		readmem(tc->task + TASK_OFFSET(task_struct_thread_esp), 
 				KVADDR, &bt->stkptr, sizeof(void *),
                 		"thread_struct esp", FAULT_ON_ERROR);
-		} else if (DIRECT_OFFSET_UNCHECKED(task_struct_thread_ksp) >= 0) {
-        		readmem(tc->task + OFFSET(task_struct_thread_ksp), 
+		} else if (TASK_OFFSET_UNCHECKED(task_struct_thread_ksp) >= 0) {
+        		readmem(tc->task + TASK_OFFSET(task_struct_thread_ksp), 
 				KVADDR, &bt->stkptr, sizeof(void *),
                 		"thread_struct ksp", FAULT_ON_ERROR);
-		} else if (DIRECT_OFFSET_UNCHECKED(task_struct_thread_context_sp) >= 0) {
-			readmem(tc->task + OFFSET(task_struct_thread_context_sp), 
+		} else if (TASK_OFFSET_UNCHECKED(task_struct_thread_context_sp) >= 0) {
+			readmem(tc->task + TASK_OFFSET(task_struct_thread_context_sp), 
 				KVADDR, &bt->stkptr, sizeof(void *),
 				"cpu_context sp", FAULT_ON_ERROR);
 		} else {

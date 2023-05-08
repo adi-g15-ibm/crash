@@ -227,8 +227,7 @@ static void s390x_offsets_init(void)
 		ASSIGN_OFFSET(s390_stack_frame_r14) = 112;
 		ASSIGN_SIZE(s390_stack_frame) = 160;
 	} else {
-		ASSIGN_OFFSET(s390_stack_frame_back_chain) =
-			MEMBER_OFFSET("stack_frame", "back_chain");
+		MEMBER_OFFSET_INIT(s390_stack_frame_back_chain, "stack_frame", "back_chain");
 		ASSIGN_OFFSET(s390_stack_frame_r14) =
 			MEMBER_OFFSET("stack_frame", "gprs") + 8 * 8;
 		ASSIGN_SIZE(s390_stack_frame) = STRUCT_SIZE("stack_frame");
@@ -1496,11 +1495,16 @@ static unsigned long show_trace(struct bt_info *bt, int cnt, unsigned long sp,
 {
 	unsigned long reg; 
 	unsigned long psw_addr ATTRIBUTE_UNUSED;
+	off_t s390_stack_frame_r14 = 112;
+	if (STRUCT_EXISTS("stack_frame")) {
+		s390_stack_frame_r14 =
+			MEMBER_OFFSET("stack_frame", "gprs") + 8 * 8;
+	}
 
 	while (1) {
 		if (sp < low || sp > high - SIZE(s390_stack_frame))
 			return sp;
-		reg = readmem_ul(sp + OFFSET(s390_stack_frame_r14));
+		reg = readmem_ul(sp + s390_stack_frame_r14);
 		if (!s390x_has_cpu(bt))
 			print_frame(bt, cnt++, sp, reg);
 		if (bt->flags & BT_FULL)
@@ -1516,7 +1520,7 @@ static unsigned long show_trace(struct bt_info *bt, int cnt, unsigned long sp,
 			}
 			if (sp <= low || sp > high - SIZE(s390_stack_frame))
 				return sp;
-			reg = readmem_ul(sp + OFFSET(s390_stack_frame_r14));
+			reg = readmem_ul(sp + s390_stack_frame_r14);
 			print_frame(bt, cnt++, sp, reg);
 			if (bt->flags & BT_FULL)
 				print_frame_data(sp, high);
@@ -1779,7 +1783,7 @@ s390x_get_stack_frame(struct bt_info *bt, ulong *eip, ulong *esp)
 			ksp = ULONG(lowcore + MEMBER_OFFSET(lc_struct,
 				"gpregs_save_area") + (15 * S390X_WORD_SIZE));
 		} else {
-			readmem(bt->task + OFFSET(task_struct_thread_ksp), 
+			readmem(bt->task + TASK_OFFSET(task_struct_thread_ksp), 
 				KVADDR, &ksp, sizeof(void *),
 				"thread_struct ksp", FAULT_ON_ERROR);
 		}

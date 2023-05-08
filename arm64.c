@@ -2322,11 +2322,11 @@ arm64_stackframe_init(void)
 		error(INFO, "cannot determine cpu_context.pc offset\n");
 		return;
 	}
-	ASSIGN_OFFSET(task_struct_thread_context_sp) =
+	ASSIGN_TASK_OFFSET(task_struct_thread_context_sp) =
 		task_struct_thread + thread_struct_cpu_context + context_sp;
-	ASSIGN_OFFSET(task_struct_thread_context_fp) =
+	ASSIGN_TASK_OFFSET(task_struct_thread_context_fp) =
 		task_struct_thread + thread_struct_cpu_context + context_fp;
-	ASSIGN_OFFSET(task_struct_thread_context_pc) =
+	ASSIGN_TASK_OFFSET(task_struct_thread_context_pc) =
 		task_struct_thread + thread_struct_cpu_context + context_pc;
 }
 
@@ -3742,9 +3742,9 @@ arm64_get_stackframe(struct bt_info *bt, struct arm64_stackframe *frame)
 	if (!fill_task_struct(bt->task))
 		return FALSE;
 
-	frame->sp = ULONG(tt->task_struct + OFFSET(task_struct_thread_context_sp));
-	frame->pc = ULONG(tt->task_struct + OFFSET(task_struct_thread_context_pc));
-	frame->fp = ULONG(tt->task_struct + OFFSET(task_struct_thread_context_fp));
+	frame->sp = ULONG(tt->task_struct + TASK_OFFSET(task_struct_thread_context_sp));
+	frame->pc = ULONG(tt->task_struct + TASK_OFFSET(task_struct_thread_context_pc));
+	frame->fp = ULONG(tt->task_struct + TASK_OFFSET(task_struct_thread_context_fp));
 
 	return TRUE;
 }

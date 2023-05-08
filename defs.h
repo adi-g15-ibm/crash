@@ -1221,6 +1221,20 @@ struct reference {
 	void *refp;
 };
 
+struct task_offset_table {
+	long task_struct_thread_context_fp;
+	long task_struct_thread_context_pc;
+	long task_struct_thread_context_sp;
+	long task_struct_thread_eip;
+	long task_struct_thread_esp;
+	long task_struct_thread_ksp;
+	long task_struct_thread_reg29;
+	long task_struct_thread_reg31;
+	long task_struct_tss_eip;
+	long task_struct_tss_esp;
+	long task_struct_tss_ksp;
+};
+
 struct offset_table {                    /* stash of commonly-used offsets */
 	long list_head_next;             /* add new entries to end of table */
 	long list_head_prev;
@@ -1231,17 +1245,11 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long task_struct_tss;
 	long task_struct_thread;
 	long task_struct_active_mm;
-	long task_struct_tss_eip;
-	long task_struct_tss_esp;
-	long task_struct_tss_ksp;
 	long task_struct_processor;
 	long task_struct_p_pptr;
 	long task_struct_parent;
 	long task_struct_has_cpu;
 	long task_struct_cpus_runnable;
-	long task_struct_thread_eip;
-	long task_struct_thread_esp;
-	long task_struct_thread_ksp;
 	long task_struct_next_task;
 	long task_struct_files;
 	long task_struct_fs;
@@ -1394,8 +1402,6 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long page_prev;
 	long page_next_hash;
 	long page_list;
-	long page_list_next;
-	long page_list_prev;
 	long page_inode;
 	long page_offset;
 	long page_count;
@@ -1717,8 +1723,6 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long vcpu_guest_context_user_regs;
 	long cpu_user_regs_eip;
 	long cpu_user_regs_esp;
-	long cpu_user_regs_rip;
-	long cpu_user_regs_rsp;
         long unwind_table_core;
         long unwind_table_init;
         long unwind_table_address;
@@ -1821,7 +1825,6 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long module_percpu;
 	long radix_tree_node_slots;
 	long s390_stack_frame_back_chain;
-	long s390_stack_frame_r14;
 	long user_regs_struct_eip;
 	long user_regs_struct_rax;
 	long user_regs_struct_eax;
@@ -1989,9 +1992,6 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long tnt_bit;
 	long tnt_true;
 	long tnt_false;
-	long task_struct_thread_context_fp;
-	long task_struct_thread_context_sp;
-	long task_struct_thread_context_pc;
 	long page_slab_page;
 	long trace_print_flags_mask;
 	long trace_print_flags_name;
@@ -2011,8 +2011,6 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long atomic_t_counter;
 	long percpu_counter_count;
 	long mm_struct_mm_count;
-	long task_struct_thread_reg29;
-	long task_struct_thread_reg31;
 	long pt_regs_regs;
 	long pt_regs_cp0_badvaddr;
 	long address_space_page_tree;
@@ -2021,7 +2019,6 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long kmem_cache_node_total_objects;
 	long timer_base_vectors;
 	long request_queue_mq_ops;
-	long request_queue_queue_ctx;
 	long blk_mq_ctx_rq_dispatched;
 	long blk_mq_ctx_rq_completed;
 	long task_struct_stack;
@@ -2070,7 +2067,6 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long memcg_cache_params_children;
 	long memcg_cache_params_children_node;
 	long task_struct_pid_links;
-	long kernel_symbol_value;
 	long pci_dev_dev;
         long pci_dev_hdr_type;
         long pci_dev_pcie_flags_reg;
@@ -2087,7 +2083,6 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long memory_block_end_section_nr;
 	long memory_block_state;
 	long memory_block_nid;
-	long mem_section_pageblock_flags;
 	long bus_type_p;
 	long device_private_device;
 	long device_private_knode_bus;
@@ -2455,7 +2450,9 @@ struct array_table {
  *  in the offset table, size table or array_table.
  */
 #define OFFSET(X)	   (OFFSET_verify(offset_table.X, (char *)__FUNCTION__, __FILE__, __LINE__, #X))
+#define TASK_OFFSET(X)	   (OFFSET_verify(task_offset_table.X, (char *)__FUNCTION__, __FILE__, __LINE__, #X))
 #define DIRECT_OFFSET_UNCHECKED(X) (offset_table.X)
+#define TASK_OFFSET_UNCHECKED(X) (task_offset_table.X)
 #define MODULE_OFFSET(X,Y) (PAX_MODULE_SPLIT() ? OFFSET(Y) : OFFSET(X))
 #define MODULE_OFFSET2(X,T) MODULE_OFFSET(X, X##_##T)
 #define SIZE(X)            (SIZE_verify(size_table.X, (char *)__FUNCTION__, __FILE__, __LINE__, #X))
@@ -2465,6 +2462,7 @@ struct array_table {
 #define VALID_STRUCT(X)    (size_table.X >= 0)
 #define ARRAY_LENGTH(X)    (array_table.X)
 #define ASSIGN_OFFSET(X)   (offset_table.X)
+#define ASSIGN_TASK_OFFSET(X)   (task_offset_table.X)
 #define ASSIGN_SIZE(X)     (size_table.X)
 #define OFFSET_OPTION(X,Y) (OFFSET_option(offset_table.X, offset_table.Y, (char *)__FUNCTION__, __FILE__, __LINE__, #X, #Y))
 #define SIZE_OPTION(X,Y)   (SIZE_option(size_table.X, size_table.Y, (char *)__FUNCTION__, __FILE__, __LINE__, #X, #Y))
@@ -5214,6 +5212,7 @@ extern char *args[MAXARGS];
 extern int argcnt;            
 extern int argerrs;
 extern struct offset_table offset_table;
+extern struct task_offset_table task_offset_table;
 extern struct size_table size_table;
 extern struct array_table array_table;
 extern struct vm_table vm_table, *vt;

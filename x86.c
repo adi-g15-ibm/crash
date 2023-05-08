@@ -3716,23 +3716,13 @@ x86_get_pc(struct bt_info *bt)
 	ulong eip, inactive_task_frame;
 
 	if (tt->flags & THREAD_INFO) {
-		if (DIRECT_OFFSET_UNCHECKED(task_struct_thread_eip) >= 0)
-			readmem(bt->task + OFFSET(task_struct_thread_eip), KVADDR,
+		if (TASK_OFFSET_UNCHECKED(task_struct_thread_eip) >= 0)
+			readmem(bt->task + TASK_OFFSET(task_struct_thread_eip), KVADDR,
 				&eip, sizeof(void *), 
 				"thread_struct eip", FAULT_ON_ERROR);
 		else if (DIRECT_OFFSET_UNCHECKED(inactive_task_frame_ret_addr) >= 0) {
-			readmem(bt->task + OFFSET(task_struct_thread_esp), KVADDR,
-				&inactive_task_frame, sizeof(void *),
-				"task_struct.inactive_task_frame", FAULT_ON_ERROR);
-			readmem(inactive_task_frame + OFFSET(inactive_task_frame_ret_addr), 
-				KVADDR, &eip, sizeof(void *),
-				"inactive_task_frame.ret_addr", FAULT_ON_ERROR);
-		} else
-			error(FATAL, "cannot determine ip address\n");
-		return eip;
-	}
-
-	offset = OFFSET_OPTION(task_struct_thread_eip, task_struct_tss_eip);
+			readmem(bt->task + TASK_OFFSET(task_struct_thread_esp), KVADDR,
+	offset = OFFSET_option(TASK_OFFSET(task_struct_thread_eip), TASK_OFFSET(task_struct_tss_eip));
 	
 	return GET_STACK_ULONG(offset);
 }
@@ -3750,7 +3740,7 @@ x86_get_sp(struct bt_info *bt)
 		return ksp;
 
 	if (tt->flags & THREAD_INFO) {
-                readmem(bt->task + OFFSET(task_struct_thread_esp), KVADDR,
+                readmem(bt->task + TASK_OFFSET(task_struct_thread_esp), KVADDR,
                         &ksp, sizeof(void *),
                         "thread_struct esp", FAULT_ON_ERROR);
 		if (DIRECT_OFFSET_UNCHECKED(inactive_task_frame_ret_addr) >= 0)
@@ -3758,7 +3748,7 @@ x86_get_sp(struct bt_info *bt)
                 return ksp;
 	} 
 
-	offset = OFFSET_OPTION(task_struct_thread_esp, task_struct_tss_esp);
+	offset = OFFSET_option(TASK_OFFSET(task_struct_thread_esp), TASK_OFFSET(task_struct_tss_esp));
 
 	return GET_STACK_ULONG(offset);
 }

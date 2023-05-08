@@ -454,13 +454,6 @@ vm_init(void)
 		MEMBER_OFFSET_INIT(page_next, "slab", "next");
 
 	MEMBER_OFFSET_INIT(page_list, "page", "list");
-	if (DIRECT_OFFSET_UNCHECKED(page_list) >= 0) {
-		ASSIGN_OFFSET(page_list_next) = OFFSET(page_list) +
-			OFFSET(list_head_next);
-		ASSIGN_OFFSET(page_list_prev) = OFFSET(page_list) +
-			OFFSET(list_head_prev);
-	}
-
 	MEMBER_OFFSET_INIT(page_next_hash, "page", "next_hash");
 	MEMBER_OFFSET_INIT(page_inode, "page", "inode");
 	MEMBER_OFFSET_INIT(page_offset, "page", "offset");
@@ -8301,7 +8294,7 @@ dump_zone_free_area(ulong free_area, int num, ulong verbose,
                 ld->flags = verbose | RETURN_ON_DUPLICATE;
                 ld->start = free_area_buf[0];
                 ld->end = free_area;
-		if (DIRECT_OFFSET_UNCHECKED(page_list_next) >= 0)
+		if (DIRECT_OFFSET_UNCHECKED(page_list) >= 0 && DIRECT_OFFSET_UNCHECKED(list_head_next))
 			ld->list_head_offset = OFFSET(page_list);
         	else if (DIRECT_OFFSET_UNCHECKED(page_lru) >= 0)
 			ld->list_head_offset = OFFSET(page_lru)+
@@ -9569,6 +9562,10 @@ vaddr_to_kmem_cache(ulong vaddr, char *buf, int verbose)
 {
 	physaddr_t paddr;
 	ulong page, cache, page_flags;
+	off_t page_list_next = INVALID_OFFSET;
+
+	if (DIRECT_OFFSET_UNCHECKED(page_list) >= 0)
+		page_list_next = OFFSET(page_list) + OFFSET(list_head_next);
 
         if (!kvtop(NULL, vaddr, &paddr, 0)) {
 		if (verbose)
@@ -9614,8 +9611,8 @@ vaddr_to_kmem_cache(ulong vaddr, char *buf, int verbose)
                 readmem(page+OFFSET(page_next),
                         KVADDR, &cache, sizeof(void *),
                         "page.next", FAULT_ON_ERROR);
-	else if (DIRECT_OFFSET_UNCHECKED(page_list_next) >= 0)
-                readmem(page+OFFSET(page_list_next),
+	else if (page_list_next >= 0)
+                readmem(page+page_list_next,
                         KVADDR, &cache, sizeof(void *),
                         "page.list.next", FAULT_ON_ERROR);
 	else if (DIRECT_OFFSET_UNCHECKED(page_lru) >= 0)
@@ -9661,6 +9658,10 @@ vaddr_to_slab(ulong vaddr)
         physaddr_t paddr;
         ulong page;
         ulong slab;
+	off_t page_list_prev = INVALID_OFFSET;
+
+	if (DIRECT_OFFSET_UNCHECKED(page_list) >= 0)
+		page_list_prev = OFFSET(page_list) + OFFSET(list_head_prev);
 
         if (!kvtop(NULL, vaddr, &paddr, 0)) {
                 error(WARNING,
@@ -9689,8 +9690,8 @@ vaddr_to_slab(ulong vaddr)
                 readmem(page+OFFSET(page_prev),
                         KVADDR, &slab, sizeof(void *),
                         "page.prev", FAULT_ON_ERROR);
-        else if (DIRECT_OFFSET_UNCHECKED(page_list_prev) >= 0)
-                readmem(page+OFFSET(page_list_prev),
+        else if (page_list_prev >= 0)
+                readmem(page+page_list_prev,
                         KVADDR, &slab, sizeof(void *),
                         "page.list.prev", FAULT_ON_ERROR);
 	else if (DIRECT_OFFSET_UNCHECKED(page_lru) >= 0)

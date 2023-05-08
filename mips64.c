@@ -755,9 +755,9 @@ mips64_stackframe_init(void)
 		return;
 	}
 
-	ASSIGN_OFFSET(task_struct_thread_reg29) =
+	ASSIGN_TASK_OFFSET(task_struct_thread_reg29) =
 		task_struct_thread + thread_reg29;
-	ASSIGN_OFFSET(task_struct_thread_reg31) =
+	ASSIGN_TASK_OFFSET(task_struct_thread_reg31) =
 		task_struct_thread + thread_reg31;
 
 	STRUCT_SIZE_INIT(pt_regs, "pt_regs");
@@ -839,14 +839,14 @@ mips64_get_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 	if (!bt->tc || !(tt->flags & THREAD_INFO))
 		return FALSE;
 
-	if (!readmem(bt->task + OFFSET(task_struct_thread_reg31),
+	if (!readmem(bt->task + TASK_OFFSET(task_struct_thread_reg31),
 		     KVADDR, pcp, sizeof(*pcp),
 		     "thread_struct.regs31",
 		     RETURN_ON_ERROR)) {
 		return FALSE;
 	}
 
-	if (!readmem(bt->task + OFFSET(task_struct_thread_reg29),
+	if (!readmem(bt->task + TASK_OFFSET(task_struct_thread_reg29),
 		     KVADDR, spp, sizeof(*spp),
 		     "thread_struct.regs29",
 		     RETURN_ON_ERROR)) {

@@ -4519,7 +4519,8 @@ get_mq_diskio(unsigned long q, unsigned long *mq_count)
 	if (CRASHDEBUG(1))
 		fprintf(fp, "mq: using blk_mq_ctx.rq_{completed,dispatched} counters\n");
 
-	readmem(q + OFFSET(request_queue_queue_ctx), KVADDR, &queue_ctx,
+	long request_queue_queue_ctx = ANON_MEMBER_OFFSET("request_queue", "queue_ctx");
+	readmem(q + request_queue_queue_ctx, KVADDR, &queue_ctx,
 		sizeof(ulong), "request_queue.queue_ctx",
 		FAULT_ON_ERROR);
 
@@ -4859,8 +4860,6 @@ void diskio_init(void)
 	if (MEMBER_EXISTS("request_queue", "mq_ops")) {
 		MEMBER_OFFSET_INIT(request_queue_mq_ops, "request_queue",
 			"mq_ops");
-		ANON_MEMBER_OFFSET_INIT(request_queue_queue_ctx,
-			"request_queue", "queue_ctx");
 		MEMBER_OFFSET_INIT(request_queue_queue_hw_ctx,
 			"request_queue", "queue_hw_ctx");
 		MEMBER_OFFSET_INIT(request_queue_nr_hw_queues,

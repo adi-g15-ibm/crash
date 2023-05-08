@@ -2777,13 +2777,13 @@ ppc64_get_sp(ulong task)
 	ulong sp;
 
 	if (tt->flags & THREAD_INFO)
-		readmem(task + OFFSET(task_struct_thread_ksp), KVADDR,
+		readmem(task + TASK_OFFSET(task_struct_thread_ksp), KVADDR,
 			&sp, sizeof(void *),
 			"thread_struct ksp", FAULT_ON_ERROR);
         else {
 		ulong offset;
-		offset = OFFSET_OPTION(task_struct_thread_ksp,
-			task_struct_tss_ksp);
+		offset = OFFSET_option(TASK_OFFSET(task_struct_thread_ksp),
+			TASK_OFFSET(task_struct_tss_ksp));
 		readmem(task + offset, KVADDR, &sp, sizeof(void *),
 			"task_struct ksp", FAULT_ON_ERROR);
         }
