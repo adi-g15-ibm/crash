@@ -1623,7 +1623,7 @@ arm64_init_kernel_pgd(void)
 	ulong value;
 
 	if (!kernel_symbol_exists("init_mm") ||
-	    !readmem(symbol_value("init_mm") + OFFSET(mm_struct_pgd), KVADDR,
+	    !readmem(symbol_value("init_mm") + LAZY_OFFSET(mm_struct_pgd), KVADDR,
 	    &value, sizeof(void *), "init_mm.pgd", RETURN_ON_ERROR)) {
 		if (kernel_symbol_exists("swapper_pg_dir"))
 			value = symbol_value("swapper_pg_dir");
@@ -1727,7 +1727,7 @@ arm64_uvtop(struct task_context *tc, ulong uvaddr, physaddr_t *paddr, int verbos
 {
         ulong user_pgd;
 
-        readmem(tc->mm_struct + OFFSET(mm_struct_pgd), KVADDR,
+        readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), KVADDR,
                 &user_pgd, sizeof(long), "user pgd", FAULT_ON_ERROR);
 
 	*paddr = 0;
@@ -2073,7 +2073,7 @@ arm64_get_task_pgd(ulong task)
 	ulong pgd;
 
 	if ((tc = task_to_context(task)) &&
-	    readmem(tc->mm_struct + OFFSET(mm_struct_pgd), KVADDR,
+	    readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), KVADDR,
 	    &pgd, sizeof(long), "user pgd", RETURN_ON_ERROR))
 		return pgd;
 	else
@@ -4310,7 +4310,7 @@ arm64_get_crash_notes(void)
 				offset = roundup(offset + note->n_namesz, 4);
 				p = (char *)note + offset; /* start of elf_prstatus */
 
-				BCOPY(p + OFFSET(elf_prstatus_pr_reg), &ms->panic_task_regs[i],
+				BCOPY(p + LAZY_OFFSET(elf_prstatus_pr_reg), &ms->panic_task_regs[i],
 				      sizeof(struct arm64_pt_regs));
 
 				found++;
@@ -4413,7 +4413,7 @@ arm64_get_crash_notes(void)
 		offset = roundup(offset + note->n_namesz, 4);
 		p = buf + offset; /* start of elf_prstatus */
 
-		BCOPY(p + OFFSET(elf_prstatus_pr_reg), &ms->panic_task_regs[i],
+		BCOPY(p + LAZY_OFFSET(elf_prstatus_pr_reg), &ms->panic_task_regs[i],
 		      sizeof(struct arm64_pt_regs));
 
 		found++;

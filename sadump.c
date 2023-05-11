@@ -1457,15 +1457,15 @@ void get_sadump_regs(struct bt_info *bt, ulong *ipp, ulong *spp)
 
 	if (get_prstatus_from_crash_notes(cpu, prstatus)) {
 		ip = ULONG(prstatus +
-			   OFFSET(elf_prstatus_pr_reg) +
+			   LAZY_OFFSET(elf_prstatus_pr_reg) +
 			   (BITS64()
-			    ? OFFSET(user_regs_struct_rip)
-			    : OFFSET(user_regs_struct_eip)));
+			    ? LAZY_OFFSET(user_regs_struct_rip)
+			    : LAZY_OFFSET(user_regs_struct_eip)));
 		sp = ULONG(prstatus +
-			   OFFSET(elf_prstatus_pr_reg) +
+			   LAZY_OFFSET(elf_prstatus_pr_reg) +
 			   (BITS64()
-			    ? OFFSET(user_regs_struct_rsp)
-			    : OFFSET(user_regs_struct_eip)));
+			    ? LAZY_OFFSET(user_regs_struct_rsp)
+			    : LAZY_OFFSET(user_regs_struct_eip)));
 		if (ip || sp) {
 			*ipp = ip;
 			*spp = sp;

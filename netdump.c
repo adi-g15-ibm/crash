@@ -1047,8 +1047,8 @@ get_netdump_panic_task(void)
 		
 		user_regs = ((char *)note32 + len)
 			- SIZE(user_regs_struct) - sizeof(int);
-		ebp = ULONG(user_regs + OFFSET(user_regs_struct_ebp));
-		esp = ULONG(user_regs + OFFSET(user_regs_struct_esp));
+		ebp = ULONG(user_regs + LAZY_OFFSET(user_regs_struct_ebp));
+		esp = ULONG(user_regs + LAZY_OFFSET(user_regs_struct_esp));
 check_ebp_esp:
 		if (CRASHDEBUG(1)) 
 			error(INFO, 
@@ -1095,8 +1095,8 @@ check_ebp_esp:
 			MEMBER_OFFSET("elf_prstatus", "pr_reg"));
 
 		if (nd->elf64->e_machine == EM_386) {
-                	ebp = ULONG(user_regs + OFFSET(user_regs_struct_ebp));
-                	esp = ULONG(user_regs + OFFSET(user_regs_struct_esp));
+                	ebp = ULONG(user_regs + LAZY_OFFSET(user_regs_struct_ebp));
+                	esp = ULONG(user_regs + LAZY_OFFSET(user_regs_struct_esp));
 			goto check_ebp_esp;
 		}
 
@@ -2704,15 +2704,15 @@ get_regs_from_note(char *note, ulong *ip, ulong *sp)
 		len = sizeof(Elf64_Nhdr);
 		len = roundup(len + note64->n_namesz, 4);
 		len = roundup(len + note64->n_descsz, 4);
-		offset_sp = OFFSET(user_regs_struct_rsp);
-		offset_ip = OFFSET(user_regs_struct_rip);
+		offset_sp = LAZY_OFFSET(user_regs_struct_rsp);
+		offset_ip = LAZY_OFFSET(user_regs_struct_rip);
 	} else if (machine_type("X86")) {
 		note32 = (Elf32_Nhdr *)note;
 		len = sizeof(Elf32_Nhdr);
 		len = roundup(len + note32->n_namesz, 4);
 		len = roundup(len + note32->n_descsz, 4);
-		offset_sp = OFFSET(user_regs_struct_esp);
-		offset_ip = OFFSET(user_regs_struct_eip);
+		offset_sp = LAZY_OFFSET(user_regs_struct_esp);
+		offset_ip = LAZY_OFFSET(user_regs_struct_eip);
 	} else
 		return NULL;
 
@@ -2770,26 +2770,26 @@ display_regs_from_elf_notes(int cpu, FILE *ofp)
 		    "    R10: %016llx  R11: %016llx  R12: %016llx\n"
 		    "    R13: %016llx  R14: %016llx  R15: %016llx\n"
 		    "    CS: %04x  SS: %04x\n",
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rip)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsp)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_eflags)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rax)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbx)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rcx)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdx)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsi)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdi)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbp)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r8)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r9)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r10)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r11)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r12)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r13)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r14)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r15)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_cs)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_ss))
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rip)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rsp)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_eflags)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rax)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rbx)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rcx)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rdx)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rsi)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rdi)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rbp)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r8)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r9)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r10)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r11)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r12)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r13)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r14)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r15)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ss))
 		);
 	} else if (machine_type("X86")) {
 		if (nd->num_prstatus_notes > 1)
@@ -2808,22 +2808,22 @@ display_regs_from_elf_notes(int cpu, FILE *ofp)
 		    "    CS: %04x       DS: %04x       ES: %04x       FS: %04x\n"
 		    "    GS: %04x       SS: %04x\n"
 		    "    EBP: %08x  EFLAGS: %08x\n",
-		    UINT(user_regs + OFFSET(user_regs_struct_eax)),
-		    UINT(user_regs + OFFSET(user_regs_struct_ebx)),
-		    UINT(user_regs + OFFSET(user_regs_struct_ecx)),
-		    UINT(user_regs + OFFSET(user_regs_struct_edx)),
-		    UINT(user_regs + OFFSET(user_regs_struct_esp)),
-		    UINT(user_regs + OFFSET(user_regs_struct_eip)),
-		    UINT(user_regs + OFFSET(user_regs_struct_esi)),
-		    UINT(user_regs + OFFSET(user_regs_struct_edi)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_cs)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_ds)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_es)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_fs)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_gs)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_ss)),
-		    UINT(user_regs + OFFSET(user_regs_struct_ebp)),
-		    UINT(user_regs + OFFSET(user_regs_struct_eflags))
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_eax)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_ebx)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_ecx)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_edx)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_esp)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_eip)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_esi)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_edi)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ds)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_es)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_fs)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_gs)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ss)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_ebp)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_eflags))
 		);
 	} else if (machine_type("PPC64")) {
 		struct ppc64_elf_prstatus *prs;
@@ -2883,7 +2883,7 @@ display_regs_from_elf_notes(int cpu, FILE *ofp)
 		len = sizeof(Elf64_Nhdr);
 		len = roundup(len + note64->n_namesz, 4);
 		len = roundup(len + note64->n_descsz, 4);
-		user_regs = (char *)note64 + len - SIZE(elf_prstatus) + OFFSET(elf_prstatus_pr_reg);
+		user_regs = (char *)note64 + len - SIZE(elf_prstatus) + LAZY_OFFSET(elf_prstatus_pr_reg);
 		fprintf(ofp,
 			"    X0: %016lx   X1: %016lx   X2: %016lx\n"
 			"    X3: %016lx   X4: %016lx   X5: %016lx\n"
@@ -3485,10 +3485,10 @@ get_netdump_regs_x86_64(struct bt_info *bt, ulong *ripp, ulong *rspp)
 			SIZE(user_regs_struct) : 
 			sizeof(struct x86_64_user_regs_struct);
 		rsp_offset = DIRECT_OFFSET_UNCHECKED(user_regs_struct_rsp) >= 0 ?
-			OFFSET(user_regs_struct_rsp) : 
+			LAZY_OFFSET(user_regs_struct_rsp) : 
 			offsetof(struct x86_64_user_regs_struct, rsp);
 		rip_offset = DIRECT_OFFSET_UNCHECKED(user_regs_struct_rip) >= 0 ?
-			OFFSET(user_regs_struct_rip) :
+			LAZY_OFFSET(user_regs_struct_rip) :
                         offsetof(struct x86_64_user_regs_struct, rip);
 
                 user_regs = ((char *)note + len) - regs_size - sizeof(long);

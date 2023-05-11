@@ -797,12 +797,12 @@ struct kernel_table {                   /* kernel data */
         switch (kt->flags & (KMOD_V1|KMOD_V2))                       \
         {                                                            \
         case KMOD_V1:                                                \
-                next_module = ULONG(modbuf + OFFSET(module_next));   \
+                next_module = ULONG(modbuf + LAZY_OFFSET(module_next));   \
                 break;                                               \
         case KMOD_V2:                                                \
-                next_module = ULONG(modbuf + OFFSET(module_list));   \
+                next_module = ULONG(modbuf + LAZY_OFFSET(module_list));   \
                 if (next_module != kt->kernel_module)                \
-                        next_module -= OFFSET(module_list);          \
+                        next_module -= LAZY_OFFSET(module_list);          \
                 break;                                               \
         }                                                            \
 }
@@ -1221,6 +1221,958 @@ struct reference {
 	void *refp;
 };
 
+/* These offsets can be lazy initialised using information from
+ * `lazy_offset_initinfo` array. Access these using OFFSET(X) */
+enum lazy_offset {
+	RESIDUAL_VitalProductData,
+	VPD_ProcessorHz,
+	__wait_queue_head_task_list,
+	__wait_queue_task,
+	__wait_queue_task_list,
+	address_space_nrpages,
+	address_space_page_tree,
+	array_cache_avail,
+	array_cache_limit,
+	atomic_long_t_counter,
+	atomic_t_counter,
+	attribute_owner,
+	bd_info_bi_intfreq,
+	blk_major_name_major,
+	blk_major_name_name,
+	blk_major_name_next,
+	blk_mq_ctx_rq_completed,
+	blk_mq_ctx_rq_dispatched,
+	blk_mq_hw_ctx_tags,
+	blk_mq_tags_bitmap_tags,
+	blk_mq_tags_breserved_tags,
+	blk_mq_tags_nr_reserved_tags,
+	blk_mq_tags_rqs,
+	block_device_bd_device,
+	block_device_bd_disk,
+	block_device_bd_inode,
+	block_device_bd_list,
+	block_device_bd_stats,
+	bpf_map_key_size,
+	bpf_map_map_flags,
+	bpf_map_map_type,
+	bpf_map_max_entries,
+	bpf_map_memory,
+	bpf_map_memory_pages,
+	bpf_map_memory_user,
+	bpf_map_name,
+	bpf_map_pages,
+	bpf_map_user,
+	bpf_map_value_size,
+	bpf_prog_aux,
+	bpf_prog_aux_load_time,
+	bpf_prog_aux_name,
+	bpf_prog_aux_used_map_cnt,
+	bpf_prog_aux_used_maps,
+	bpf_prog_aux_user,
+	bpf_prog_bpf_func,
+	bpf_prog_insnsi,
+	bpf_prog_jited_len,
+	bpf_prog_len,
+	bpf_prog_pages,
+	bpf_prog_tag,
+	bpf_prog_type,
+	bus_type_p,
+	cdev_ops,
+	cfs_rq_curr,
+	cfs_rq_nr_running,
+	cfs_rq_rb_leftmost,
+	cfs_rq_tasks_timeline,
+	cfs_rq_tg,
+	cfs_rq_throttled,
+	cgroup_dentry,
+	cgroup_kn,
+	cgroup_subsys_state_cgroup,
+	char_device_struct_baseminor,
+	char_device_struct_cdev,
+	char_device_struct_fops,
+	char_device_struct_major,
+	char_device_struct_name,
+	char_device_struct_next,
+	class_devices,
+	class_p,
+	class_private_devices,
+	cpu_context_save_fp,
+	cpu_context_save_pc,
+	cpu_context_save_r7,
+	cpu_context_save_sp,
+	cpu_s_curr,
+	cpu_s_idle,
+	cpu_user_regs_eip,
+	cpu_user_regs_esp,
+	cpucache_s_avail,
+	cpucache_s_limit,
+	cpuinfo_ia64_proc_freq,
+	cpuinfo_ia64_unimpl_pa_mask,
+	cpuinfo_ia64_unimpl_va_mask,
+	dentry_d_covers,
+	dentry_d_iname,
+	dentry_d_inode,
+	dentry_d_name,
+	dentry_d_parent,
+	dentry_d_sb,
+	dev_printk_info_device,
+	dev_printk_info_subsystem,
+	device_addr_len,
+	device_ip_ptr,
+	device_knode_class,
+	device_kobj,
+	device_name,
+	device_next,
+	device_node,
+	device_node_allnext,
+	device_node_properties,
+	device_node_type,
+	device_private_device,
+	device_private_knode_bus,
+	device_private_knode_class,
+	device_type,
+	disk_stats_in_flight,
+	e820entry_addr,
+	e820entry_size,
+	e820entry_type,
+	e820map_nr_map,
+	elf_prstatus_pr_pid,
+	elf_prstatus_pr_reg,
+	fdtable_fd,
+	fdtable_max_fds,
+	fdtable_max_fdset,
+	fdtable_open_fds,
+	file_f_count,
+	file_f_dentry,
+	file_f_op,
+	file_f_path,
+	file_f_vfsmnt,
+	file_lock_fl_owner,
+	file_private_data,
+	file_system_type_name,
+	files_struct_fd,
+	files_struct_fdt,
+	files_struct_max_fds,
+	files_struct_max_fdset,
+	files_struct_open_fds,
+	files_struct_open_fds_init,
+	fs_struct_pwd,
+	fs_struct_pwdmnt,
+	fs_struct_root,
+	fs_struct_rootmnt,
+	gendisk_dev,
+	gendisk_disk_name,
+	gendisk_fops,
+	gendisk_kobj,
+	gendisk_major,
+	gendisk_part0,
+	gendisk_private_data,
+	gendisk_queue,
+	hd_struct_dev,
+	hd_struct_dkstats,
+	hlist_node_next,
+	hlist_node_pprev,
+	hrtimer_base_first,
+	hrtimer_base_get_time,
+	hrtimer_base_pending,
+	hrtimer_clock_base_active,
+	hrtimer_clock_base_first,
+	hrtimer_clock_base_get_time,
+	hrtimer_clock_base_offset,
+	hrtimer_cpu_base_clock_base,
+	hrtimer_expires,
+	hrtimer_function,
+	hrtimer_list,
+	hrtimer_node,
+	hrtimer_softexpires,
+	hstate_free_huge_pages,
+	hstate_name,
+	hstate_nr_huge_pages,
+	hstate_order,
+	hugetlbfs_sb_info_hstate,
+	hw_interrupt_type_ack,
+	hw_interrupt_type_disable,
+	hw_interrupt_type_enable,
+	hw_interrupt_type_end,
+	hw_interrupt_type_handle,
+	hw_interrupt_type_set_affinity,
+	hw_interrupt_type_shutdown,
+	hw_interrupt_type_startup,
+	hw_interrupt_type_typename,
+	hwrpb_struct_cycle_freq,
+	hwrpb_struct_processor_offset,
+	hwrpb_struct_processor_size,
+	idr_cur,
+	idr_idr_rt,
+	idr_layer_ary,
+	idr_layer_layer,
+	idr_layers,
+	idr_top,
+	in6_addr_in6_u,
+	in_device_ifa_list,
+	in_ifaddr_ifa_address,
+	in_ifaddr_ifa_next,
+	inactive_task_frame_bp,
+	inactive_task_frame_ret_addr,
+	inet6_dev_addr_list,
+	inet6_ifaddr_addr,
+	inet6_ifaddr_if_list,
+	inet6_ifaddr_if_next,
+	inet_opt_sport,
+	inet_sock_inet,
+	inode_i_flock,
+	inode_i_fop,
+	inode_i_mapping,
+	inode_i_mode,
+	inode_i_op,
+	inode_i_sb,
+	inode_i_sb_list,
+	inode_u,
+	ipc_id_ary_p,
+	ipc_ids_entries,
+	ipc_ids_in_use,
+	ipc_ids_ipcs_idr,
+	ipc_ids_max_id,
+	ipc_namespace_ids,
+	ipv6_pinfo_daddr,
+	ipv6_pinfo_rcv_saddr,
+	irq_chip_ack,
+	irq_chip_disable,
+	irq_chip_enable,
+	irq_chip_end,
+	irq_chip_eoi,
+	irq_chip_mask,
+	irq_chip_mask_ack,
+	irq_chip_retrigger,
+	irq_chip_set_affinity,
+	irq_chip_set_type,
+	irq_chip_set_wake,
+	irq_chip_shutdown,
+	irq_chip_startup,
+	irq_chip_typename,
+	irq_chip_unmask,
+	irq_common_data_affinity,
+	irq_cpustat_t___softirq_active,
+	irq_cpustat_t___softirq_mask,
+	irq_data_affinity,
+	irq_data_chip,
+	irq_desc_irq_common_data,
+	irq_desc_irq_data,
+	irq_desc_t_action,
+	irq_desc_t_affinity,
+	irq_desc_t_chip,
+	irq_desc_t_depth,
+	irq_desc_t_handler,
+	irq_desc_t_irq_data,
+	irq_desc_t_kstat_irqs,
+	irq_desc_t_name,
+	irq_desc_t_status,
+	irqaction_dev_id,
+	irqaction_flags,
+	irqaction_handler,
+	irqaction_mask,
+	irqaction_name,
+	irqaction_next,
+	irqdesc_action,
+	irqdesc_ctl,
+	irqdesc_level,
+	k_sigaction_sa,
+	kallsyms_header_section_off,
+	kallsyms_header_sections,
+	kallsyms_header_string_off,
+	kallsyms_header_symbol_off,
+	kallsyms_header_symbols,
+	kallsyms_section_name_off,
+	kallsyms_section_size,
+	kallsyms_section_start,
+	kallsyms_symbol_name_off,
+	kallsyms_symbol_section_off,
+	kallsyms_symbol_symbol_addr,
+	kern_ipc_perm_deleted,
+	kern_ipc_perm_id,
+	kern_ipc_perm_key,
+	kern_ipc_perm_mode,
+	kern_ipc_perm_seq,
+	kern_ipc_perm_uid,
+	kernel_stat_irqs,
+	kernfs_node_name,
+	kernfs_node_parent,
+	klist_k_list,
+	klist_node_n_klist,
+	klist_node_n_node,
+	kmem_cache_align,
+	kmem_cache_cpu_cache,
+	kmem_cache_cpu_freelist,
+	kmem_cache_cpu_node,
+	kmem_cache_cpu_page,
+	kmem_cache_cpu_partial,
+	kmem_cache_cpu_slab,
+	kmem_cache_flags,
+	kmem_cache_inuse,
+	kmem_cache_list,
+	kmem_cache_local_node,
+	kmem_cache_memcg_params,
+	kmem_cache_name,
+	kmem_cache_node,
+	kmem_cache_node_full,
+	kmem_cache_node_nr_partial,
+	kmem_cache_node_nr_slabs,
+	kmem_cache_node_partial,
+	kmem_cache_node_total_objects,
+	kmem_cache_objects,
+	kmem_cache_objsize,
+	kmem_cache_offset,
+	kmem_cache_oo,
+	kmem_cache_order,
+	kmem_cache_random,
+	kmem_cache_red_left_pad,
+	kmem_cache_s_array,
+	kmem_cache_s_c_align,
+	kmem_cache_s_c_firstp,
+	kmem_cache_s_c_flags,
+	kmem_cache_s_c_gfporder,
+	kmem_cache_s_c_magic,
+	kmem_cache_s_c_name,
+	kmem_cache_s_c_nextp,
+	kmem_cache_s_c_num,
+	kmem_cache_s_c_offset,
+	kmem_cache_s_c_org_size,
+	kmem_cache_s_colour_off,
+	kmem_cache_s_cpudata,
+	kmem_cache_s_flags,
+	kmem_cache_s_gfporder,
+	kmem_cache_s_lists,
+	kmem_cache_s_name,
+	kmem_cache_s_next,
+	kmem_cache_s_num,
+	kmem_cache_s_objsize,
+	kmem_cache_s_slabs,
+	kmem_cache_s_slabs_free,
+	kmem_cache_s_slabs_full,
+	kmem_cache_s_slabs_partial,
+	kmem_cache_size,
+	kmem_list3_free_objects,
+	kmem_list3_shared,
+	kmem_list3_slabs_free,
+	kmem_list3_slabs_full,
+	kmem_list3_slabs_partial,
+	kmem_slab_s_s_freep,
+	kmem_slab_s_s_index,
+	kmem_slab_s_s_inuse,
+	kmem_slab_s_s_magic,
+	kmem_slab_s_s_mem,
+	kmem_slab_s_s_nextp,
+	kmem_slab_s_s_offset,
+	kobj_map_probes,
+	kobject_entry,
+	kobject_name,
+	kset_kobj,
+	kset_list,
+	ktime_t_nsec,
+	ktime_t_sec,
+	ktime_t_tv64,
+	list_head_next,
+	list_head_prev,
+	log_dict_len,
+	log_flags_level,
+	log_len,
+	log_level,
+	log_text_len,
+	log_ts_nsec,
+	machdep_calls_setup_residual,
+	maple_arange_64_gap,
+	maple_arange_64_meta,
+	maple_arange_64_pivot,
+	maple_arange_64_slot,
+	maple_metadata_end,
+	maple_metadata_gap,
+	maple_node_ma64,
+	maple_node_mr64,
+	maple_node_parent,
+	maple_node_slot,
+	maple_range_64_pivot,
+	maple_range_64_slot,
+	maple_tree_ma_flags,
+	maple_tree_ma_root,
+	mem_section_section_mem_map,
+	memcg_cache_params___root_caches_node,
+	memcg_cache_params_children,
+	memcg_cache_params_children_node,
+	memory_block_dev,
+	memory_block_end_section_nr,
+	memory_block_nid,
+	memory_block_start_section_nr,
+	memory_block_state,
+	mm_rss_stat_count,
+	mm_struct_anon_rss,
+	mm_struct_arg_end,
+	mm_struct_arg_start,
+	mm_struct_env_end,
+	mm_struct_env_start,
+	mm_struct_file_rss,
+	mm_struct_mm_count,
+	mm_struct_mm_mt,
+	mm_struct_mmap,
+	mm_struct_pgd,
+	mm_struct_rss,
+	mm_struct_rss_stat,
+	mm_struct_start_code,
+	mm_struct_total_vm,
+	mnt_namespace_list,
+	mnt_namespace_root,
+	mod_arch_specific_num_orcs,
+	mod_arch_specific_orc_unwind,
+	mod_arch_specific_orc_unwind_ip,
+	module_arch,
+	module_attribute_attr,
+	module_core_size,
+	module_core_size_rw,
+	module_core_size_rx,
+	module_core_text_size,
+	module_flags,
+	module_gpgsig_ok,
+	module_gpl_syms,
+	module_init_size,
+	module_init_size_rw,
+	module_init_size_rx,
+	module_init_text_size,
+	module_kallsyms_start,
+	module_license_gplok,
+	module_list,
+	module_module_core,
+	module_module_core_rw,
+	module_module_core_rx,
+	module_module_init,
+	module_module_init_rw,
+	module_module_init_rx,
+	module_name,
+	module_next,
+	module_nsyms,
+	module_num_gpl_syms,
+	module_num_syms,
+	module_num_symtab,
+	module_percpu,
+	module_sect_attr_address,
+	module_sect_attr_attr,
+	module_sect_attr_mattr,
+	module_sect_attr_name,
+	module_sect_attrs,
+	module_sect_attrs_attrs,
+	module_sect_attrs_nsections,
+	module_sections_attrs,
+	module_size,
+	module_size_of_struct,
+	module_strtab,
+	module_syms,
+	module_symtab,
+	module_taints,
+	mount_mnt,
+	mount_mnt_devname,
+	mount_mnt_list,
+	mount_mnt_mountpoint,
+	mount_mnt_parent,
+	msg_queue_q_cbytes,
+	msg_queue_q_id,
+	msg_queue_q_perm,
+	msg_queue_q_qnum,
+	namespace_list,
+	namespace_root,
+	neigh_table_hash_buckets,
+	neigh_table_hash_mask,
+	neigh_table_hash_shift,
+	neigh_table_key_len,
+	neigh_table_nht_ptr,
+	neighbour_dev,
+	neighbour_ha,
+	neighbour_next,
+	neighbour_nud_state,
+	neighbour_primary_key,
+	net_dev_base_head,
+	net_device_addr_len,
+	net_device_dev_list,
+	net_device_ip6_ptr,
+	net_device_ip_ptr,
+	net_device_name,
+	net_device_next,
+	net_device_type,
+	nlm_file_f_file,
+	nlm_host_h_exportent,
+	nlmsghdr_nlmsg_type,
+	nsproxy_ipc_ns,
+	nsproxy_mnt_ns,
+	nsproxy_net_ns,
+	page_buffers,
+	page_cache_bucket_chain,
+	page_flags,
+	page_inode,
+	page_list,
+	page_next_hash,
+	page_prev,
+	page_private,
+	page_pte,
+	path_dentry,
+	path_mnt,
+	pci_bus_children,
+	pci_bus_dev,
+	pci_bus_devices,
+	pci_bus_node,
+	pci_bus_number,
+	pci_bus_parent,
+	pci_bus_self,
+	pci_dev_bus,
+	pci_dev_class,
+	pci_dev_dev,
+	pci_dev_devfn,
+	pci_dev_device,
+	pci_dev_global_list,
+	pci_dev_hdr_type,
+	pci_dev_next,
+	pci_dev_pcie_flags_reg,
+	pci_dev_vendor,
+	pcpu_info_idle,
+	pcpu_info_vcpu,
+	percpu_counter_count,
+	percpu_counter_counters,
+	percpu_struct_halt_PC,
+	percpu_struct_halt_pv,
+	percpu_struct_halt_ra,
+	pglist_data_bdata,
+	pglist_data_node_id,
+	pglist_data_node_mem_map,
+	pglist_data_node_next,
+	pglist_data_node_present_pages,
+	pglist_data_node_size,
+	pglist_data_node_spanned_pages,
+	pglist_data_node_start_mapnr,
+	pglist_data_node_start_paddr,
+	pglist_data_node_start_pfn,
+	pglist_data_node_zones,
+	pglist_data_nr_zones,
+	pglist_data_pgdat_next,
+	pid_hash_chain,
+	pid_link_pid,
+	pid_namespace_idr,
+	pid_numbers,
+	pid_pid_chain,
+	pid_tasks,
+	prb_data_blk_lpos_begin,
+	prb_data_blk_lpos_next,
+	prb_data_ring_data,
+	prb_data_ring_size_bits,
+	prb_desc_ring,
+	prb_desc_ring_count_bits,
+	prb_desc_ring_descs,
+	prb_desc_ring_head_id,
+	prb_desc_ring_infos,
+	prb_desc_ring_tail_id,
+	prb_desc_state_var,
+	prb_desc_text_blk_lpos,
+	prb_text_data_ring,
+	printk_info_caller_id,
+	printk_info_dev_info,
+	printk_info_level,
+	printk_info_seq,
+	printk_info_text_len,
+	printk_info_ts_nsec,
+	printk_safe_seq_buf_buffer,
+	printk_safe_seq_buf_len,
+	printk_safe_seq_buf_message_lost,
+	prio_array_nr_active,
+	prio_array_queue,
+	probe_data,
+	probe_dev,
+	probe_next,
+	property_name,
+	property_next,
+	property_value,
+	pt_regs_cp0_badvaddr,
+	pt_regs_regs,
+	qstr_name,
+	radix_tree_node_height,
+	radix_tree_node_shift,
+	radix_tree_node_slots,
+	radix_tree_root_height,
+	radix_tree_root_rnode,
+	rb_node_rb_left,
+	rb_node_rb_right,
+	rb_root_cached_rb_leftmost,
+	rb_root_rb_node,
+	request_cmd_flags,
+	request_list_count,
+	request_q,
+	request_queue_hctx_table,
+	request_queue_in_flight,
+	request_queue_mq_ops,
+	request_queue_nr_hw_queues,
+	request_queue_queue_hw_ctx,
+	request_queue_rq,
+	request_state,
+	resource_child,
+	resource_end,
+	resource_entry_t_from,
+	resource_entry_t_name,
+	resource_entry_t_next,
+	resource_entry_t_num,
+	resource_name,
+	resource_sibling,
+	resource_start,
+	rq_cfs,
+	rq_nr_running,
+	rq_rt,
+	rq_timestamp,
+	rt_prio_array_queue,
+	rt_rq_active,
+	rt_rq_highest_prio,
+	rt_rq_rt_nr_running,
+	rt_rq_rt_throttled,
+	rt_rq_tg,
+	runqueue_active,
+	runqueue_arrays,
+	runqueue_cpu,
+	runqueue_curr,
+	runqueue_expired,
+	runqueue_idle,
+	s390_lowcore_psw_save_area,
+	s390_stack_frame_back_chain,
+	sbitmap_alloc_hint,
+	sbitmap_depth,
+	sbitmap_map,
+	sbitmap_map_nr,
+	sbitmap_queue_alloc_hint,
+	sbitmap_queue_min_shallow_depth,
+	sbitmap_queue_round_robin,
+	sbitmap_queue_sb,
+	sbitmap_queue_wake_batch,
+	sbitmap_queue_wake_index,
+	sbitmap_queue_ws,
+	sbitmap_queue_ws_active,
+	sbitmap_round_robin,
+	sbitmap_shift,
+	sbitmap_word_cleared,
+	sbitmap_word_depth,
+	sbitmap_word_word,
+	sbq_wait_state_wait,
+	sbq_wait_state_wait_cnt,
+	sched_entity_cfs_rq,
+	sched_entity_my_q,
+	sched_entity_on_rq,
+	sched_entity_run_node,
+	sched_info_last_arrival,
+	sched_rt_entity_my_q,
+	sched_rt_entity_run_list,
+	sem_array_sem_id,
+	sem_array_sem_nsems,
+	sem_array_sem_perm,
+	shm_file_data_file,
+	shmem_inode_info_vfs_inode,
+	shmid_kernel_id,
+	shmid_kernel_shm_file,
+	shmid_kernel_shm_nattch,
+	shmid_kernel_shm_perm,
+	shmid_kernel_shm_segsz,
+	sigaction_sa_flags,
+	sigaction_sa_handler,
+	sigaction_sa_mask,
+	sighand_struct_action,
+	siginfo_si_signo,
+	signal_queue_info,
+	signal_queue_next,
+	signal_struct_action,
+	signal_struct_count,
+	signal_struct_nr_threads,
+	signal_struct_rlim,
+	signal_struct_shared_pending,
+	sigpending_head,
+	sigpending_list,
+	sigpending_signal,
+	sigqueue_info,
+	sigqueue_list,
+	sigqueue_next,
+	size_class_size,
+	sk_buff_data,
+	sk_buff_head_next,
+	sk_buff_head_qlen,
+	sk_buff_len,
+	sk_buff_next,
+	slab_s_free,
+	slab_s_inuse,
+	slab_s_list,
+	slab_s_s_mem,
+	slab_slab_list,
+	sock_common_skc_family,
+	sock_common_skc_v6_daddr,
+	sock_common_skc_v6_rcv_saddr,
+	sock_daddr,
+	sock_dport,
+	sock_family,
+	sock_num,
+	sock_rcv_saddr,
+	sock_sk_common,
+	sock_sk_type,
+	sock_sport,
+	sock_type,
+	socket_alloc_vfs_inode,
+	socket_sk,
+	subsys_private_klist_devices,
+	subsys_private_subsys,
+	subsystem_kset,
+	super_block_s_dirty,
+	super_block_s_files,
+	super_block_s_fs_info,
+	super_block_s_inodes,
+	super_block_s_type,
+	svc_client_cl_ident,
+	swap_info_struct_bdev,
+	swap_info_struct_flags,
+	swap_info_struct_inuse_pages,
+	swap_info_struct_max,
+	swap_info_struct_old_block_size,
+	swap_info_struct_pages,
+	swap_info_struct_prio,
+	swap_info_struct_swap_device,
+	swap_info_struct_swap_file,
+	swap_info_struct_swap_map,
+	swap_info_struct_swap_vfsmnt,
+	switch_stack_ar_bspstore,
+	switch_stack_ar_pfs,
+	switch_stack_ar_rnat,
+	switch_stack_b0,
+	switch_stack_pr,
+	switch_stack_r26,
+	task_group_cfs_bandwidth,
+	task_group_cfs_rq,
+	task_group_children,
+	task_group_css,
+	task_group_parent,
+	task_group_rt_bandwidth,
+	task_group_rt_rq,
+	task_group_siblings,
+	task_rss_stat_count,
+	task_struct_active_mm,
+	task_struct_blocked,
+	task_struct_comm,
+	task_struct_cpu,
+	task_struct_cpus_runnable,
+	task_struct_exit_state,
+	task_struct_files,
+	task_struct_flags,
+	task_struct_fs,
+	task_struct_has_cpu,
+	task_struct_last_run,
+	task_struct_mm,
+	task_struct_namespace,
+	task_struct_next_run,
+	task_struct_next_task,
+	task_struct_nsproxy,
+	task_struct_on_rq,
+	task_struct_p_pptr,
+	task_struct_parent,
+	task_struct_pending,
+	task_struct_pgrp,
+	task_struct_pid,
+	task_struct_pid_links,
+	task_struct_pidhash_next,
+	task_struct_pids,
+	task_struct_policy,
+	task_struct_prio,
+	task_struct_processor,
+	task_struct_rlim,
+	task_struct_rss_stat,
+	task_struct_rt,
+	task_struct_run_list,
+	task_struct_sched_info,
+	task_struct_se,
+	task_struct_sig,
+	task_struct_sighand,
+	task_struct_signal,
+	task_struct_sigpending,
+	task_struct_sigqueue,
+	task_struct_stack,
+	task_struct_start_time,
+	task_struct_state,
+	task_struct_stime,
+	task_struct_tgid,
+	task_struct_thread,
+	task_struct_thread_info,
+	task_struct_times,
+	task_struct_timestamp,
+	task_struct_tss,
+	task_struct_utime,
+	thread_info_cpu,
+	thread_info_cpu_context,
+	thread_info_flags,
+	thread_info_previous_esp,
+	thread_info_task,
+	thread_struct_cr3,
+	thread_struct_eip,
+	thread_struct_esp,
+	thread_struct_fph,
+	thread_struct_ksp,
+	thread_struct_pg_tables,
+	thread_struct_ptbr,
+	thread_struct_rip,
+	thread_struct_rsp,
+	thread_struct_rsp0,
+	timekeeper_xtime,
+	timekeeper_xtime_sec,
+	timer_base_vectors,
+	timer_list_entry,
+	timer_list_expires,
+	timer_list_function,
+	timer_list_list,
+	timer_list_next,
+	timer_vec_root_vec,
+	timer_vec_vec,
+	timerqueue_head_next,
+	timerqueue_head_rb_root,
+	timerqueue_node_expires,
+	timerqueue_node_node,
+	tms_tms_stime,
+	tms_tms_utime,
+	tnt_bit,
+	tnt_false,
+	tnt_mod,
+	tnt_true,
+	trace_print_flags_mask,
+	trace_print_flags_name,
+	tss_struct_ist,
+	tvec_root_s_vec,
+	tvec_s_vec,
+	tvec_t_base_s_tv1,
+	unwind_idx_addr,
+	unwind_idx_insn,
+	unwind_table_address,
+	unwind_table_begin_addr,
+	unwind_table_core,
+	unwind_table_end_addr,
+	unwind_table_init,
+	unwind_table_link,
+	unwind_table_list,
+	unwind_table_name,
+	unwind_table_size,
+	unwind_table_start,
+	unwind_table_stop,
+	upid_nr,
+	upid_ns,
+	upid_pid_chain,
+	user_regs_struct_cs,
+	user_regs_struct_ds,
+	user_regs_struct_eax,
+	user_regs_struct_ebp,
+	user_regs_struct_ebx,
+	user_regs_struct_ecx,
+	user_regs_struct_edi,
+	user_regs_struct_edx,
+	user_regs_struct_eflags,
+	user_regs_struct_eip,
+	user_regs_struct_es,
+	user_regs_struct_esi,
+	user_regs_struct_esp,
+	user_regs_struct_fs,
+	user_regs_struct_gs,
+	user_regs_struct_r10,
+	user_regs_struct_r11,
+	user_regs_struct_r12,
+	user_regs_struct_r13,
+	user_regs_struct_r14,
+	user_regs_struct_r15,
+	user_regs_struct_r8,
+	user_regs_struct_r9,
+	user_regs_struct_rax,
+	user_regs_struct_rbp,
+	user_regs_struct_rbx,
+	user_regs_struct_rcx,
+	user_regs_struct_rdi,
+	user_regs_struct_rdx,
+	user_regs_struct_rip,
+	user_regs_struct_rsi,
+	user_regs_struct_rsp,
+	user_regs_struct_ss,
+	user_struct_uid,
+	uts_namespace_name,
+	vcpu_guest_context_user_regs,
+	vcpu_struct_rq,
+	vfsmount_mnt_devname,
+	vfsmount_mnt_dirname,
+	vfsmount_mnt_list,
+	vfsmount_mnt_mountpoint,
+	vfsmount_mnt_next,
+	vfsmount_mnt_parent,
+	vfsmount_mnt_sb,
+	vm_area_struct_vm_end,
+	vm_area_struct_vm_file,
+	vm_area_struct_vm_flags,
+	vm_area_struct_vm_mm,
+	vm_area_struct_vm_next,
+	vm_area_struct_vm_offset,
+	vm_area_struct_vm_pgoff,
+	vm_area_struct_vm_start,
+	vm_struct_addr,
+	vm_struct_next,
+	vm_struct_size,
+	vmap_area_flags,
+	vmap_area_list,
+	vmap_area_va_end,
+	vmap_area_va_start,
+	vmap_area_vm,
+	wait_queue_entry_entry,
+	wait_queue_entry_private,
+	wait_queue_head_head,
+	wait_queue_next,
+	wait_queue_task,
+	x8664_pda_cpunumber,
+	x8664_pda_data_offset,
+	x8664_pda_irqrsp,
+	x8664_pda_irqstackptr,
+	x8664_pda_kernelstack,
+	x8664_pda_level4_pgt,
+	x8664_pda_me,
+	x8664_pda_pcurrent,
+	xa_node_shift,
+	xa_node_slots,
+	xarray_xa_head,
+	zone_all_unreclaimable,
+	zone_flags,
+	zone_free_area,
+	zone_free_pages,
+	zone_name,
+	zone_nr_active,
+	zone_nr_inactive,
+	zone_pages_high,
+	zone_pages_low,
+	zone_pages_min,
+	zone_pages_scanned,
+	zone_present_pages,
+	zone_spanned_pages,
+	zone_struct_active_pages,
+	zone_struct_free_area,
+	zone_struct_free_pages,
+	zone_struct_inactive_clean_list,
+	zone_struct_inactive_clean_pages,
+	zone_struct_inactive_dirty_pages,
+	zone_struct_memsize,
+	zone_struct_name,
+	zone_struct_pages_high,
+	zone_struct_pages_low,
+	zone_struct_pages_min,
+	zone_struct_size,
+	zone_struct_zone_mem_map,
+	zone_struct_zone_pgdat,
+	zone_struct_zone_start_mapnr,
+	zone_struct_zone_start_paddr,
+	zone_struct_zone_start_pfn,
+	zone_vm_stat,
+	zone_watermark,
+	zone_zone_mem_map,
+	zone_zone_pgdat,
+	zone_zone_start_pfn,
+	zram_compressor,
+	zram_mempoll,
+	zram_table_flag,
+	zspoll_size_class,
+	NUM_LAZY_OFFSETS
+};
+
 struct task_offset_table {
 	long task_struct_thread_context_fp;
 	long task_struct_thread_context_pc;
@@ -1236,981 +2188,32 @@ struct task_offset_table {
 };
 
 struct offset_table {                    /* stash of commonly-used offsets */
-	long list_head_next;             /* add new entries to end of table */
-	long list_head_prev;
-	long task_struct_pid;
-	long task_struct_state;
-	long task_struct_comm;
-	long task_struct_mm;
-	long task_struct_tss;
-	long task_struct_thread;
-	long task_struct_active_mm;
-	long task_struct_processor;
-	long task_struct_p_pptr;
-	long task_struct_parent;
-	long task_struct_has_cpu;
-	long task_struct_cpus_runnable;
-	long task_struct_next_task;
-	long task_struct_files;
-	long task_struct_fs;
-	long task_struct_pidhash_next;
-	long task_struct_next_run;
-	long task_struct_flags;
-	long task_struct_sig;
-	long task_struct_signal;
-	long task_struct_blocked;
-	long task_struct_sigpending;
-	long task_struct_pending;
-	long task_struct_sigqueue;
-	long task_struct_sighand;
-	long task_struct_start_time;
-	long task_struct_times;
-	long task_struct_utime;
-	long task_struct_stime;
-	long task_struct_cpu;
-	long task_struct_run_list;
-        long task_struct_pgrp;
-        long task_struct_tgid;
-	long task_struct_namespace;
-	long task_struct_pids;
-	long task_struct_last_run;
-	long task_struct_timestamp;
-	long task_struct_thread_info;
-	long task_struct_nsproxy;
-	long task_struct_rlim;
-	long thread_info_task;
-	long thread_info_cpu;
-	long thread_info_previous_esp;
-	long thread_info_flags;
-	long nsproxy_mnt_ns;
-	long mnt_namespace_root;
-	long mnt_namespace_list;
-	long pid_link_pid;
-	long pid_hash_chain;
-	long hlist_node_next;
-	long hlist_node_pprev;
-	long pid_pid_chain;
-	long thread_struct_eip;
-	long thread_struct_esp;
-	long thread_struct_ksp;
-	long thread_struct_fph;
-	long thread_struct_rip;
-	long thread_struct_rsp;
-	long thread_struct_rsp0;
-	long tms_tms_utime;
-	long tms_tms_stime;
-	long signal_struct_count;
-	long signal_struct_action;
-	long signal_struct_shared_pending;
-	long signal_struct_rlim;
-	long k_sigaction_sa;
-	long sigaction_sa_handler;
-	long sigaction_sa_flags;
-	long sigaction_sa_mask;
-	long sigpending_head;
-	long sigpending_list;
-	long sigpending_signal;
-	long signal_queue_next;
-	long signal_queue_info;
-	long sigqueue_next;
-	long sigqueue_list;
-	long sigqueue_info;
-	long sighand_struct_action;
-	long siginfo_si_signo;
-	long thread_struct_cr3;
-	long thread_struct_ptbr;
-	long thread_struct_pg_tables;
-	long switch_stack_r26;
-	long switch_stack_b0;
-	long switch_stack_ar_bspstore;
-	long switch_stack_ar_pfs;
-	long switch_stack_ar_rnat;
-	long switch_stack_pr;
-	long cpuinfo_ia64_proc_freq;
-	long cpuinfo_ia64_unimpl_va_mask;
-	long cpuinfo_ia64_unimpl_pa_mask;
-	long device_node_type;
-	long device_node_allnext;
-	long device_node_properties;
-	long property_name;
-	long property_value;
-	long property_next;
-	long machdep_calls_setup_residual;
-	long RESIDUAL_VitalProductData;
-	long VPD_ProcessorHz;
-	long bd_info_bi_intfreq;
-	long hwrpb_struct_cycle_freq;
-	long hwrpb_struct_processor_offset;
-	long hwrpb_struct_processor_size;
-	long percpu_struct_halt_PC;
-	long percpu_struct_halt_ra;
-	long percpu_struct_halt_pv;
-	long mm_struct_mmap;
-	long mm_struct_pgd;
-	long mm_struct_rss;
-	long mm_struct_anon_rss;
-	long mm_struct_file_rss;
-	long mm_struct_total_vm;
-	long mm_struct_start_code;
-	long mm_struct_arg_start;
-	long mm_struct_arg_end;
-	long mm_struct_env_start;
-	long mm_struct_env_end;
-        long vm_area_struct_vm_mm;
-        long vm_area_struct_vm_next;
-        long vm_area_struct_vm_end;
-        long vm_area_struct_vm_start; 
-	long vm_area_struct_vm_flags;
-	long vm_area_struct_vm_file;
-	long vm_area_struct_vm_offset;
-	long vm_area_struct_vm_pgoff;
-        long vm_struct_addr;
-        long vm_struct_size;
-        long vm_struct_next;
-	long module_size_of_struct;
-	long module_next;
-	long module_size;
-	long module_name;
-	long module_nsyms;
-	long module_syms;
-	long module_flags;
-	long module_num_syms;
-	long module_list;
-	long module_gpl_syms;
-	long module_num_gpl_syms;
-	long module_module_core;
-	long module_core_size;
-	long module_core_text_size;
-	long module_num_symtab;
-	long module_symtab;
-	long module_strtab;
-
-	long module_kallsyms_start;
-	long kallsyms_header_sections;
-	long kallsyms_header_section_off;
-	long kallsyms_header_symbols;
-	long kallsyms_header_symbol_off;
-	long kallsyms_header_string_off;
-	long kallsyms_symbol_section_off;
-	long kallsyms_symbol_symbol_addr;
-	long kallsyms_symbol_name_off;
-	long kallsyms_section_start;
-	long kallsyms_section_size;
-	long kallsyms_section_name_off;
-
-	long page_next;
-	long page_prev;
-	long page_next_hash;
-	long page_list;
-	long page_inode;
+	long page_next;                      /* add new entries to end of table */
 	long page_offset;
 	long page_count;
-	long page_flags;
 	long page_mapping;
 	long page_index;
-	long page_buffers;
 	long page_lru;
-	long page_pte;
-	long swap_info_struct_swap_file;
-	long swap_info_struct_swap_vfsmnt;
-	long swap_info_struct_flags;
-	long swap_info_struct_swap_map;
-	long swap_info_struct_swap_device;
-	long swap_info_struct_prio;
-	long swap_info_struct_max;
-	long swap_info_struct_pages;
-	long swap_info_struct_old_block_size;
-	long block_device_bd_inode;
-	long block_device_bd_list;
-	long block_device_bd_disk;
-	long irq_desc_t_status;
-	long irq_desc_t_handler;
-	long irq_desc_t_chip;
-	long irq_desc_t_action;
-	long irq_desc_t_depth;
-	long irqdesc_action;
-	long irqdesc_ctl;
-	long irqdesc_level;
-	long irqaction_handler;
-	long irqaction_flags;
-	long irqaction_mask;
-	long irqaction_name;
-	long irqaction_dev_id;
-	long irqaction_next;
-	long hw_interrupt_type_typename;
-	long hw_interrupt_type_startup;
-	long hw_interrupt_type_shutdown;
-	long hw_interrupt_type_handle;
-	long hw_interrupt_type_enable;
-	long hw_interrupt_type_disable;
-	long hw_interrupt_type_ack;
-	long hw_interrupt_type_end;
-	long hw_interrupt_type_set_affinity;
-	long irq_chip_typename;
-	long irq_chip_startup;
-	long irq_chip_shutdown;
-	long irq_chip_enable;
-	long irq_chip_disable;
-	long irq_chip_ack;
-	long irq_chip_end;
-	long irq_chip_set_affinity;
-	long irq_chip_mask;
-	long irq_chip_mask_ack;
-	long irq_chip_unmask;
-	long irq_chip_eoi;
-	long irq_chip_retrigger;
-	long irq_chip_set_type;
-	long irq_chip_set_wake;
-	long irq_cpustat_t___softirq_active;
-	long irq_cpustat_t___softirq_mask;
-	long fdtable_max_fds;
-	long fdtable_max_fdset;
-	long fdtable_open_fds;
-	long fdtable_fd;
-	long files_struct_fdt;
-        long files_struct_max_fds;
-        long files_struct_max_fdset;
-        long files_struct_open_fds;
-        long files_struct_fd;
-	long files_struct_open_fds_init;
-        long file_f_dentry;
-        long file_f_vfsmnt;
-        long file_f_count;
-	long file_f_path;
-	long path_mnt;
-	long path_dentry;
-        long fs_struct_root;
-        long fs_struct_pwd;
-        long fs_struct_rootmnt;
-        long fs_struct_pwdmnt;
-        long dentry_d_inode;
-        long dentry_d_parent;
-        long dentry_d_name;
-	long dentry_d_covers;
-	long dentry_d_iname;
         long qstr_len;
-        long qstr_name;
-        long inode_i_mode;
-        long inode_i_op;
-        long inode_i_sb;
-	long inode_u;
-	long inode_i_flock;
-	long inode_i_fop;
-	long inode_i_mapping;
-	long address_space_nrpages;
-	long vfsmount_mnt_next;
-	long vfsmount_mnt_devname;
-	long vfsmount_mnt_dirname;
-	long vfsmount_mnt_sb;
-	long vfsmount_mnt_list;
-	long vfsmount_mnt_mountpoint;
-	long vfsmount_mnt_parent;
-	long namespace_root;
-	long namespace_list;
-	long super_block_s_dirty;
-	long super_block_s_type;
-	long super_block_s_files;
-	long file_system_type_name;
-	long nlm_file_f_file;
-	long file_lock_fl_owner;
-	long nlm_host_h_exportent;
-	long svc_client_cl_ident;
-	long kmem_cache_s_c_nextp;
-	long kmem_cache_s_c_name;
-	long kmem_cache_s_c_num;
-	long kmem_cache_s_c_org_size;
-	long kmem_cache_s_c_flags;
-	long kmem_cache_s_c_offset;
-	long kmem_cache_s_c_firstp;
-	long kmem_cache_s_c_gfporder;
-	long kmem_cache_s_c_magic;
-	long kmem_cache_s_num;
-	long kmem_cache_s_next;
-	long kmem_cache_s_name;
-	long kmem_cache_s_objsize;
-	long kmem_cache_s_flags;
-	long kmem_cache_s_gfporder;
-	long kmem_cache_s_slabs;
-	long kmem_cache_s_slabs_full;
-	long kmem_cache_s_slabs_partial;
-	long kmem_cache_s_slabs_free;
-	long kmem_cache_s_cpudata;
-	long kmem_cache_s_c_align;
-	long kmem_cache_s_colour_off;
-	long cpucache_s_avail;
-	long cpucache_s_limit;
-	long kmem_cache_s_array;
-	long array_cache_avail;
-	long array_cache_limit;
-	long kmem_cache_s_lists;
-	long kmem_list3_slabs_partial;
-	long kmem_list3_slabs_full;
-	long kmem_list3_slabs_free;
-	long kmem_list3_free_objects;
-	long kmem_list3_shared;
-	long kmem_slab_s_s_nextp;
-	long kmem_slab_s_s_freep;
-	long kmem_slab_s_s_inuse;
-	long kmem_slab_s_s_mem;
-	long kmem_slab_s_s_index;
-	long kmem_slab_s_s_offset;
-	long kmem_slab_s_s_magic;
-	long slab_s_list;
-	long slab_s_s_mem;
-	long slab_s_inuse;
-	long slab_s_free;
         long slab_list;
         long slab_s_mem;
         long slab_inuse;
         long slab_free;
-	long net_device_next;
-	long net_device_name;
-	long net_device_type;
-	long net_device_addr_len;
-	long net_device_ip_ptr;
-	long net_device_dev_list;
-	long net_dev_base_head;
-	long device_next;
-	long device_name;
-	long device_type;
-	long device_ip_ptr;
-	long device_addr_len;
-	long socket_sk;
-	long sock_daddr;
-	long sock_rcv_saddr;
-	long sock_dport;
-	long sock_sport;
-	long sock_num;
-	long sock_type;
-	long sock_family;
-	long sock_common_skc_family;
-	long sock_sk_type;
-	long inet_sock_inet;
 	long inet_opt_daddr;
 	long inet_opt_rcv_saddr;
 	long inet_opt_dport;
-	long inet_opt_sport;
 	long inet_opt_num;
-	long ipv6_pinfo_rcv_saddr;
-	long ipv6_pinfo_daddr;
-	long timer_list_list;
-	long timer_list_next;
-	long timer_list_entry;
-	long timer_list_expires;
-	long timer_list_function;
-	long timer_vec_root_vec;
-	long timer_vec_vec;
-	long tvec_root_s_vec;
-	long tvec_s_vec;
-	long tvec_t_base_s_tv1;
- 	long wait_queue_task;
- 	long wait_queue_next;
- 	long __wait_queue_task;
-	long __wait_queue_head_task_list;
- 	long __wait_queue_task_list;
-	long pglist_data_node_zones;
-	long pglist_data_node_mem_map;
-	long pglist_data_node_start_paddr;
-        long pglist_data_node_start_mapnr;
-        long pglist_data_node_size;
-        long pglist_data_node_id;
-        long pglist_data_node_next;
-	long pglist_data_nr_zones;
-	long pglist_data_node_start_pfn;
-	long pglist_data_pgdat_next;
-	long pglist_data_node_present_pages;
-	long pglist_data_node_spanned_pages;
-	long pglist_data_bdata;
-	long page_cache_bucket_chain;
-        long zone_struct_free_pages;
-        long zone_struct_free_area;
-        long zone_struct_zone_pgdat;
-        long zone_struct_name;
-        long zone_struct_size;
-	long zone_struct_memsize;
-	long zone_struct_zone_start_pfn;
-        long zone_struct_zone_start_paddr;
-        long zone_struct_zone_start_mapnr;
-        long zone_struct_zone_mem_map;
-	long zone_struct_inactive_clean_pages;
-	long zone_struct_inactive_clean_list;
-	long zone_struct_inactive_dirty_pages;
-	long zone_struct_active_pages;
-	long zone_struct_pages_min;
-	long zone_struct_pages_low;
-	long zone_struct_pages_high;
-	long zone_free_pages;
-	long zone_free_area;
-        long zone_zone_pgdat;
-	long zone_zone_mem_map;
-        long zone_name;
-	long zone_spanned_pages;
-	long zone_zone_start_pfn;
-	long zone_pages_min;
-	long zone_pages_low;
-	long zone_pages_high;
-	long zone_vm_stat;
-        long neighbour_next;
-        long neighbour_primary_key;
-        long neighbour_ha;
-        long neighbour_dev;
-        long neighbour_nud_state;
-	long neigh_table_hash_buckets;
-	long neigh_table_key_len;
-        long in_device_ifa_list;
-        long in_ifaddr_ifa_next;
-        long in_ifaddr_ifa_address;
-	long pci_dev_global_list;
-	long pci_dev_next;
-	long pci_dev_bus;
-	long pci_dev_devfn;
-	long pci_dev_class;
-	long pci_dev_device;
-	long pci_dev_vendor;
-	long pci_bus_number;
-        long resource_entry_t_from;
-        long resource_entry_t_num;
-        long resource_entry_t_name; 
-        long resource_entry_t_next;
-        long resource_name;
-        long resource_start;
-        long resource_end;
-        long resource_sibling;
-        long resource_child;
-	long runqueue_curr;
-	long runqueue_idle;
-	long runqueue_active;
-	long runqueue_expired;
-	long runqueue_arrays;
-	long runqueue_cpu;
-	long cpu_s_idle;
-	long cpu_s_curr;
-	long prio_array_nr_active;
-	long prio_array_queue;
-	long user_regs_struct_ebp;
-	long user_regs_struct_esp;
-	long user_regs_struct_rip;
-	long user_regs_struct_cs;
-	long user_regs_struct_eflags;
-	long user_regs_struct_rsp;
-	long user_regs_struct_ss;
-	long e820map_nr_map;
-	long e820entry_addr;	
-	long e820entry_size;	
-	long e820entry_type;	
-	long char_device_struct_next;
-	long char_device_struct_name;
-	long char_device_struct_fops;
-	long char_device_struct_major;
-	long gendisk_major;
-	long gendisk_disk_name;
-	long gendisk_fops;
-	long blk_major_name_next;
-	long blk_major_name_major;
-	long blk_major_name_name;
-	long radix_tree_root_height;
-	long radix_tree_root_rnode;
-	long x8664_pda_pcurrent;
-	long x8664_pda_data_offset;
-	long x8664_pda_kernelstack;
-	long x8664_pda_irqrsp;
-	long x8664_pda_irqstackptr;
-	long x8664_pda_level4_pgt;
-	long x8664_pda_cpunumber;
-	long x8664_pda_me;
-	long tss_struct_ist;
-	long mem_section_section_mem_map;
-	long vcpu_guest_context_user_regs;
-	long cpu_user_regs_eip;
-	long cpu_user_regs_esp;
-        long unwind_table_core;
-        long unwind_table_init;
-        long unwind_table_address;
-        long unwind_table_size;
-        long unwind_table_link;
-        long unwind_table_name;
-	long rq_cfs;
-	long rq_rt;
-	long rq_nr_running;
-	long cfs_rq_rb_leftmost;
-	long cfs_rq_nr_running;
-	long cfs_rq_tasks_timeline;
-	long task_struct_se;
-	long sched_entity_run_node;
-	long rt_rq_active;
-	long kmem_cache_size;
-	long kmem_cache_objsize;
-	long kmem_cache_offset;
-	long kmem_cache_order;
-	long kmem_cache_local_node;
-	long kmem_cache_objects;
-	long kmem_cache_inuse;
-	long kmem_cache_align;
-	long kmem_cache_name;
-	long kmem_cache_list;
-	long kmem_cache_node;
-	long kmem_cache_cpu_slab;
 	long page_inuse;
-/*	long page_offset;  use "old" page->offset */
 	long page_slab;
 	long page_first_page;
 	long page_freelist;
-	long kmem_cache_node_nr_partial;
-	long kmem_cache_node_nr_slabs;
-	long kmem_cache_node_partial;
-	long kmem_cache_node_full;
-	long pid_numbers;
-	long upid_nr;
-	long upid_ns;
-	long upid_pid_chain;
-	long pid_tasks;
-        long kmem_cache_cpu_freelist;
-        long kmem_cache_cpu_page;
-        long kmem_cache_cpu_node;
-	long kmem_cache_flags;
-	long zone_nr_active;
-	long zone_nr_inactive;
-	long zone_all_unreclaimable;
-	long zone_present_pages;
-	long zone_flags;
-	long zone_pages_scanned;
-	long pcpu_info_vcpu;
-	long pcpu_info_idle;
-	long vcpu_struct_rq;
-	long task_struct_sched_info;
-	long sched_info_last_arrival;
 	long page_objects;
-	long kmem_cache_oo;
-	long char_device_struct_cdev;
-	long char_device_struct_baseminor;
-	long cdev_ops;
-	long probe_next;
-	long probe_dev;
-	long probe_data;
-	long kobj_map_probes;
-	long task_struct_prio;
-	long zone_watermark;
-	long module_sect_attrs;
-	long module_sect_attrs_attrs;
-	long module_sect_attrs_nsections;
-	long module_sect_attr_mattr;
-	long module_sect_attr_name;
-	long module_sect_attr_address;
-	long module_attribute_attr;
-	long attribute_owner;
-	long module_sect_attr_attr;
-	long module_sections_attrs;
-	long swap_info_struct_inuse_pages;
-	long s390_lowcore_psw_save_area;
-	long mm_struct_rss_stat;
-	long mm_rss_stat_count;
-	long module_module_init;
-	long module_init_text_size;
-	long cpu_context_save_fp;
-	long cpu_context_save_sp;
-	long cpu_context_save_pc;
-	long elf_prstatus_pr_pid;
-	long elf_prstatus_pr_reg;
-	long irq_desc_t_name;
-	long thread_info_cpu_context;
-	long unwind_table_list;
-	long unwind_table_start;
-	long unwind_table_stop;
-	long unwind_table_begin_addr;
-	long unwind_table_end_addr;
-	long unwind_idx_addr;
-	long unwind_idx_insn;
-	long signal_struct_nr_threads;
-	long module_init_size;
-	long module_percpu;
-	long radix_tree_node_slots;
-	long s390_stack_frame_back_chain;
-	long user_regs_struct_eip;
-	long user_regs_struct_rax;
-	long user_regs_struct_eax;
-	long user_regs_struct_rbx;
-	long user_regs_struct_ebx;
-	long user_regs_struct_rcx;
-	long user_regs_struct_ecx;
-	long user_regs_struct_rdx;
-	long user_regs_struct_edx;
-	long user_regs_struct_rsi;
-	long user_regs_struct_esi;
-	long user_regs_struct_rdi;
-	long user_regs_struct_edi;
-	long user_regs_struct_ds;
-	long user_regs_struct_es;
-	long user_regs_struct_fs;
-	long user_regs_struct_gs;
-	long user_regs_struct_rbp;
-	long user_regs_struct_r8;
-	long user_regs_struct_r9;
-	long user_regs_struct_r10;
-	long user_regs_struct_r11;
-	long user_regs_struct_r12;
-	long user_regs_struct_r13;
-	long user_regs_struct_r14;
-	long user_regs_struct_r15;
-	long sched_entity_cfs_rq;
-	long sched_entity_my_q;
-	long sched_entity_on_rq;
-	long task_struct_on_rq;
-	long cfs_rq_curr;
-	long irq_desc_t_irq_data;
-	long irq_desc_t_kstat_irqs;
-	long irq_desc_t_affinity;
-	long irq_data_chip;
-	long irq_data_affinity;
-	long kernel_stat_irqs;
-	long socket_alloc_vfs_inode;
-	long class_devices;
-	long class_p;
-	long class_private_devices;
-	long device_knode_class;
-	long device_node;
-	long gendisk_dev;
-	long gendisk_kobj;
-	long gendisk_part0;
-	long gendisk_queue;
-	long hd_struct_dev;
-	long klist_k_list;
-	long klist_node_n_klist;
-	long klist_node_n_node;
-	long kobject_entry;
-	long kset_list;
-	long request_list_count;
-	long request_queue_in_flight;
-	long request_queue_rq;
-	long subsys_private_klist_devices;
-	long subsystem_kset;
-	long mount_mnt_parent;
-	long mount_mnt_mountpoint;
-	long mount_mnt_list;
-	long mount_mnt_devname;
-	long mount_mnt;
-	long task_struct_exit_state;
-	long timekeeper_xtime;
-	long file_f_op;
-	long file_private_data;
-	long hstate_order;
-	long hugetlbfs_sb_info_hstate;
-	long idr_layer_ary;
-	long idr_layer_layer;
-	long idr_layers;
-	long idr_top;
-	long ipc_id_ary_p;
-	long ipc_ids_entries;
-	long ipc_ids_max_id;
-	long ipc_ids_ipcs_idr;
-	long ipc_ids_in_use;
-	long ipc_namespace_ids;
-	long kern_ipc_perm_deleted;
-	long kern_ipc_perm_key;
-	long kern_ipc_perm_mode;
-	long kern_ipc_perm_uid;
-	long kern_ipc_perm_id;
-	long kern_ipc_perm_seq;
-	long nsproxy_ipc_ns;
 	long shmem_inode_info_swapped;
-	long shmem_inode_info_vfs_inode;
-	long shm_file_data_file;
-	long shmid_kernel_shm_file;
-	long shmid_kernel_shm_nattch;
-	long shmid_kernel_shm_perm;
-	long shmid_kernel_shm_segsz;
-	long shmid_kernel_id;
-	long sem_array_sem_perm;
-	long sem_array_sem_id;
-	long sem_array_sem_nsems;
-	long msg_queue_q_perm;
-	long msg_queue_q_id;
-	long msg_queue_q_cbytes;
-	long msg_queue_q_qnum;
-	long super_block_s_fs_info;
-	long rq_timestamp;
-	long radix_tree_node_height;
-	long rb_root_rb_node;
-	long rb_node_rb_left;
-	long rb_node_rb_right;
-	long rt_prio_array_queue;
-	long task_struct_rt;
-	long sched_rt_entity_run_list;
-	long log_ts_nsec;
-	long log_len;
-	long log_text_len;
-	long log_dict_len;
-	long log_level;
-	long log_flags_level;
-	long timekeeper_xtime_sec;
-	long neigh_table_hash_mask;
-	long sched_rt_entity_my_q;
-	long neigh_table_hash_shift;
-	long neigh_table_nht_ptr;
-	long task_group_parent;
-	long task_group_css;
-	long cgroup_subsys_state_cgroup;
-	long cgroup_dentry;
-	long task_group_rt_rq;
-	long rt_rq_tg;
-	long task_group_cfs_rq;
-	long cfs_rq_tg;
-	long task_group_siblings;
-	long task_group_children;
-	long task_group_cfs_bandwidth;
-	long cfs_rq_throttled;
-	long task_group_rt_bandwidth;
-	long rt_rq_rt_throttled;
-	long rt_rq_highest_prio;
-	long rt_rq_rt_nr_running;
-	long vmap_area_va_start;
-	long vmap_area_va_end;
-	long vmap_area_list;
-	long vmap_area_flags;
-	long vmap_area_vm;
-	long hrtimer_cpu_base_clock_base;
-	long hrtimer_clock_base_offset;
-	long hrtimer_clock_base_active;
-	long hrtimer_clock_base_first;
-	long hrtimer_clock_base_get_time;
-	long hrtimer_base_first;
-	long hrtimer_base_pending;
-	long hrtimer_base_get_time;
-	long hrtimer_node;
-	long hrtimer_list;
-	long hrtimer_softexpires;
-	long hrtimer_expires;
-	long hrtimer_function;
-	long timerqueue_head_next;
-	long timerqueue_node_expires;
-	long timerqueue_node_node;
-	long ktime_t_tv64;
-	long ktime_t_sec;
-	long ktime_t_nsec;
-	long module_taints;
-	long module_gpgsig_ok;
-	long module_license_gplok;
-	long tnt_bit;
-	long tnt_true;
-	long tnt_false;
 	long page_slab_page;
-	long trace_print_flags_mask;
-	long trace_print_flags_name;
-	long task_struct_rss_stat;
-	long task_rss_stat_count;
 	long page_s_mem;
 	long page_active;
-	long hstate_nr_huge_pages;
-	long hstate_free_huge_pages;
-	long hstate_name;
-	long cgroup_kn;
-	long kernfs_node_name;
-	long kernfs_node_parent;
-	long kmem_cache_cpu_partial;
-	long kmem_cache_cpu_cache;
-	long nsproxy_net_ns;
-	long atomic_t_counter;
-	long percpu_counter_count;
-	long mm_struct_mm_count;
-	long pt_regs_regs;
-	long pt_regs_cp0_badvaddr;
-	long address_space_page_tree;
 	long page_compound_head;
-	long irq_desc_irq_data;
-	long kmem_cache_node_total_objects;
-	long timer_base_vectors;
-	long request_queue_mq_ops;
-	long blk_mq_ctx_rq_dispatched;
-	long blk_mq_ctx_rq_completed;
-	long task_struct_stack;
-	long tnt_mod;
-	long radix_tree_node_shift;
-	long kmem_cache_red_left_pad;
-	long inactive_task_frame_ret_addr;
-	long sk_buff_head_next;
-	long sk_buff_head_qlen;
-	long sk_buff_next;
-	long sk_buff_len;
-	long sk_buff_data;
-	long nlmsghdr_nlmsg_type;
-	long module_arch;
-	long mod_arch_specific_num_orcs;
-	long mod_arch_specific_orc_unwind_ip;
-	long mod_arch_specific_orc_unwind;
-	long task_struct_policy;
-	long kmem_cache_random;
-	long pid_namespace_idr;
-	long idr_idr_rt;
-	long bpf_prog_aux;
-	long bpf_prog_type;
-	long bpf_prog_tag;
-	long bpf_prog_jited_len;
-	long bpf_prog_bpf_func;
-	long bpf_prog_len;
-	long bpf_prog_insnsi;
-	long bpf_prog_pages;
-	long bpf_map_map_type;
-	long bpf_map_map_flags;
-	long bpf_map_pages;
-	long bpf_map_key_size;
-	long bpf_map_value_size;
-	long bpf_map_max_entries;
-	long bpf_map_user;
-	long bpf_map_name;
-	long bpf_prog_aux_used_map_cnt;
-	long bpf_prog_aux_used_maps;
-	long bpf_prog_aux_load_time;
-	long bpf_prog_aux_user;
-	long user_struct_uid;
-	long idr_cur;
-	long kmem_cache_memcg_params;
-	long memcg_cache_params___root_caches_node;
-	long memcg_cache_params_children;
-	long memcg_cache_params_children_node;
-	long task_struct_pid_links;
-	long pci_dev_dev;
-        long pci_dev_hdr_type;
-        long pci_dev_pcie_flags_reg;
-        long pci_bus_node;
-        long pci_bus_devices;
-        long pci_bus_dev;
-        long pci_bus_children;
-        long pci_bus_parent;
-        long pci_bus_self;
-	long device_kobj;
-	long kobject_name;
-	long memory_block_dev;
-	long memory_block_start_section_nr;
-	long memory_block_end_section_nr;
-	long memory_block_state;
-	long memory_block_nid;
-	long bus_type_p;
-	long device_private_device;
-	long device_private_knode_bus;
-	long xarray_xa_head;
-	long xa_node_slots;
-	long xa_node_shift;
-	long hd_struct_dkstats;
-	long disk_stats_in_flight;
-	long cpu_context_save_r7;
-	long dentry_d_sb;
-	long device_private_knode_class;
-	long timerqueue_head_rb_root;
-	long rb_root_cached_rb_leftmost;
-	long bpf_map_memory;
-	long bpf_map_memory_pages;
-	long bpf_map_memory_user;
-	long bpf_prog_aux_name;
-	long page_private;
-	long swap_info_struct_bdev;
-	long zram_mempoll;
-	long zram_compressor;
-	long zram_table_flag;
-	long zspoll_size_class;
-	long size_class_size;
-	long gendisk_private_data;
 	long zram_table_entry;
-	long module_core_size_rw;
-	long module_core_size_rx;
-	long module_init_size_rw;
-	long module_init_size_rx;
-	long module_module_core_rw;
-	long module_module_core_rx;
-	long module_module_init_rw;
-	long module_module_init_rx;
-	long super_block_s_inodes;
-	long inode_i_sb_list;
-	long irq_common_data_affinity;
-	long irq_desc_irq_common_data;
-	long uts_namespace_name;
-	long printk_info_seq;
-	long printk_info_ts_nsec;
-	long printk_info_text_len;
-	long printk_info_level;
-	long printk_info_caller_id;
-	long printk_info_dev_info;
-	long dev_printk_info_subsystem;
-	long dev_printk_info_device;
-	long prb_desc_ring;
-	long prb_text_data_ring;
-	long prb_desc_ring_count_bits;
-	long prb_desc_ring_descs;
-	long prb_desc_ring_infos;
-	long prb_desc_ring_head_id;
-	long prb_desc_ring_tail_id;
-	long prb_desc_state_var;
-	long prb_desc_text_blk_lpos;
-	long prb_data_blk_lpos_begin;
-	long prb_data_blk_lpos_next;
-	long prb_data_ring_size_bits;
-	long prb_data_ring_data;
-	long atomic_long_t_counter;
-	long block_device_bd_device;
-	long block_device_bd_stats;
-	long wait_queue_entry_private;
-	long wait_queue_head_head;
-	long wait_queue_entry_entry;
-	long printk_safe_seq_buf_len;
-	long printk_safe_seq_buf_message_lost;
-	long printk_safe_seq_buf_buffer;
-	long sbitmap_word_depth;
-	long sbitmap_word_word;
-	long sbitmap_word_cleared;
-	long sbitmap_depth;
-	long sbitmap_shift;
-	long sbitmap_map_nr;
-	long sbitmap_map;
-	long sbitmap_queue_sb;
-	long sbitmap_queue_alloc_hint;
-	long sbitmap_queue_wake_batch;
-	long sbitmap_queue_wake_index;
-	long sbitmap_queue_ws;
-	long sbitmap_queue_ws_active;
-	long sbitmap_queue_round_robin;
-	long sbitmap_queue_min_shallow_depth;
-	long sbq_wait_state_wait_cnt;
-	long sbq_wait_state_wait;
-	long sbitmap_alloc_hint;
-	long sbitmap_round_robin;
-	long request_cmd_flags;
-	long request_q;
-	long request_state;
-	long request_queue_queue_hw_ctx;
-	long request_queue_nr_hw_queues;
-	long blk_mq_hw_ctx_tags;
-	long blk_mq_tags_bitmap_tags;
-	long blk_mq_tags_breserved_tags;
-	long blk_mq_tags_nr_reserved_tags;
-	long blk_mq_tags_rqs;
-	long request_queue_hctx_table;
-	long percpu_counter_counters;
-	long slab_slab_list;
-	long mm_struct_mm_mt;
-	long maple_tree_ma_root;
-	long maple_tree_ma_flags;
-	long maple_node_parent;
-	long maple_node_ma64;
-	long maple_node_mr64;
-	long maple_node_slot;
-	long maple_arange_64_pivot;
-	long maple_arange_64_slot;
-	long maple_arange_64_gap;
-	long maple_arange_64_meta;
-	long maple_range_64_pivot;
-	long maple_range_64_slot;
-	long maple_metadata_end;
-	long maple_metadata_gap;
-	long sock_sk_common;
-	long sock_common_skc_v6_daddr;
-	long sock_common_skc_v6_rcv_saddr;
-	long inactive_task_frame_bp;
-	long net_device_ip6_ptr;
-	long inet6_dev_addr_list;
-	long inet6_ifaddr_addr;
-	long inet6_ifaddr_if_list;
-	long inet6_ifaddr_if_next;
-	long in6_addr_in6_u;
-	long kset_kobj;
-	long subsys_private_subsys;
 };
 
 struct size_table {         /* stash of commonly-used sizes */
@@ -2449,7 +2452,8 @@ struct array_table {
  *  The following set of macros can only be used with pre-intialized fields
  *  in the offset table, size table or array_table.
  */
-#define OFFSET(X)	   (OFFSET_verify(offset_table.X, (char *)__FUNCTION__, __FILE__, __LINE__, #X))
+#define OFFSET(X) (OFFSET_verify(offset_table.X), (char *)__FUNCTION__, __FILE__, __LINE__, #X))
+#define LAZY_OFFSET(X) (OFFSET_verify(get_lazy_offset(X), (char *)__FUNCTION__, __FILE__, __LINE__, #X))
 #define TASK_OFFSET(X)	   (OFFSET_verify(task_offset_table.X, (char *)__FUNCTION__, __FILE__, __LINE__, #X))
 #define DIRECT_OFFSET_UNCHECKED(X) (offset_table.X)
 #define TASK_OFFSET_UNCHECKED(X) (task_offset_table.X)
@@ -2457,6 +2461,7 @@ struct array_table {
 #define MODULE_OFFSET2(X,T) MODULE_OFFSET(X, X##_##T)
 #define SIZE(X)            (SIZE_verify(size_table.X, (char *)__FUNCTION__, __FILE__, __LINE__, #X))
 #define INVALID_OFFSET     (-1)
+#define UNINITIALISED_OFFSET     (-2)
 #define INVALID_SIZE(X)    (size_table.X == -1)
 #define VALID_SIZE(X)      (size_table.X >= 0)
 #define VALID_STRUCT(X)    (size_table.X >= 0)
@@ -5213,6 +5218,7 @@ extern int argcnt;
 extern int argerrs;
 extern struct offset_table offset_table;
 extern struct task_offset_table task_offset_table;
+extern long _lazy_offset_cache[NUM_LAZY_OFFSETS];
 extern struct size_table size_table;
 extern struct array_table array_table;
 extern struct vm_table vm_table, *vt;
@@ -5615,6 +5621,7 @@ int get_symbol_length(char *);
 void dump_numargs_cache(void);
 int patch_kernel_symbol(struct gnu_request *);
 struct syment *generic_machdep_value_to_symbol(ulong, ulong *);
+long get_lazy_offset(enum lazy_offset);
 long OFFSET_verify(long, char *, char *, int, char *);
 long SIZE_verify(long, char *, char *, int, char *);
 long OFFSET_option(long, long, char *, char *, int, char *, char *);

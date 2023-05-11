@@ -314,11 +314,11 @@ bpf_init(struct bpf_info *bpf)
 		bpf->progs = do_old_idr(IDR_ORIG_COUNT, symbol_value("prog_idr"), NULL);
 		break;
 	case IDR_RADIX:
-		bpf->progs = do_radix_tree(symbol_value("prog_idr") + OFFSET(idr_idr_rt),
+		bpf->progs = do_radix_tree(symbol_value("prog_idr") + LAZY_OFFSET(idr_idr_rt),
 			RADIX_TREE_COUNT, NULL);
 		break;
 	case IDR_XARRAY:
-		bpf->progs = do_xarray(symbol_value("prog_idr") + OFFSET(idr_idr_rt),
+		bpf->progs = do_xarray(symbol_value("prog_idr") + LAZY_OFFSET(idr_idr_rt),
 			XARRAY_COUNT, NULL);
 		break;
 	}
@@ -334,11 +334,11 @@ bpf_init(struct bpf_info *bpf)
 			bpf->progs = do_old_idr(IDR_ORIG_GATHER, symbol_value("prog_idr"), bpf->proglist);
 			break;
 		case IDR_RADIX:
-			bpf->progs = do_radix_tree(symbol_value("prog_idr") + OFFSET(idr_idr_rt),
+			bpf->progs = do_radix_tree(symbol_value("prog_idr") + LAZY_OFFSET(idr_idr_rt),
 				RADIX_TREE_GATHER, bpf->proglist);
 			break;
 		case IDR_XARRAY:
-			bpf->progs = do_xarray(symbol_value("prog_idr") + OFFSET(idr_idr_rt),
+			bpf->progs = do_xarray(symbol_value("prog_idr") + LAZY_OFFSET(idr_idr_rt),
 				XARRAY_GATHER, bpf->proglist);
 			break;
 		}
@@ -350,11 +350,11 @@ bpf_init(struct bpf_info *bpf)
 		bpf->maps = do_old_idr(IDR_ORIG_COUNT, symbol_value("map_idr"), NULL);
 		break;
 	case IDR_RADIX:
-		bpf->maps = do_radix_tree(symbol_value("map_idr") + OFFSET(idr_idr_rt), 
+		bpf->maps = do_radix_tree(symbol_value("map_idr") + LAZY_OFFSET(idr_idr_rt), 
 			RADIX_TREE_COUNT, NULL);
 		break;
 	case IDR_XARRAY:
-		bpf->maps = do_xarray(symbol_value("map_idr") + OFFSET(idr_idr_rt), 
+		bpf->maps = do_xarray(symbol_value("map_idr") + LAZY_OFFSET(idr_idr_rt), 
 			XARRAY_COUNT, NULL);
 		break;
 	}
@@ -370,11 +370,11 @@ bpf_init(struct bpf_info *bpf)
 			bpf->maps = do_old_idr(IDR_ORIG_GATHER, symbol_value("map_idr"), bpf->maplist);
 			break;
 		case IDR_RADIX:
-			bpf->maps = do_radix_tree(symbol_value("map_idr") + OFFSET(idr_idr_rt),
+			bpf->maps = do_radix_tree(symbol_value("map_idr") + LAZY_OFFSET(idr_idr_rt),
 				RADIX_TREE_GATHER, bpf->maplist);
 			break;
 		case IDR_XARRAY:
-			bpf->maps = do_xarray(symbol_value("map_idr") + OFFSET(idr_idr_rt),
+			bpf->maps = do_xarray(symbol_value("map_idr") + LAZY_OFFSET(idr_idr_rt),
 				XARRAY_GATHER, bpf->maplist);
 			break;
 		}
@@ -462,7 +462,7 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 		if (!readmem((ulong)bpf->proglist[i].value, KVADDR, bpf->bpf_prog_buf, 
 		    SIZE(bpf_prog), "struct bpf_prog", RETURN_ON_ERROR))
 			goto bailout;
-		bpf_prog_aux = ULONG(bpf->bpf_prog_buf + OFFSET(bpf_prog_aux));
+		bpf_prog_aux = ULONG(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_aux));
 		if (!readmem(bpf_prog_aux, KVADDR, bpf->bpf_prog_aux_buf, 
 		    SIZE(bpf_prog_aux), "struct bpf_prog_aux", RETURN_ON_ERROR))
 			goto bailout;
@@ -476,20 +476,20 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 			mkstring(buf1, 4, CENTER|LJUST|LONG_DEC, MKSTR(bpf->proglist[i].index)),
 			mkstring(buf2, VADDR_PRLEN, CENTER|LJUST|LONG_HEX, MKSTR(bpf->proglist[i].value)),
 			mkstring(buf3, VADDR_PRLEN, CENTER|LJUST|LONG_HEX, MKSTR(bpf_prog_aux)));
-		type = INT(bpf->bpf_prog_buf + OFFSET(bpf_prog_type));
+		type = INT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_type));
 		fprintf(fp, "%s ", 
 			mkstring(buf1, bpf->bpf_prog_type_size, CENTER|LJUST, bpf_prog_type_string(type, buf2)));
-		fprintf(fp, "%s ", bpf_prog_tag_string(bpf->bpf_prog_buf + OFFSET(bpf_prog_tag), buf1));
+		fprintf(fp, "%s ", bpf_prog_tag_string(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_tag), buf1));
 		fprintf(fp, "%s ", 
 			mkstring(buf1, strlen("USED_MAPS"), CENTER|LJUST, bpf_prog_used_maps(i, buf2)));
 		fprintf(fp, "\n");
 
 		if (flags & (PROG_ID|PROG_VERBOSE)) {
-			jited_len = UINT(bpf->bpf_prog_buf + OFFSET(bpf_prog_jited_len));
-			len = UINT(bpf->bpf_prog_buf + OFFSET(bpf_prog_len));
+			jited_len = UINT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_jited_len));
+			len = UINT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_len));
 			len *= SIZE(bpf_insn);
 			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_pages) >= 0) {
-				prog_pages = USHORT(bpf->bpf_prog_buf + OFFSET(bpf_prog_pages));
+				prog_pages = USHORT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_pages));
 				prog_pages *= PAGESIZE();
 			} else
 				prog_pages = 0;
@@ -502,7 +502,7 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 
 			fprintf(fp, "     LOAD_TIME: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_aux_load_time) >= 0) {
-				load_time = ULONGLONG(bpf->bpf_prog_aux_buf + OFFSET(bpf_prog_aux_load_time));
+				load_time = ULONGLONG(bpf->bpf_prog_aux_buf + LAZY_OFFSET(bpf_prog_aux_load_time));
 				print_boot_time(load_time, buf5, BUFSIZE/2);
 				fprintf(fp, "%s\n", buf5);
 			} else
@@ -513,7 +513,7 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 
 			fprintf(fp, "  NAME: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_aux_name) >= 0) {
-				BCOPY(&bpf->bpf_prog_aux_buf[OFFSET(bpf_prog_aux_name)], buf1, 16);
+				BCOPY(&bpf->bpf_prog_aux_buf[LAZY_OFFSET(bpf_prog_aux_name)], buf1, 16);
 				buf1[16] = NULLCHAR;
 				if (strlen(buf1))
 					fprintf(fp, "\"%s\"", buf1);
@@ -524,8 +524,8 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 
 			fprintf(fp, "  UID: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_aux_user) >= 0 && DIRECT_OFFSET_UNCHECKED(user_struct_uid) >= 0) {
-				user = ULONG(bpf->bpf_prog_aux_buf + OFFSET(bpf_prog_aux_user));
-				if (readmem(user + OFFSET(user_struct_uid), KVADDR, &uid, sizeof(uint), 
+				user = ULONG(bpf->bpf_prog_aux_buf + LAZY_OFFSET(bpf_prog_aux_user));
+				if (readmem(user + LAZY_OFFSET(user_struct_uid), KVADDR, &uid, sizeof(uint), 
 				    "user_struct.uid", QUIET|RETURN_ON_ERROR))
 					fprintf(fp, "%d\n", uid);
 				else
@@ -536,8 +536,8 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 
 		if (flags & JITED) {
 			fprintf(fp, "\n");
-			jited_len = UINT(bpf->bpf_prog_buf + OFFSET(bpf_prog_jited_len));
-			bpf_func = ULONG(bpf->bpf_prog_buf + OFFSET(bpf_prog_bpf_func));
+			jited_len = UINT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_jited_len));
+			bpf_func = ULONG(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_bpf_func));
 			end_func = bpf_func + jited_len;
 
 			if (jited_len) {
@@ -575,8 +575,8 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 
 		if (flags & XLATED) {
 			fprintf(fp, "\n");
-			len = UINT(bpf->bpf_prog_buf + OFFSET(bpf_prog_len));
-			insnsi = (ulong)bpf->proglist[i].value + OFFSET(bpf_prog_insnsi);
+			len = UINT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_len));
+			insnsi = (ulong)bpf->proglist[i].value + LAZY_OFFSET(bpf_prog_insnsi);
 			bpf->bytecode_buf = GETBUF(len * SIZE(bpf_insn));
 			if (CRASHDEBUG(1))
 				fprintf(fp, "bytecode_buf: [%lx] len %d * size %ld = %ld  from: %lx\n", 
@@ -623,10 +623,10 @@ do_map_only:
 		fprintf(fp, "%s %s ", 
 			mkstring(buf1, 4, CENTER|LJUST|LONG_DEC, MKSTR(bpf->maplist[i].index)),
 			mkstring(buf2, VADDR_PRLEN, CENTER|LJUST|LONG_HEX, MKSTR(bpf->maplist[i].value)));
-		type = INT(bpf->bpf_map_buf + OFFSET(bpf_map_map_type));
+		type = INT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_map_type));
 		fprintf(fp, "%s ", 
 			mkstring(buf1, bpf->bpf_map_map_type_size, CENTER|LJUST, bpf_map_map_type_string(type, buf2)));
-		fprintf(fp, " %08x ", UINT(bpf->bpf_map_buf + OFFSET(bpf_map_map_flags)));
+		fprintf(fp, " %08x ", UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_map_flags)));
 		fprintf(fp, "\n");
 
 		if (flags & (MAP_ID|MAP_VERBOSE)) {
@@ -634,21 +634,21 @@ do_map_only:
 
 			fprintf(fp, "     KEY_SIZE: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_map_key_size) >= 0) {
-				key_size = UINT(bpf->bpf_map_buf + OFFSET(bpf_map_key_size));
+				key_size = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_key_size));
 				fprintf(fp, "%d", key_size);
 			} else
 				fprintf(fp, "(unknown)");
 
 			fprintf(fp, "  VALUE_SIZE: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_map_value_size) >= 0) {
-				value_size = UINT(bpf->bpf_map_buf + OFFSET(bpf_map_value_size));
+				value_size = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_value_size));
 				fprintf(fp, "%d", value_size);
 			} else
 				fprintf(fp, "(unknown)");
 
 			fprintf(fp, "  MAX_ENTRIES: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_map_max_entries) >= 0) {
-				max_entries = UINT(bpf->bpf_map_buf + OFFSET(bpf_map_max_entries));
+				max_entries = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_max_entries));
 				fprintf(fp, "%d", max_entries);
 
 			} else
@@ -656,11 +656,11 @@ do_map_only:
 
 			fprintf(fp, "  MEMLOCK: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_map_memory) >= 0 && DIRECT_OFFSET_UNCHECKED(bpf_map_memory_pages) >= 0) {
-				map_pages = UINT(bpf->bpf_map_buf + OFFSET(bpf_map_memory)
-						+ OFFSET(bpf_map_memory_pages));
+				map_pages = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_memory)
+						+ LAZY_OFFSET(bpf_map_memory_pages));
 				fprintf(fp, "%d\n", map_pages * PAGESIZE());
 			} else if (DIRECT_OFFSET_UNCHECKED(bpf_map_pages) >= 0) {
-				map_pages = UINT(bpf->bpf_map_buf + OFFSET(bpf_map_pages));
+				map_pages = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_pages));
 				fprintf(fp, "%d\n", map_pages * PAGESIZE());
 			} else if ((msize = bpf_map_memory_size(type, value_size, key_size, max_entries)))
 				fprintf(fp, "%ld\n", msize);
@@ -669,7 +669,7 @@ do_map_only:
 
 			fprintf(fp, "     NAME: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_map_name) >= 0) {
-				BCOPY(&bpf->bpf_map_buf[OFFSET(bpf_map_name)], buf1, 16);
+				BCOPY(&bpf->bpf_map_buf[LAZY_OFFSET(bpf_map_name)], buf1, 16);
 				buf1[17] = NULLCHAR;
 				if (strlen(buf1))
 					fprintf(fp, "\"%s\"", buf1);
@@ -680,15 +680,15 @@ do_map_only:
 
 			fprintf(fp, "  UID: ");
 			if (DIRECT_OFFSET_UNCHECKED(bpf_map_memory) >= 0 && DIRECT_OFFSET_UNCHECKED(bpf_map_memory_user) >= 0)
-				user = ULONG(bpf->bpf_map_buf + OFFSET(bpf_map_memory)
-						+ OFFSET(bpf_map_memory_user));
+				user = ULONG(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_memory)
+						+ LAZY_OFFSET(bpf_map_memory_user));
 			else if (DIRECT_OFFSET_UNCHECKED(bpf_map_user) >= 0)
-				user = ULONG(bpf->bpf_map_buf + OFFSET(bpf_map_user));
+				user = ULONG(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_user));
 			else
 				user = 0;
 
 			if (user && DIRECT_OFFSET_UNCHECKED(user_struct_uid) >= 0) {
-				if (readmem(user + OFFSET(user_struct_uid), KVADDR, &uid, sizeof(uint), 
+				if (readmem(user + LAZY_OFFSET(user_struct_uid), KVADDR, &uid, sizeof(uint), 
 				    "user_struct.uid", QUIET|RETURN_ON_ERROR))
 					fprintf(fp, "%d\n", uid);
 				else
@@ -840,8 +840,8 @@ bpf_prog_used_maps(int idx, char *retbuf)
 
 	retbuf[0] = NULLCHAR;
 
-	used_map_cnt = UINT(bpf->bpf_prog_aux_buf + OFFSET(bpf_prog_aux_used_map_cnt));
-	used_maps = ULONG(bpf->bpf_prog_aux_buf + OFFSET(bpf_prog_aux_used_maps));
+	used_map_cnt = UINT(bpf->bpf_prog_aux_buf + LAZY_OFFSET(bpf_prog_aux_used_map_cnt));
+	used_maps = ULONG(bpf->bpf_prog_aux_buf + LAZY_OFFSET(bpf_prog_aux_used_maps));
 
 	for (i = cnt = 0; i < used_map_cnt; i++) {
 		if (!readmem(used_maps + (sizeof(ulong)*i), KVADDR, &map,
@@ -1442,7 +1442,7 @@ do_old_idr(int cmd, ulong idr, struct list_pair *lp)
 		break;
 
 	case IDR_ORIG_COUNT:
-		readmem(idr + OFFSET(idr_cur), KVADDR, &cur, 
+		readmem(idr + LAZY_OFFSET(idr_cur), KVADDR, &cur, 
 			sizeof(int), "idr.cur", FAULT_ON_ERROR);
 		for (total = next_id = 0; next_id < cur; next_id++) {
 			entry = idr_find(idr, next_id);
@@ -1454,7 +1454,7 @@ do_old_idr(int cmd, ulong idr, struct list_pair *lp)
 
 	case IDR_ORIG_GATHER:
 		max = lp[0].index;
-		readmem(idr + OFFSET(idr_cur), KVADDR, &cur, 
+		readmem(idr + LAZY_OFFSET(idr_cur), KVADDR, &cur, 
 			sizeof(int), "idr.cur", FAULT_ON_ERROR);
 		for (i = total = next_id = 0; next_id < cur; next_id++) {
 			entry = idr_find(idr, next_id);

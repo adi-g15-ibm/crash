@@ -1196,28 +1196,28 @@ x86_64_cpu_pda_init(void)
 		}
 
 		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_level4_pgt) >= 0) {
-			level4_pgt = ULONG(cpu_pda_buf + OFFSET(x8664_pda_level4_pgt));
+			level4_pgt = ULONG(cpu_pda_buf + LAZY_OFFSET(x8664_pda_level4_pgt));
 			if (!VALID_LEVEL4_PGT_ADDR(level4_pgt))
 				break;
 		}
-		cpunumber = INT(cpu_pda_buf + OFFSET(x8664_pda_cpunumber));
+		cpunumber = INT(cpu_pda_buf + LAZY_OFFSET(x8664_pda_cpunumber));
 		if (cpunumber != cpus)
 			break;
 		cpus++;
 
 		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_data_offset) >= 0) {
 			data_offset = ULONG(cpu_pda_buf + 
-				OFFSET(x8664_pda_data_offset));
+				LAZY_OFFSET(x8664_pda_data_offset));
                         kt->__per_cpu_offset[i] = data_offset;
                         kt->flags |= PER_CPU_OFF;
 		} else
 			data_offset = 0;
 
 		machdep->machspec->stkinfo.ibase[i] = ULONG(cpu_pda_buf + 
-			OFFSET(x8664_pda_irqstackptr));
+			LAZY_OFFSET(x8664_pda_irqstackptr));
 		if (DUMPFILE())
 			machdep->machspec->current[i] = ULONG(cpu_pda_buf + 
-				OFFSET(x8664_pda_pcurrent));
+				LAZY_OFFSET(x8664_pda_pcurrent));
 
 		if (CRASHDEBUG(2)) 
 			fprintf(fp, 
@@ -1425,7 +1425,7 @@ x86_64_ist_init(void)
 	
 		for (c = cpus = 0; c < NR_CPUS; c++) {
 			vaddr = init_tss + (c * SIZE(tss_struct)) +
-				OFFSET(tss_struct_ist); 
+				LAZY_OFFSET(tss_struct_ist); 
 			readmem(vaddr, KVADDR, &ms->stkinfo.ebase[c][0], 
 				sizeof(ulong) * MAX_EXCEPTION_STACKS, 
 				"tss_struct ist array", FAULT_ON_ERROR);
@@ -1441,7 +1441,7 @@ x86_64_ist_init(void)
 			} else 
 				vaddr = tss_sp->value;
 
-			vaddr += OFFSET(tss_struct_ist);
+			vaddr += LAZY_OFFSET(tss_struct_ist);
 
                         readmem(vaddr, KVADDR, &ms->stkinfo.ebase[c][0],
                                 sizeof(ulong) * MAX_EXCEPTION_STACKS, 
@@ -1856,9 +1856,9 @@ x86_64_upgd_offset_legacy(struct task_context *tc, ulong uvaddr, int verbose, in
 	ulong pud_pte;
 
         if (task_mm(tc->task, TRUE))
-                pud = ULONG_PTR(tt->mm_struct + OFFSET(mm_struct_pgd));
+                pud = ULONG_PTR(tt->mm_struct + LAZY_OFFSET(mm_struct_pgd));
         else
-                readmem(tc->mm_struct + OFFSET(mm_struct_pgd), KVADDR, &pud,
+                readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), KVADDR, &pud,
                         sizeof(long), "mm_struct pgd", FAULT_ON_ERROR);
 
         pud_paddr = x86_64_VTOP((ulong)pud);
@@ -1888,9 +1888,9 @@ x86_64_upgd_offset(struct task_context *tc, ulong uvaddr, int verbose, int IS_XE
 	ulong pgd_pte;
 
 	if (task_mm(tc->task, TRUE))
-		pgd = ULONG_PTR(tt->mm_struct + OFFSET(mm_struct_pgd));
+		pgd = ULONG_PTR(tt->mm_struct + LAZY_OFFSET(mm_struct_pgd));
 	else
-		readmem(tc->mm_struct + OFFSET(mm_struct_pgd), KVADDR, &pgd,
+		readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), KVADDR, &pgd,
 				sizeof(long), "mm_struct pgd", FAULT_ON_ERROR);
 
 	pgd_paddr = x86_64_VTOP((ulong)pgd);
@@ -3912,7 +3912,7 @@ in_exception_stack:
 			 */
 			if (CRASHDEBUG(1))
 				fprintf(fp, "rsp: %lx rbp: %lx\n", rsp, bt->bptr);
-			rsp += OFFSET(inactive_task_frame_ret_addr);
+			rsp += LAZY_OFFSET(inactive_task_frame_ret_addr);
 		} else {
 			if (STREQ(rip_symbol, "__schedule")) {
 				i = (rsp - bt->stackbase)/sizeof(ulong);
@@ -5014,27 +5014,27 @@ x86_64_get_dumpfile_stack_frame(struct bt_info *bt_in, ulong *rip, ulong *rsp)
 
 		if (x86_64_eframe_verify(bt, 
 		    0,
-		    ULONG(user_regs + OFFSET(user_regs_struct_cs)),
-		    ULONG(user_regs + OFFSET(user_regs_struct_ss)),
-		    ULONG(user_regs + OFFSET(user_regs_struct_rip)),
-        	    ULONG(user_regs + OFFSET(user_regs_struct_rsp)),
-		    ULONG(user_regs + OFFSET(user_regs_struct_eflags)))) {
+		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
+		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_ss)),
+		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_rip)),
+        	    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_rsp)),
+		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_eflags)))) {
 			bt->stkptr = ULONG(user_regs + 
-				OFFSET(user_regs_struct_rsp));
+				LAZY_OFFSET(user_regs_struct_rsp));
 			if (x86_64_in_irqstack(bt)) {
 				ur_rip = ULONG(user_regs + 
-					OFFSET(user_regs_struct_rip));
+					LAZY_OFFSET(user_regs_struct_rip));
 				ur_rsp = ULONG(user_regs + 
-					OFFSET(user_regs_struct_rsp));
+					LAZY_OFFSET(user_regs_struct_rsp));
 				goto skip_stage;
 			}
 		}
 	} else if (ELF_NOTES_VALID() && bt->machdep) {
 		user_regs = bt->machdep;
 		ur_rip = ULONG(user_regs +
-			OFFSET(user_regs_struct_rip));
+			LAZY_OFFSET(user_regs_struct_rip));
 		ur_rsp = ULONG(user_regs +
-			OFFSET(user_regs_struct_rsp));
+			LAZY_OFFSET(user_regs_struct_rsp));
 	}
 
 	/*
@@ -5270,8 +5270,8 @@ skip_stage:
 	 */ 
 	if (bt->flags & BT_KDUMP_ELF_REGS) {
 		user_regs = bt->machdep;
-		ur_rip = ULONG(user_regs + OFFSET(user_regs_struct_rip));
-		ur_rsp = ULONG(user_regs + OFFSET(user_regs_struct_rsp));
+		ur_rip = ULONG(user_regs + LAZY_OFFSET(user_regs_struct_rip));
+		ur_rsp = ULONG(user_regs + LAZY_OFFSET(user_regs_struct_rsp));
 		if (!in_alternate_stack(bt->tc->processor, ur_rsp) && 
 		    !stkptr_to_task(ur_rsp)) {
 			if (CRASHDEBUG(1))
@@ -5318,18 +5318,18 @@ x86_64_get_sp(struct bt_info *bt)
         ulong offset, rsp;
 
         if (tt->flags & THREAD_INFO) {
-                readmem(bt->task + OFFSET(task_struct_thread) +
-			OFFSET(thread_struct_rsp), KVADDR,
+                readmem(bt->task + LAZY_OFFSET(task_struct_thread) +
+			LAZY_OFFSET(thread_struct_rsp), KVADDR,
                         &rsp, sizeof(void *),
                         "thread_struct rsp", FAULT_ON_ERROR);
 		if ((machdep->flags & ORC) && DIRECT_OFFSET_UNCHECKED(inactive_task_frame_bp) >= 0) {
-			readmem(rsp + OFFSET(inactive_task_frame_bp), KVADDR, &bt->bptr,
+			readmem(rsp + LAZY_OFFSET(inactive_task_frame_bp), KVADDR, &bt->bptr,
 				sizeof(void *), "inactive_task_frame.bp", FAULT_ON_ERROR);
 		}
                 return rsp;
         }
 
-        offset = OFFSET(task_struct_thread) + OFFSET(thread_struct_rsp); 
+        offset = LAZY_OFFSET(task_struct_thread) + LAZY_OFFSET(thread_struct_rsp); 
 
         return GET_STACK_ULONG(offset);
 }
@@ -5347,8 +5347,8 @@ x86_64_get_pc(struct bt_info *bt)
 		return machdep->machspec->thread_return;
 
         if (tt->flags & THREAD_INFO) {
-                readmem(bt->task + OFFSET(task_struct_thread) +
-                        OFFSET(thread_struct_rip), KVADDR,
+                readmem(bt->task + LAZY_OFFSET(task_struct_thread) +
+                        LAZY_OFFSET(thread_struct_rip), KVADDR,
                         &rip, sizeof(void *),
                         "thread_struct rip", FAULT_ON_ERROR);
 		if (rip)
@@ -5357,7 +5357,7 @@ x86_64_get_pc(struct bt_info *bt)
 			return machdep->machspec->thread_return;
         }
 
-        offset = OFFSET(task_struct_thread) + OFFSET(thread_struct_rip);
+        offset = LAZY_OFFSET(task_struct_thread) + LAZY_OFFSET(thread_struct_rip);
 
         return GET_STACK_ULONG(offset);
 }
@@ -5732,11 +5732,11 @@ x86_64_get_smp_cpus(void)
 				break;
 		}
 		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_level4_pgt) >= 0) {
-			level4_pgt = ULONG(cpu_pda_buf + OFFSET(x8664_pda_level4_pgt));
+			level4_pgt = ULONG(cpu_pda_buf + LAZY_OFFSET(x8664_pda_level4_pgt));
 			if (!VALID_LEVEL4_PGT_ADDR(level4_pgt))
 				break;
 		}
-		cpunumber = INT(cpu_pda_buf + OFFSET(x8664_pda_cpunumber));
+		cpunumber = INT(cpu_pda_buf + LAZY_OFFSET(x8664_pda_cpunumber));
 		if (cpunumber != cpus)
 			break;
                 cpus++;
@@ -5993,15 +5993,15 @@ x86_64_display_memmap(void)
         readmem(e820, KVADDR, &buf[0], SIZE(e820map),
                 "e820map", FAULT_ON_ERROR);
 
-        nr_map = INT(buf + OFFSET(e820map_nr_map));
+        nr_map = INT(buf + LAZY_OFFSET(e820map_nr_map));
 
         fprintf(fp, "      PHYSICAL ADDRESS RANGE         TYPE\n");
 
         for (i = 0; i < nr_map; i++) {
                 e820entry_ptr = buf + sizeof(int) + (SIZE(e820entry) * i);
-                addr = ULONGLONG(e820entry_ptr + OFFSET(e820entry_addr));
-                size = ULONGLONG(e820entry_ptr + OFFSET(e820entry_size));
-                type = UINT(e820entry_ptr + OFFSET(e820entry_type));
+                addr = ULONGLONG(e820entry_ptr + LAZY_OFFSET(e820entry_addr));
+                size = ULONGLONG(e820entry_ptr + LAZY_OFFSET(e820entry_size));
+                type = UINT(e820entry_ptr + LAZY_OFFSET(e820entry_type));
 		fprintf(fp, "%016llx - %016llx  ", addr, addr+size);
 		if (type >= (sizeof(e820type)/sizeof(char *))) {
 			if (type == 12)
@@ -7666,7 +7666,7 @@ x86_64_xendump_panic_task(struct xendump_data *xd)
 		return NO_TASK;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rsp;
+                (off_t)LAZY_OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rsp;
 
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
 		return NO_TASK;
@@ -7719,14 +7719,14 @@ x86_64_get_xendump_regs(struct xendump_data *xd, struct bt_info *bt, ulong *rip,
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rsp;
+                (off_t)LAZY_OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rsp;
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
                 goto generic;
         if (read(xd->xfd, &xrsp, sizeof(ulong)) != sizeof(ulong))
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rip;
+                (off_t)LAZY_OFFSET(vcpu_guest_context_user_regs) + cpu_user_regs_rip;
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
                 goto generic;
         if (read(xd->xfd, &xrip, sizeof(ulong)) != sizeof(ulong))
@@ -9074,8 +9074,8 @@ GART_init(void)
 		    SIZE(resource), "GART resource", RETURN_ON_ERROR))
 			return;
 		ms = machdep->machspec;
-		ms->GART_start = ULONG(resource + OFFSET(resource_start));
-		ms->GART_end = ULONG(resource + OFFSET(resource_end)); 
+		ms->GART_start = ULONG(resource + LAZY_OFFSET(resource_start));
+		ms->GART_end = ULONG(resource + LAZY_OFFSET(resource_end)); 
 		if (ms->GART_start && ms->GART_end) {
 			machdep->flags |= GART_REGION;
 			if (CRASHDEBUG(1))
@@ -9272,15 +9272,15 @@ orc_module_find(ulong ip)
 	if (!(orc->module_ORC) || !module_symbol(ip, NULL, &lm, NULL, 0))
 		return NULL;
 
-	module_arch = lm->module_struct + OFFSET(module_arch);
+	module_arch = lm->module_struct + LAZY_OFFSET(module_arch);
 
-	if (!readmem(module_arch + OFFSET(mod_arch_specific_num_orcs), KVADDR, 
+	if (!readmem(module_arch + LAZY_OFFSET(mod_arch_specific_num_orcs), KVADDR, 
 	    &num_orcs, sizeof(int), "module num_orcs", RETURN_ON_ERROR|QUIET)) 
 		return NULL;
-	if (!readmem(module_arch + OFFSET(mod_arch_specific_orc_unwind_ip), KVADDR, 
+	if (!readmem(module_arch + LAZY_OFFSET(mod_arch_specific_orc_unwind_ip), KVADDR, 
 	    &orc_unwind_ip, sizeof(void *), "module orc_unwind_ip", RETURN_ON_ERROR|QUIET)) 
 		return NULL;
-	if (!readmem(module_arch + OFFSET(mod_arch_specific_orc_unwind), KVADDR, 
+	if (!readmem(module_arch + LAZY_OFFSET(mod_arch_specific_orc_unwind), KVADDR, 
 	    &orc_unwind, sizeof(void *), "module orc_unwind", RETURN_ON_ERROR|QUIET)) 
 		return NULL;
 

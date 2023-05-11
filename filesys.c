@@ -1340,7 +1340,7 @@ cmd_mount(void)
 						FAULT_ON_ERROR, NULL);
 					value2 = htol(arglist[i], 
 						FAULT_ON_ERROR, NULL) + 
-						OFFSET(mount_mnt);
+						LAZY_OFFSET(mount_mnt);
 					if (value1 == value2)
 						found = TRUE;
 				}
@@ -1404,7 +1404,7 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 	dirp = dentry = mnt_parent = sb_s_files = s_dirty = 0;
 
 	if (DIRECT_OFFSET_UNCHECKED(super_block_s_dirty) >= 0)
-		s_dirty = OFFSET(super_block_s_dirty);
+		s_dirty = LAZY_OFFSET(super_block_s_dirty);
 
 	per_cpu_s_files = MEMBER_EXISTS("file", "f_sb_list_cpu");
 
@@ -1434,7 +1434,7 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 		fprintf(fp, "%s", mount_hdr);
 
 	sb_s_files = DIRECT_OFFSET_UNCHECKED(super_block_s_files) >= 0 ?
-		OFFSET(super_block_s_files) : INVALID_OFFSET;
+		LAZY_OFFSET(super_block_s_files) : INVALID_LAZY_OFFSET;
 
 	if ((flags & MOUNT_PRINT_FILES) && (sb_s_files == INVALID_OFFSET)) {
 		/*
@@ -1455,7 +1455,7 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 
 	if (VALID_STRUCT(mount)) {
 		mount_buf = GETBUF(SIZE(mount));
-		vfsmount_buf = mount_buf + OFFSET(mount_mnt);
+		vfsmount_buf = mount_buf + LAZY_OFFSET(mount_mnt);
 	} else {
 		mount_buf = NULL;
 		vfsmount_buf = GETBUF(SIZE(vfsmount));
@@ -1466,31 +1466,31 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 		if (VALID_STRUCT(mount)) {
 			readmem(*vfsmnt, KVADDR, mount_buf, SIZE(mount),
 				"mount buffer", FAULT_ON_ERROR);
-			devp = ULONG(mount_buf +  OFFSET(mount_mnt_devname));
+			devp = ULONG(mount_buf +  LAZY_OFFSET(mount_mnt_devname));
 		} else {
 			readmem(*vfsmnt, KVADDR, vfsmount_buf, SIZE(vfsmount),
 				"vfsmount buffer", FAULT_ON_ERROR);
-			devp = ULONG(vfsmount_buf +  OFFSET(vfsmount_mnt_devname));
+			devp = ULONG(vfsmount_buf +  LAZY_OFFSET(vfsmount_mnt_devname));
 		}
 
 		if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_dirname) >= 0) {
 			dirp = ULONG(vfsmount_buf +  
-				OFFSET(vfsmount_mnt_dirname)); 
+				LAZY_OFFSET(vfsmount_mnt_dirname)); 
 		} else {
 			if (VALID_STRUCT(mount)) {
 				mnt_parent = ULONG(mount_buf + 
-					OFFSET(mount_mnt_parent));
+					LAZY_OFFSET(mount_mnt_parent));
 				dentry = ULONG(mount_buf +  
-					OFFSET(mount_mnt_mountpoint));
+					LAZY_OFFSET(mount_mnt_mountpoint));
 			} else {
 				mnt_parent = ULONG(vfsmount_buf + 
-					OFFSET(vfsmount_mnt_parent));
+					LAZY_OFFSET(vfsmount_mnt_parent));
 				dentry = ULONG(vfsmount_buf +  
-					OFFSET(vfsmount_mnt_mountpoint));
+					LAZY_OFFSET(vfsmount_mnt_mountpoint));
 			}
 		}
 
-		sbp = ULONG(vfsmount_buf + OFFSET(vfsmount_mnt_sb)); 
+		sbp = ULONG(vfsmount_buf + LAZY_OFFSET(vfsmount_mnt_sb)); 
 		if (!IS_KVADDR(sbp)) {
 			error(WARNING, "cannot get super_block from vfsmnt: 0x%lx\n", *vfsmnt);
 			continue;
@@ -1506,8 +1506,8 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 
                 readmem(sbp, KVADDR, super_block_buf, SIZE(super_block),
                         "super_block buffer", FAULT_ON_ERROR);
-		type = ULONG(super_block_buf + OFFSET(super_block_s_type)); 
-                readmem(type + OFFSET(file_system_type_name),
+		type = ULONG(super_block_buf + LAZY_OFFSET(super_block_s_type)); 
+                readmem(type + LAZY_OFFSET(file_system_type_name),
                         KVADDR, &name, sizeof(void *),
                         "file_system_type name", FAULT_ON_ERROR);
 
@@ -1535,7 +1535,7 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
                         	fprintf(fp, "%-10s\n", "(unknown)");
 		} else {
 			get_pathname(dentry, buf1, BUFSIZE, 1, VALID_STRUCT(mount) ?
-				mnt_parent + OFFSET(mount_mnt) : mnt_parent);
+				mnt_parent + LAZY_OFFSET(mount_mnt) : mnt_parent);
                        	fprintf(fp, "%-10s\n", buf1);
 		}
 
@@ -1551,12 +1551,12 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 			for (i=0, dp = dentry_list; i<cnt; i++, dp++) {
 				dentry_buf = fill_dentry_cache(*dp);
 				inode = ULONG(dentry_buf +
-					OFFSET(dentry_d_inode));
+					LAZY_OFFSET(dentry_d_inode));
 				if (!inode)
 					continue;
 				inode_buf = fill_inode_cache(inode);
 				inode_sb = ULONG(inode_buf + 
-					OFFSET(inode_i_sb));
+					LAZY_OFFSET(inode_i_sb));
 				if (inode_sb != sbp)
 					continue;
 				if (files_header_printed == 0) {
@@ -1627,28 +1627,28 @@ get_mount_list(int *cntptr, struct task_context *namespace_context)
 	} else if (DIRECT_OFFSET_UNCHECKED(task_struct_nsproxy) >= 0) {
  		tc = namespace_context;
 
-        	readmem(tc->task + OFFSET(task_struct_nsproxy), KVADDR, 
+        	readmem(tc->task + LAZY_OFFSET(task_struct_nsproxy), KVADDR, 
 			&nsproxy, sizeof(void *), "task nsproxy", 
 			FAULT_ON_ERROR);
-        	if (!readmem(nsproxy + OFFSET(nsproxy_mnt_ns), KVADDR, 
+        	if (!readmem(nsproxy + LAZY_OFFSET(nsproxy_mnt_ns), KVADDR, 
 			&mnt_ns, sizeof(void *), "nsproxy mnt_ns", 
 			RETURN_ON_ERROR|QUIET))
 			error(FATAL, "cannot determine mount list location!\n");
-        	if (!readmem(mnt_ns + OFFSET(mnt_namespace_root), KVADDR, 
+        	if (!readmem(mnt_ns + LAZY_OFFSET(mnt_namespace_root), KVADDR, 
 			&root, sizeof(void *), "mnt_namespace root", 
 			RETURN_ON_ERROR|QUIET))
 			error(FATAL, "cannot determine mount list location!\n");
 
 		ld->start = root + OFFSET_OPTION(vfsmount_mnt_list, mount_mnt_list);
-        	ld->end = mnt_ns + OFFSET(mnt_namespace_list);
+        	ld->end = mnt_ns + LAZY_OFFSET(mnt_namespace_list);
 
 	} else if (DIRECT_OFFSET_UNCHECKED(namespace_root) >= 0) {
  		tc = namespace_context;
 
-        	readmem(tc->task + OFFSET(task_struct_namespace), KVADDR, 
+        	readmem(tc->task + LAZY_OFFSET(task_struct_namespace), KVADDR, 
 			&namespace, sizeof(void *), "task namespace", 
 			FAULT_ON_ERROR);
-        	if (!readmem(namespace + OFFSET(namespace_root), KVADDR, 
+        	if (!readmem(namespace + LAZY_OFFSET(namespace_root), KVADDR, 
 			&root, sizeof(void *), "namespace root", 
 			RETURN_ON_ERROR|QUIET))
 			error(FATAL, "cannot determine mount list location!\n");
@@ -1658,16 +1658,16 @@ get_mount_list(int *cntptr, struct task_context *namespace_context)
 				namespace, root);
 
 		ld->start = root + OFFSET_OPTION(vfsmount_mnt_list, mount_mnt_list);
-        	ld->end = namespace + OFFSET(namespace_list);
+        	ld->end = namespace + LAZY_OFFSET(namespace_list);
 	} else
 		error(FATAL, "cannot determine mount list location!\n");
 	
         if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_list) >= 0) 
-                ld->list_head_offset = OFFSET(vfsmount_mnt_list);
+                ld->list_head_offset = LAZY_OFFSET(vfsmount_mnt_list);
 	else if (VALID_STRUCT(mount))
-		ld->list_head_offset = OFFSET(mount_mnt_list);
+		ld->list_head_offset = LAZY_OFFSET(mount_mnt_list);
 	else
-                ld->member_offset = OFFSET(vfsmount_mnt_next);
+                ld->member_offset = LAZY_OFFSET(vfsmount_mnt_next);
         
         *cntptr = do_list(ld);
         return(ld->list_ptr);
@@ -1700,15 +1700,15 @@ display_dentry_info(ulong dentry)
 		space(MINSPACE));
 
         dentry_buf = fill_dentry_cache(dentry);
-        inode = ULONG(dentry_buf + OFFSET(dentry_d_inode));
+        inode = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_inode));
 	pathname[0] = NULLCHAR;
 
         if (inode) {
                 inode_buf = fill_inode_cache(inode);
-                superblock = ULONG(inode_buf + OFFSET(inode_i_sb));
+                superblock = ULONG(inode_buf + LAZY_OFFSET(inode_i_sb));
 	} else {
 		inode_buf = NULL;
-		superblock = ULONG(dentry_buf + OFFSET(dentry_d_sb));
+		superblock = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_sb));
 	}
 
 	if (!superblock)
@@ -1718,7 +1718,7 @@ display_dentry_info(ulong dentry)
 		mntlist = get_mount_list(&mount_cnt, pid_to_context(1));
 		if (VALID_STRUCT(mount)) {
 			mount_buf = GETBUF(SIZE(mount));
-			vfsmount_buf = mount_buf + OFFSET(mount_mnt);
+			vfsmount_buf = mount_buf + LAZY_OFFSET(mount_mnt);
 		} else {
 			mount_buf = NULL;
 			vfsmount_buf = GETBUF(SIZE(vfsmount));
@@ -1732,11 +1732,11 @@ display_dentry_info(ulong dentry)
 			else
 				readmem(*vfsmnt, KVADDR, vfsmount_buf, SIZE(vfsmount),
 					"vfsmount buffer", FAULT_ON_ERROR);
-                	sb = ULONG(vfsmount_buf + OFFSET(vfsmount_mnt_sb));
+                	sb = ULONG(vfsmount_buf + LAZY_OFFSET(vfsmount_mnt_sb));
 			if (superblock && (sb == superblock)) {
                 		get_pathname(dentry, pathname, BUFSIZE, 1,
 					VALID_STRUCT(mount) ?
-					*vfsmnt+OFFSET(mount_mnt) : *vfsmnt);
+					*vfsmnt+LAZY_OFFSET(mount_mnt) : *vfsmnt);
 				found = TRUE;
 			}
 		}
@@ -1744,12 +1744,12 @@ display_dentry_info(ulong dentry)
 		if (!found && symbol_exists("pipe_mnt")) {
 			get_symbol_data("pipe_mnt", sizeof(long), &vfs);
 			if (VALID_STRUCT(mount))
-				readmem(vfs - OFFSET(mount_mnt), KVADDR, mount_buf, SIZE(mount),
+				readmem(vfs - LAZY_OFFSET(mount_mnt), KVADDR, mount_buf, SIZE(mount),
 					"mount buffer", FAULT_ON_ERROR);
 			else
 				readmem(vfs, KVADDR, vfsmount_buf, SIZE(vfsmount),
 					"vfsmount buffer", FAULT_ON_ERROR);
-                        sb = ULONG(vfsmount_buf + OFFSET(vfsmount_mnt_sb));
+                        sb = ULONG(vfsmount_buf + LAZY_OFFSET(vfsmount_mnt_sb));
                         if (superblock && (sb == superblock)) {
                                 get_pathname(dentry, pathname, BUFSIZE, 1, vfs);
                                 found = TRUE;
@@ -1758,12 +1758,12 @@ display_dentry_info(ulong dentry)
 		if (!found && symbol_exists("sock_mnt")) {
 			get_symbol_data("sock_mnt", sizeof(long), &vfs);
 			if (VALID_STRUCT(mount))
-				readmem(vfs - OFFSET(mount_mnt), KVADDR, mount_buf, SIZE(mount),
+				readmem(vfs - LAZY_OFFSET(mount_mnt), KVADDR, mount_buf, SIZE(mount),
 					"mount buffer", FAULT_ON_ERROR);
 			else
 				readmem(vfs, KVADDR, vfsmount_buf, SIZE(vfsmount),
 					"vfsmount buffer", FAULT_ON_ERROR);
-                        sb = ULONG(vfsmount_buf + OFFSET(vfsmount_mnt_sb));
+                        sb = ULONG(vfsmount_buf + LAZY_OFFSET(vfsmount_mnt_sb));
                         if (superblock && (sb == superblock)) {
                                 get_pathname(dentry, pathname, BUFSIZE, 1, vfs);
                                 found = TRUE;
@@ -1814,12 +1814,12 @@ inode_type(char *inode_buf, char *pathname)
         switch (SIZE(umode_t))
         {
         case SIZEOF_32BIT:
-                umode32 = UINT(inode_buf + OFFSET(inode_i_mode));
+                umode32 = UINT(inode_buf + LAZY_OFFSET(inode_i_mode));
 		mode = umode32;
                 break;
 
         case SIZEOF_16BIT:
-                umode16 = USHORT(inode_buf + OFFSET(inode_i_mode));
+                umode16 = USHORT(inode_buf + LAZY_OFFSET(inode_i_mode));
 		mode = (uint)umode16;
                 break;
         }
@@ -1838,7 +1838,7 @@ inode_type(char *inode_buf, char *pathname)
 	if (S_ISFIFO(mode)) {
 		type = "FIFO";
 		if (symbol_exists("pipe_inode_operations")) {
-			inode_i_op = ULONG(inode_buf + OFFSET(inode_i_op));
+			inode_i_op = ULONG(inode_buf + LAZY_OFFSET(inode_i_op));
 			if (inode_i_op == 
 			    symbol_value("pipe_inode_operations")) {
 				type = "PIPE";
@@ -1846,7 +1846,7 @@ inode_type(char *inode_buf, char *pathname)
 			}
 		} else {
 			if (symbol_exists("rdwr_pipe_fops") && 
-			    (i_fop_off = OFFSET(inode_i_fop)) > 0) {
+			    (i_fop_off = LAZY_OFFSET(inode_i_fop)) > 0) {
 				 inode_i_fop = ULONG(inode_buf + i_fop_off);
 				 if (inode_i_fop == 
 				     symbol_value("rdwr_pipe_fops")) { 
@@ -1905,16 +1905,16 @@ create_dentry_array(ulong list_addr, int *count)
 	for (i=0, file = files_list; i<cnt; i++, file++) {
 		file_buf = fill_file_cache(*file);
 
-		f_count = INT(file_buf + OFFSET(file_f_count));
+		f_count = INT(file_buf + LAZY_OFFSET(file_f_count));
 		if (!f_count)
 			continue;
 
-		dentry = ULONG(file_buf + OFFSET(file_f_dentry));
+		dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
 		if (!dentry)
 			continue;
 
 		dentry_buf = fill_dentry_cache(dentry);
-		inode = ULONG(dentry_buf + OFFSET(dentry_d_inode));
+		inode = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_inode));
 
 		if (!inode)
 			continue;
@@ -2017,8 +2017,8 @@ vfs_init(void)
 	MEMBER_OFFSET_INIT(path_dentry, "path", "dentry");
 	if (DIRECT_OFFSET_UNCHECKED(file_f_dentry) == INVALID_OFFSET) {
 		MEMBER_OFFSET_INIT(file_f_path, "file", "f_path");
-		ASSIGN_OFFSET(file_f_dentry) = OFFSET(file_f_path) + OFFSET(path_dentry);
-		ASSIGN_OFFSET(file_f_vfsmnt) = OFFSET(file_f_path) + OFFSET(path_mnt);
+		ASSIGN_LAZY_OFFSET(file_f_dentry) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_dentry);
+		ASSIGN_LAZY_OFFSET(file_f_vfsmnt) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_mnt);
 	}
 	MEMBER_OFFSET_INIT(dentry_d_inode, "dentry", "d_inode");
 	MEMBER_OFFSET_INIT(dentry_d_parent, "dentry", "d_parent");
@@ -2066,7 +2066,7 @@ vfs_init(void)
 	} else if (THIS_KERNEL_VERSION >= LINUX(2,4,20)) {
 		if (CRASHDEBUG(2))
 			fprintf(fp, "hardwiring namespace stuff\n");
-		ASSIGN_OFFSET(task_struct_namespace) = OFFSET(task_struct_files) +
+		ASSIGN_LAZY_OFFSET(task_struct_namespace) = LAZY_OFFSET(task_struct_files) +
 			sizeof(void *);
 		ASSIGN_OFFSET(namespace_root) = sizeof(void *);
 		ASSIGN_OFFSET(namespace_list) = sizeof(void *) * 2;
@@ -2185,7 +2185,7 @@ get_inode_nrpages(ulong i_mapping)
 	readmem(i_mapping, KVADDR, address_space_buf,
 	    SIZE(address_space), "address_space buffer",
 	    FAULT_ON_ERROR);
-	nrpages = ULONG(address_space_buf + OFFSET(address_space_nrpages));
+	nrpages = ULONG(address_space_buf + LAZY_OFFSET(address_space_nrpages));
 
 	FREEBUF(address_space_buf);
 
@@ -2206,7 +2206,7 @@ dump_inode_page_cache_info(ulong inode)
 	readmem(inode, KVADDR, inode_buf, SIZE(inode), "inode buffer",
 	    FAULT_ON_ERROR);
 
-	i_mapping = ULONG(inode_buf + OFFSET(inode_i_mapping));
+	i_mapping = ULONG(inode_buf + LAZY_OFFSET(inode_i_mapping));
 	nrpages = get_inode_nrpages(i_mapping);
 
 	sprintf(header, "%s  NRPAGES\n",
@@ -2231,9 +2231,9 @@ dump_inode_page_cache_info(ulong inode)
 	    (STREQ(MEMBER_TYPE_NAME("address_space", "i_pages"), "xarray") ||
 	    (STREQ(MEMBER_TYPE_NAME("address_space", "i_pages"), "radix_tree_root") &&
 	     MEMBER_EXISTS("radix_tree_root", "xa_head"))))
-		xarray = i_mapping + OFFSET(address_space_page_tree);
+		xarray = i_mapping + LAZY_OFFSET(address_space_page_tree);
 	else 
-		root_rnode = i_mapping + OFFSET(address_space_page_tree);
+		root_rnode = i_mapping + LAZY_OFFSET(address_space_page_tree);
 
 	lp.index = 0;
 	lp.value = (void *)&dump_inode_page;
@@ -2462,7 +2462,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 	if (ref) 
 		ref->cmdflags = 0;
 
-	fs_struct_addr = ULONG(tt->task_struct + OFFSET(task_struct_fs));
+	fs_struct_addr = ULONG(tt->task_struct + LAZY_OFFSET(task_struct_fs));
 
         if (fs_struct_addr) {
 		fs_struct_buf = GETBUF(SIZE(fs_struct));
@@ -2471,21 +2471,21 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 
 		use_path = (MEMBER_TYPE("fs_struct", "root") == TYPE_CODE_STRUCT);
 		if (use_path)
-			root_dentry = ULONG(fs_struct_buf + OFFSET(fs_struct_root) +
-				OFFSET(path_dentry));
+			root_dentry = ULONG(fs_struct_buf + LAZY_OFFSET(fs_struct_root) +
+				LAZY_OFFSET(path_dentry));
 		else
-			root_dentry = ULONG(fs_struct_buf + OFFSET(fs_struct_root));
+			root_dentry = ULONG(fs_struct_buf + LAZY_OFFSET(fs_struct_root));
 
 		if (root_dentry) {
 			if (DIRECT_OFFSET_UNCHECKED(fs_struct_rootmnt) >= 0) {
                 		vfsmnt = ULONG(fs_struct_buf +
-                        		OFFSET(fs_struct_rootmnt));
+                        		LAZY_OFFSET(fs_struct_rootmnt));
 				get_pathname(root_dentry, root_pathname, 
 					BUFSIZE, 1, vfsmnt);
 			} else if (use_path) {
 				vfsmnt = ULONG(fs_struct_buf +
-					OFFSET(fs_struct_root) +
-					OFFSET(path_mnt));
+					LAZY_OFFSET(fs_struct_root) +
+					LAZY_OFFSET(path_mnt));
 				get_pathname(root_dentry, root_pathname, 
 					BUFSIZE, 1, vfsmnt);
 			} else {
@@ -2495,21 +2495,21 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 		}
 
 		if (use_path)
-			pwd_dentry = ULONG(fs_struct_buf + OFFSET(fs_struct_pwd) +
-				OFFSET(path_dentry));
+			pwd_dentry = ULONG(fs_struct_buf + LAZY_OFFSET(fs_struct_pwd) +
+				LAZY_OFFSET(path_dentry));
 		else
-			pwd_dentry = ULONG(fs_struct_buf + OFFSET(fs_struct_pwd));
+			pwd_dentry = ULONG(fs_struct_buf + LAZY_OFFSET(fs_struct_pwd));
 
 		if (pwd_dentry) {
 			if (DIRECT_OFFSET_UNCHECKED(fs_struct_pwdmnt) >= 0) {
                 		vfsmnt = ULONG(fs_struct_buf +
-                        		OFFSET(fs_struct_pwdmnt));
+                        		LAZY_OFFSET(fs_struct_pwdmnt));
 				get_pathname(pwd_dentry, pwd_pathname, 
 					BUFSIZE, 1, vfsmnt);
 			} else if (use_path) {
 				vfsmnt = ULONG(fs_struct_buf +
-					OFFSET(fs_struct_pwd) +
-					OFFSET(path_mnt));
+					LAZY_OFFSET(fs_struct_pwd) +
+					LAZY_OFFSET(path_mnt));
 				get_pathname(pwd_dentry, pwd_pathname, 
 					BUFSIZE, 1, vfsmnt);
 
@@ -2521,9 +2521,9 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 
 		if ((flags & PRINT_INODES) && root_dentry && pwd_dentry) {
 			dentry_buf = fill_dentry_cache(root_dentry);
-			root_inode = ULONG(dentry_buf + OFFSET(dentry_d_inode));
+			root_inode = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_inode));
 			dentry_buf = fill_dentry_cache(pwd_dentry);
-			pwd_inode = ULONG(dentry_buf + OFFSET(dentry_d_inode));
+			pwd_inode = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_inode));
 			fprintf(fp, "ROOT: %lx %s    CWD: %lx %s\n", 
 				root_inode, root_pathname, pwd_inode,
 				pwd_pathname);
@@ -2545,7 +2545,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 		FREEBUF(fs_struct_buf);
 	}
 
-	files_struct_addr = ULONG(tt->task_struct + OFFSET(task_struct_files));
+	files_struct_addr = ULONG(tt->task_struct + LAZY_OFFSET(task_struct_files));
 
 	if (files_struct_addr) {
 		readmem(files_struct_addr, KVADDR, files_struct_buf,
@@ -2554,26 +2554,26 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 	
 		if (DIRECT_OFFSET_UNCHECKED(files_struct_max_fdset) >= 0) {
 			max_fdset = INT(files_struct_buf +
-			OFFSET(files_struct_max_fdset));
+			LAZY_OFFSET(files_struct_max_fdset));
 
 			max_fds = INT(files_struct_buf +
-			OFFSET(files_struct_max_fds));
+			LAZY_OFFSET(files_struct_max_fds));
 		}
 	}
 
 	if (DIRECT_OFFSET_UNCHECKED(files_struct_fdt) >= 0) {
-		fdtable_addr = ULONG(files_struct_buf + OFFSET(files_struct_fdt));
+		fdtable_addr = ULONG(files_struct_buf + LAZY_OFFSET(files_struct_fdt));
 
 		if (fdtable_addr) {
 			readmem(fdtable_addr, KVADDR, fdtable_buf,
 	 			SIZE(fdtable), "fdtable buffer", FAULT_ON_ERROR); 
 			if (DIRECT_OFFSET_UNCHECKED(fdtable_max_fdset) >= 0)
 				max_fdset = INT(fdtable_buf +
-					OFFSET(fdtable_max_fdset));
+					LAZY_OFFSET(fdtable_max_fdset));
 			else
 				max_fdset = -1;
 			max_fds = INT(fdtable_buf +
-        	                OFFSET(fdtable_max_fds));
+        	                LAZY_OFFSET(fdtable_max_fds));
 		}
 	}
 
@@ -2609,10 +2609,10 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 
 	if (DIRECT_OFFSET_UNCHECKED(fdtable_open_fds) >= 0)
 		open_fds_addr = ULONG(fdtable_buf +
-			OFFSET(fdtable_open_fds));
+			LAZY_OFFSET(fdtable_open_fds));
 	else
 		open_fds_addr = ULONG(files_struct_buf +
-			OFFSET(files_struct_open_fds));
+			LAZY_OFFSET(files_struct_open_fds));
 
 	open_fds_size = MAX(max_fdset, max_fds) / BITS_PER_BYTE;	
 	open_fds = (ulong *)GETBUF(open_fds_size);
@@ -2626,9 +2626,9 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 	if (open_fds_addr) {
 		if (DIRECT_OFFSET_UNCHECKED(files_struct_open_fds_init) >= 0 && 
 		    (open_fds_addr == (files_struct_addr + 
-		    OFFSET(files_struct_open_fds_init)))) 
+		    LAZY_OFFSET(files_struct_open_fds_init)))) 
 			BCOPY(files_struct_buf + 
-			        OFFSET(files_struct_open_fds_init),
+			        LAZY_OFFSET(files_struct_open_fds_init),
 				open_fds, open_fds_size);
 		else
 			readmem(open_fds_addr, KVADDR, open_fds,
@@ -2637,9 +2637,9 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 	} 
 
 	if (DIRECT_OFFSET_UNCHECKED(fdtable_fd) >= 0)
-		fd = ULONG(fdtable_buf + OFFSET(fdtable_fd));
+		fd = ULONG(fdtable_buf + LAZY_OFFSET(fdtable_fd));
 	else
-		fd = ULONG(files_struct_buf + OFFSET(files_struct_fd));
+		fd = ULONG(files_struct_buf + LAZY_OFFSET(files_struct_fd));
 
 	if (!open_fds_addr || !fd) {
                 if (ref && (ref->cmdflags & FILES_REF_FOUND))
@@ -2825,33 +2825,33 @@ nlm_files_dump(void)
 		cnt = retrieve_list(files_list, cnt);
 		hq_close();
 		for (j=0, file = files_list; j<cnt; j++, file++) {
-			readmem(*file + OFFSET(nlm_file_f_file) + 
-				OFFSET(file_f_dentry), KVADDR, &dentry,
+			readmem(*file + LAZY_OFFSET(nlm_file_f_file) + 
+				LAZY_OFFSET(file_f_dentry), KVADDR, &dentry,
 				sizeof(void *), "nlm_file dentry", 
 				FAULT_ON_ERROR);
 			if (!dentry)
 				continue;
-			readmem(dentry + OFFSET(dentry_d_inode), KVADDR, 
+			readmem(dentry + LAZY_OFFSET(dentry_d_inode), KVADDR, 
 				&inode, sizeof(void *), "dentry d_inode",
 				FAULT_ON_ERROR);
 			if (!inode)
 				continue;
-			readmem(inode + OFFSET(inode_i_flock), KVADDR,
+			readmem(inode + LAZY_OFFSET(inode_i_flock), KVADDR,
 				&flock, sizeof(void *), "inode i_flock",
 				FAULT_ON_ERROR);
 			if (!flock)
 				continue;
-			readmem(flock + OFFSET(file_lock_fl_owner), KVADDR,
+			readmem(flock + LAZY_OFFSET(file_lock_fl_owner), KVADDR,
 				&host, sizeof(void *), 
 				"file_lock fl_owner", FAULT_ON_ERROR);
 			if (!host)
 				continue;
-			readmem(host + OFFSET(nlm_host_h_exportent), KVADDR,
+			readmem(host + LAZY_OFFSET(nlm_host_h_exportent), KVADDR,
 				&client, sizeof(void *), 
 				"nlm_host h_exportent", FAULT_ON_ERROR);
 			if (!client)
 				continue;
-			if (!read_string(client + OFFSET(svc_client_cl_ident), 
+			if (!read_string(client + LAZY_OFFSET(svc_client_cl_ident), 
 			    buf1, BUFSIZE-1))
 				continue;
 			if (!header_printed) {
@@ -2892,7 +2892,7 @@ file_dump(ulong file, ulong dentry, ulong inode, int fd, int flags)
 
 	if (!dentry && file) {
 		file_buf = fill_file_cache(file);		
-		dentry = ULONG(file_buf + OFFSET(file_f_dentry));
+		dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
 	}
 
 	if (!dentry) {
@@ -2922,7 +2922,7 @@ file_dump(ulong file, ulong dentry, ulong inode, int fd, int flags)
 
 	if (!inode) {
 		dentry_buf = fill_dentry_cache(dentry);
-		inode = ULONG(dentry_buf + OFFSET(dentry_d_inode));
+		inode = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_inode));
 	}
 
 	if (!inode) { 
@@ -2997,7 +2997,7 @@ file_dump(ulong file, ulong dentry, ulong inode, int fd, int flags)
 				space(MINSPACE),
 				pathname+1);
 		} else if (flags & DUMP_FILE_NRPAGES) {
-			i_mapping = ULONG(inode_buf + OFFSET(inode_i_mapping));
+			i_mapping = ULONG(inode_buf + LAZY_OFFSET(inode_i_mapping));
 			nrpages = get_inode_nrpages(i_mapping);
 
 			fprintf(fp, "%3d%s%s%s%s%s%s%s%s%s%s\n",
@@ -3053,7 +3053,7 @@ file_to_dentry(ulong file)
 	ulong dentry;
 
         file_buf = fill_file_cache(file);
-        dentry = ULONG(file_buf + OFFSET(file_f_dentry));
+        dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
         return dentry;
 }
 
@@ -3067,7 +3067,7 @@ file_to_vfsmnt(ulong file)
 	ulong vfsmnt;
 
 	file_buf = fill_file_cache(file);
-	vfsmnt = ULONG(file_buf + OFFSET(file_f_vfsmnt));
+	vfsmnt = ULONG(file_buf + LAZY_OFFSET(file_f_vfsmnt));
 	return vfsmnt;
 }
 
@@ -3092,7 +3092,7 @@ get_pathname(ulong dentry, char *pathname, int length, int full, ulong vfsmnt)
 	if (VALID_STRUCT(mount)) {
 		if (DIRECT_OFFSET_UNCHECKED(mount_mnt_mountpoint) >= 0) {
 			mnt_buf = GETBUF(SIZE(mount));
-			vfsmnt_buf = mnt_buf + OFFSET(mount_mnt);
+			vfsmnt_buf = mnt_buf + LAZY_OFFSET(mount_mnt);
 		} else {
 			mnt_buf = NULL;
 			vfsmnt_buf = NULL;
@@ -3112,13 +3112,13 @@ get_pathname(ulong dentry, char *pathname, int length, int full, ulong vfsmnt)
 		dentry_buf = fill_dentry_cache(tmp_dentry);
 
 		d_name_len = INT(dentry_buf +
-			OFFSET(dentry_d_name) + OFFSET(qstr_len));
+			LAZY_OFFSET(dentry_d_name) + LAZY_OFFSET(qstr_len));
 
 		if (!d_name_len) 
 			break;
 
-		d_name_name = ULONG(dentry_buf + OFFSET(dentry_d_name) 
-			+ OFFSET(qstr_name));
+		d_name_name = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_name) 
+			+ LAZY_OFFSET(qstr_name));
 
 		if (!d_name_name)
 			break;
@@ -3143,7 +3143,7 @@ get_pathname(ulong dentry, char *pathname, int length, int full, ulong vfsmnt)
 			strncpy(pathname, buf, BUFSIZE);
 		}
 
-		parent = ULONG(dentry_buf + OFFSET(dentry_d_parent)); 
+		parent = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_parent)); 
 			
 		if (tmp_dentry == parent && full) {
 			if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_mountpoint) >= 0) {
@@ -3155,9 +3155,9 @@ get_pathname(ulong dentry, char *pathname, int length, int full, ulong vfsmnt)
 						"vfsmount buffer", 
 						FAULT_ON_ERROR);
         				parent = ULONG(vfsmnt_buf + 
-					    OFFSET(vfsmount_mnt_mountpoint));
+					    LAZY_OFFSET(vfsmount_mnt_mountpoint));
         				mnt_parent = ULONG(vfsmnt_buf + 
-					    OFFSET(vfsmount_mnt_parent));
+					    LAZY_OFFSET(vfsmount_mnt_parent));
 					if (tmp_vfsmnt == mnt_parent)
 						break;
 					else
@@ -3167,24 +3167,24 @@ get_pathname(ulong dentry, char *pathname, int length, int full, ulong vfsmnt)
 				if (tmp_vfsmnt) {
 					if (strncmp(pathname, "//", 2) == 0)
 						shift_string_left(pathname, 1);
-                                        readmem(tmp_vfsmnt - OFFSET(mount_mnt),
+                                        readmem(tmp_vfsmnt - LAZY_OFFSET(mount_mnt),
 						KVADDR, mnt_buf,
 						SIZE(mount), 
 						"mount buffer", 
 						FAULT_ON_ERROR);
         				parent = ULONG(mnt_buf + 
-					    OFFSET(mount_mnt_mountpoint));
+					    LAZY_OFFSET(mount_mnt_mountpoint));
         				mnt_parent = ULONG(mnt_buf + 
-					    OFFSET(mount_mnt_parent));
-					if ((tmp_vfsmnt - OFFSET(mount_mnt)) == mnt_parent)
+					    LAZY_OFFSET(mount_mnt_parent));
+					if ((tmp_vfsmnt - LAZY_OFFSET(mount_mnt)) == mnt_parent)
 						break;
 					else
-						tmp_vfsmnt = mnt_parent + OFFSET(mount_mnt);
+						tmp_vfsmnt = mnt_parent + LAZY_OFFSET(mount_mnt);
 				}
 			}
 			else {
 				parent = ULONG(dentry_buf + 
-					OFFSET(dentry_d_covers)); 
+					LAZY_OFFSET(dentry_d_covers)); 
 			}
 		}
 						
@@ -3210,9 +3210,9 @@ get_pathname_component(ulong dentry,
 {
 	int len = d_name_len;   /* presume success */
 
-        if (d_name_name == (dentry + OFFSET(dentry_d_iname))) {
-                if (strlen(dentry_buf + OFFSET(dentry_d_iname)) == d_name_len)
-                	strcpy(pathbuf, dentry_buf + OFFSET(dentry_d_iname));
+        if (d_name_name == (dentry + LAZY_OFFSET(dentry_d_iname))) {
+                if (strlen(dentry_buf + LAZY_OFFSET(dentry_d_iname)) == d_name_len)
+                	strcpy(pathbuf, dentry_buf + LAZY_OFFSET(dentry_d_iname));
                 else
                         len = 0;
         } else if ((read_string(d_name_name, pathbuf, BUFSIZE)) != d_name_len)
@@ -4349,12 +4349,12 @@ vfsmount_devname(ulong vfsmnt, char *buf, int maxlen)
 	BZERO(buf, maxlen);
 
 	if (VALID_STRUCT(mount)) {
-		if (!readmem(vfsmnt - OFFSET(mount_mnt) + OFFSET(mount_mnt_devname),
+		if (!readmem(vfsmnt - LAZY_OFFSET(mount_mnt) + LAZY_OFFSET(mount_mnt_devname),
 		    KVADDR, &devp, sizeof(void *), "mount mnt_devname", 
 		    QUIET|RETURN_ON_ERROR))
 			return buf;
 	} else {
-		if (!readmem(vfsmnt + OFFSET(vfsmount_mnt_devname),
+		if (!readmem(vfsmnt + LAZY_OFFSET(vfsmount_mnt_devname),
 		    KVADDR, &devp, sizeof(void *), "vfsmount mnt_devname", 
 		    QUIET|RETURN_ON_ERROR))
 			return buf;
@@ -4374,19 +4374,19 @@ get_root_vfsmount(char *file_buf)
 	ulong vfsmnt;
 	ulong mnt_parent;
 
-	vfsmnt = ULONG(file_buf + OFFSET(file_f_vfsmnt));
+	vfsmnt = ULONG(file_buf + LAZY_OFFSET(file_f_vfsmnt));
 
 	if (!strlen(vfsmount_devname(vfsmnt, buf1, BUFSIZE)))
 		return vfsmnt;
 
 	if (STREQ(buf1, "udev") || STREQ(buf1, "devtmpfs")) {
 		if (VALID_STRUCT(mount)) {
-			if (!readmem(vfsmnt - OFFSET(mount_mnt) + OFFSET(mount_mnt_parent), KVADDR, 
+			if (!readmem(vfsmnt - LAZY_OFFSET(mount_mnt) + LAZY_OFFSET(mount_mnt_parent), KVADDR, 
 			    &mnt_parent, sizeof(void *), "mount mnt_parent", 
 			    QUIET|RETURN_ON_ERROR))
 				return vfsmnt;
 		} else {
-			if (!readmem(vfsmnt + OFFSET(vfsmount_mnt_parent), KVADDR, 
+			if (!readmem(vfsmnt + LAZY_OFFSET(vfsmount_mnt_parent), KVADDR, 
 			    &mnt_parent, sizeof(void *), "vfsmount mnt_parent", 
 			    QUIET|RETURN_ON_ERROR))
 				return vfsmnt;

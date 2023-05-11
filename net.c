@@ -526,7 +526,7 @@ show_net_devices_v2(ulong task)
 	ld->flags |= LIST_ALLOCATE;
 	get_symbol_data("dev_base_head", sizeof(void *), &ld->start);
 	ld->end = symbol_value("dev_base_head");
-	ld->list_head_offset = OFFSET(net_device_dev_list);
+	ld->list_head_offset = LAZY_OFFSET(net_device_dev_list);
 
 	ndevcnt = do_list(ld);
 
@@ -579,15 +579,15 @@ show_net_devices_v3(ulong task)
 	BZERO(ld, sizeof(struct list_data));
 	ld->flags |= LIST_ALLOCATE;
 	if (DIRECT_OFFSET_UNCHECKED(nsproxy_net_ns) >= 0) {
-		readmem(task + OFFSET(task_struct_nsproxy), KVADDR, &nsproxy_p,
+		readmem(task + LAZY_OFFSET(task_struct_nsproxy), KVADDR, &nsproxy_p,
 			sizeof(ulong), "task_struct.nsproxy", FAULT_ON_ERROR);
-		if (!readmem(nsproxy_p + OFFSET(nsproxy_net_ns), KVADDR, &net_ns_p,
+		if (!readmem(nsproxy_p + LAZY_OFFSET(nsproxy_net_ns), KVADDR, &net_ns_p,
 			sizeof(ulong), "nsproxy.net_ns", RETURN_ON_ERROR|QUIET))
 			error(FATAL, "cannot determine net_namespace location!\n");
 	} else
 		net_ns_p = symbol_value("init_net");
-	ld->start = ld->end = net_ns_p + OFFSET(net_dev_base_head);
-	ld->list_head_offset = OFFSET(net_device_dev_list);
+	ld->start = ld->end = net_ns_p + LAZY_OFFSET(net_dev_base_head);
+	ld->list_head_offset = LAZY_OFFSET(net_device_dev_list);
 
 	ndevcnt = do_list(ld);
 
@@ -655,26 +655,26 @@ dump_arp(void)
 	 * and pointer to it has been added to neigh_table.
 	 */
 	if (DIRECT_OFFSET_UNCHECKED(neigh_table_nht_ptr) >= 0) {
-		readmem(arp_tbl + OFFSET(neigh_table_nht_ptr),
+		readmem(arp_tbl + LAZY_OFFSET(neigh_table_nht_ptr),
 			KVADDR, &nht, sizeof(nht),
 			"neigh_table nht", FAULT_ON_ERROR);
 		/* NB! Re-use of offsets like neigh_table_hash_mask
 		 * with neigh_hash_table structure */
 		if (DIRECT_OFFSET_UNCHECKED(neigh_table_hash_mask) >= 0) {
-			readmem(nht + OFFSET(neigh_table_hash_mask),
+			readmem(nht + LAZY_OFFSET(neigh_table_hash_mask),
 				KVADDR, &hash_mask, sizeof(hash_mask),
 				"neigh_hash_table hash_mask", FAULT_ON_ERROR);
 
 			nhash_buckets = hash_mask + 1;
 		} else if (DIRECT_OFFSET_UNCHECKED(neigh_table_hash_shift) >= 0) {
-			readmem(nht + OFFSET(neigh_table_hash_shift),
+			readmem(nht + LAZY_OFFSET(neigh_table_hash_shift),
 				KVADDR, &hash_mask, sizeof(hash_mask),
 				"neigh_hash_table hash_shift", FAULT_ON_ERROR);
 
 			nhash_buckets = 1U << hash_mask;
 		}
 	} else if (DIRECT_OFFSET_UNCHECKED(neigh_table_hash_mask) >= 0) {
-		readmem(arp_tbl + OFFSET(neigh_table_hash_mask),
+		readmem(arp_tbl + LAZY_OFFSET(neigh_table_hash_mask),
 			KVADDR, &hash_mask, sizeof(hash_mask),
 			"neigh_table hash_mask", FAULT_ON_ERROR);
 
@@ -693,19 +693,19 @@ dump_arp(void)
 
 	hash_buckets = (ulong *)GETBUF(hash_bytes);
 
-	readmem(arp_tbl + OFFSET(neigh_table_key_len),
+	readmem(arp_tbl + LAZY_OFFSET(neigh_table_key_len),
 		KVADDR, &key_len, sizeof(key_len),
 		"neigh_table key_len", FAULT_ON_ERROR);
 
 	if (DIRECT_OFFSET_UNCHECKED(neigh_table_nht_ptr) >= 0) {
-		readmem(nht + OFFSET(neigh_table_hash_buckets),
+		readmem(nht + LAZY_OFFSET(neigh_table_hash_buckets),
 			KVADDR, &hash, sizeof(hash),
 			"neigh_hash_table hash_buckets ptr", FAULT_ON_ERROR);
 
 		readmem(hash, KVADDR, hash_buckets, hash_bytes,
 			"neigh_hash_table hash_buckets", FAULT_ON_ERROR);
 	} else if (hash_mask) {
-		readmem(arp_tbl + OFFSET(neigh_table_hash_buckets), 
+		readmem(arp_tbl + LAZY_OFFSET(neigh_table_hash_buckets), 
 			KVADDR, &hash, sizeof(hash),
 			"neigh_table hash_buckets pointer", FAULT_ON_ERROR);
 		
@@ -713,7 +713,7 @@ dump_arp(void)
 			KVADDR, hash_buckets, hash_bytes,
 			"neigh_table hash_buckets", FAULT_ON_ERROR);
 	} else
-		readmem(arp_tbl + OFFSET(neigh_table_hash_buckets), 
+		readmem(arp_tbl + LAZY_OFFSET(neigh_table_hash_buckets), 
 			KVADDR, hash_buckets, hash_bytes,
 			"neigh_table hash_buckets", FAULT_ON_ERROR);
 
@@ -753,18 +753,18 @@ print_neighbour_q(ulong addr, int key_len)
 	ha_buf = (unsigned char *)GETBUF(ha_size);
 
 	while (addr) {
-		readmem(addr + OFFSET(neighbour_primary_key), KVADDR, 
+		readmem(addr + LAZY_OFFSET(neighbour_primary_key), KVADDR, 
 			&ipaddr, sizeof(ipaddr), "neighbour primary_key", 
 			FAULT_ON_ERROR);
 
-		readmem(addr + OFFSET(neighbour_ha), KVADDR, ha_buf, ha_size,
+		readmem(addr + LAZY_OFFSET(neighbour_ha), KVADDR, ha_buf, ha_size,
 			"neighbour ha", FAULT_ON_ERROR);
 
-		readmem(addr + OFFSET(neighbour_dev), KVADDR, &dev, sizeof(dev),
+		readmem(addr + LAZY_OFFSET(neighbour_dev), KVADDR, &dev, sizeof(dev),
 			"neighbour dev", FAULT_ON_ERROR);
 		get_netdev_info(dev, &dinfo);
 
-		readmem(addr + OFFSET(neighbour_nud_state), KVADDR, 
+		readmem(addr + LAZY_OFFSET(neighbour_nud_state), KVADDR, 
 			&state, sizeof(state), "neighbour nud_state", 
 			FAULT_ON_ERROR);
 
@@ -831,7 +831,7 @@ print_neighbour_q(ulong addr, int key_len)
 
 		arp_state_to_flags(state);
 
-		readmem(addr + OFFSET(neighbour_next), KVADDR, 
+		readmem(addr + LAZY_OFFSET(neighbour_next), KVADDR, 
 			&addr, sizeof(addr), "neighbour next", FAULT_ON_ERROR);
 	}
 
@@ -915,11 +915,11 @@ get_device_address(ulong devaddr, char **bufp, long buflen)
 	if (!ip_ptr)
 		return buflen;
 
-        readmem(ip_ptr + OFFSET(in_device_ifa_list), KVADDR,
+        readmem(ip_ptr + LAZY_OFFSET(in_device_ifa_list), KVADDR,
         	&ifa_list, sizeof(ulong), "ifa_list", FAULT_ON_ERROR);
 
 	while (ifa_list) {
-        	readmem(ifa_list + OFFSET(in_ifaddr_ifa_address), KVADDR,
+        	readmem(ifa_list + LAZY_OFFSET(in_ifaddr_ifa_address), KVADDR,
         		&ifa_address, sizeof(struct in_addr), "ifa_address", 
 			FAULT_ON_ERROR);
 
@@ -933,7 +933,7 @@ get_device_address(ulong devaddr, char **bufp, long buflen)
 		BCOPY(buf2, &buf[pos], strlen(buf2));
 		pos += strlen(buf2);
 
-        	readmem(ifa_list + OFFSET(in_ifaddr_ifa_next), KVADDR,
+        	readmem(ifa_list + LAZY_OFFSET(in_ifaddr_ifa_next), KVADDR,
         		&ifa_list, sizeof(ulong), "ifa_next", FAULT_ON_ERROR);
 	}
 	return buflen;
@@ -952,7 +952,7 @@ get_device_ip6_address(ulong devaddr, char **bufp, long buflen)
 	buf = *bufp;
 	pos = strlen(buf);
 
-	readmem(devaddr + OFFSET(net_device_ip6_ptr), KVADDR,
+	readmem(devaddr + LAZY_OFFSET(net_device_ip6_ptr), KVADDR,
 		&ip6_ptr, sizeof(ulong), "ip6_ptr", FAULT_ON_ERROR);
 
 	if (!ip6_ptr)
@@ -969,14 +969,14 @@ get_device_ip6_address(ulong devaddr, char **bufp, long buflen)
 		ld = &list_data;
 		BZERO(ld, sizeof(struct list_data));
 		ld->flags |= LIST_ALLOCATE;
-		ld->start = ip6_ptr + OFFSET(inet6_dev_addr_list);
-		ld->list_head_offset = OFFSET(inet6_ifaddr_if_list);
+		ld->start = ip6_ptr + LAZY_OFFSET(inet6_dev_addr_list);
+		ld->list_head_offset = LAZY_OFFSET(inet6_ifaddr_if_list);
 		cnt = do_list(ld);
 
 		for (i = 1; i < cnt; i++) {
 
-			addr = ld->list_ptr[i] + OFFSET(inet6_ifaddr_addr);
-			readmem(addr + OFFSET(in6_addr_in6_u), KVADDR, &ip6_addr,
+			addr = ld->list_ptr[i] + LAZY_OFFSET(inet6_ifaddr_addr);
+			readmem(addr + LAZY_OFFSET(in6_addr_in6_u), KVADDR, &ip6_addr,
 				sizeof(struct in6_addr), "in6_addr.in6_u", FAULT_ON_ERROR);
 
 			inet_ntop(AF_INET6, (void*)&ip6_addr, str, INET6_ADDRSTRLEN);
@@ -999,11 +999,11 @@ get_device_ip6_address(ulong devaddr, char **bufp, long buflen)
 	if (DIRECT_OFFSET_UNCHECKED(inet6_ifaddr_if_next) == INVALID_OFFSET)
 		return;
 
-	readmem(ip6_ptr + OFFSET(inet6_dev_addr_list), KVADDR,
+	readmem(ip6_ptr + LAZY_OFFSET(inet6_dev_addr_list), KVADDR,
 		&addr, sizeof(void *), "inet6_dev.addr_list", FAULT_ON_ERROR);
 
 	while (addr) {
-		readmem(addr + OFFSET(in6_addr_in6_u), KVADDR, &ip6_addr,
+		readmem(addr + LAZY_OFFSET(in6_addr_in6_u), KVADDR, &ip6_addr,
 			sizeof(struct in6_addr), "in6_addr.in6_u", FAULT_ON_ERROR);
 		inet_ntop(AF_INET6, (void*)&ip6_addr, str, INET6_ADDRSTRLEN);
 		sprintf(buffer, "%s%s", pos ? ", " : "", str);
@@ -1017,7 +1017,7 @@ get_device_ip6_address(ulong devaddr, char **bufp, long buflen)
 		}
 		BCOPY(buffer, &buf[pos], len);
 		pos += len;
-		readmem(addr + OFFSET(inet6_ifaddr_if_next), KVADDR, &addr,
+		readmem(addr + LAZY_OFFSET(inet6_ifaddr_if_next), KVADDR, &addr,
 			sizeof(void *), "inet6_ifaddr.if_next", FAULT_ON_ERROR);
 	}
 }
@@ -1055,13 +1055,13 @@ get_sock_info(ulong sock, char *buf)
 	        readmem(sock, KVADDR, sockbuf, SIZE(sock), 
 			"sock buffer", FAULT_ON_ERROR);
 	
-		daddr = UINT(sockbuf + OFFSET(sock_daddr));
-		rcv_saddr = UINT(sockbuf + OFFSET(sock_rcv_saddr));
-		dport = USHORT(sockbuf + OFFSET(sock_dport));
-		sport = USHORT(sockbuf + OFFSET(sock_sport));
-		num = USHORT(sockbuf + OFFSET(sock_num));
-		family = USHORT(sockbuf + OFFSET(sock_family));
-		type = USHORT(sockbuf + OFFSET(sock_type));
+		daddr = UINT(sockbuf + LAZY_OFFSET(sock_daddr));
+		rcv_saddr = UINT(sockbuf + LAZY_OFFSET(sock_rcv_saddr));
+		dport = USHORT(sockbuf + LAZY_OFFSET(sock_dport));
+		sport = USHORT(sockbuf + LAZY_OFFSET(sock_sport));
+		num = USHORT(sockbuf + LAZY_OFFSET(sock_num));
+		family = USHORT(sockbuf + LAZY_OFFSET(sock_family));
+		type = USHORT(sockbuf + LAZY_OFFSET(sock_type));
 		break;
 
 	case SOCK_V2:
@@ -1069,18 +1069,18 @@ get_sock_info(ulong sock, char *buf)
 	        readmem(sock, KVADDR, inet_sockbuf, SIZE(inet_sock), 
 			"inet_sock buffer", FAULT_ON_ERROR);
 
-		daddr = UINT(inet_sockbuf + OFFSET(inet_sock_inet) +
+		daddr = UINT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_daddr));
-		rcv_saddr = UINT(inet_sockbuf + OFFSET(inet_sock_inet) +
+		rcv_saddr = UINT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_rcv_saddr));
-		dport = USHORT(inet_sockbuf + OFFSET(inet_sock_inet) +
+		dport = USHORT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_dport));
-		sport = USHORT(inet_sockbuf + OFFSET(inet_sock_inet) +
-			OFFSET(inet_opt_sport));
-		num = USHORT(inet_sockbuf + OFFSET(inet_sock_inet) +
+		sport = USHORT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
+			LAZY_OFFSET(inet_opt_sport));
+		num = USHORT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_num));
-		family = USHORT(inet_sockbuf + OFFSET(sock_common_skc_family));
-		type = USHORT(inet_sockbuf + OFFSET(sock_sk_type));
+		family = USHORT(inet_sockbuf + LAZY_OFFSET(sock_common_skc_family));
+		type = USHORT(inet_sockbuf + LAZY_OFFSET(sock_sk_type));
 		ipv6_pinfo = ULONG(inet_sockbuf + SIZE(sock));
 		break;
 	}
@@ -1206,13 +1206,13 @@ get_sock_info(ulong sock, char *buf)
 	case SOCK_V2:
 		if (DIRECT_OFFSET_UNCHECKED(ipv6_pinfo_rcv_saddr) >= 0 &&
 		    DIRECT_OFFSET_UNCHECKED(ipv6_pinfo_daddr) >= 0) {
-			ipv6_rcv_saddr = ipv6_pinfo + OFFSET(ipv6_pinfo_rcv_saddr);
-			ipv6_daddr = ipv6_pinfo + OFFSET(ipv6_pinfo_daddr);
+			ipv6_rcv_saddr = ipv6_pinfo + LAZY_OFFSET(ipv6_pinfo_rcv_saddr);
+			ipv6_daddr = ipv6_pinfo + LAZY_OFFSET(ipv6_pinfo_daddr);
 		} else if (DIRECT_OFFSET_UNCHECKED(sock_sk_common) >= 0 &&
 			   DIRECT_OFFSET_UNCHECKED(sock_common_skc_v6_daddr) >= 0 &&
 			   DIRECT_OFFSET_UNCHECKED(sock_common_skc_v6_rcv_saddr) >= 0) {
-			ipv6_rcv_saddr = sock + OFFSET(sock_sk_common) + OFFSET(sock_common_skc_v6_rcv_saddr);
-			ipv6_daddr = sock + OFFSET(sock_sk_common) + OFFSET(sock_common_skc_v6_daddr);
+			ipv6_rcv_saddr = sock + LAZY_OFFSET(sock_sk_common) + LAZY_OFFSET(sock_common_skc_v6_rcv_saddr);
+			ipv6_daddr = sock + LAZY_OFFSET(sock_sk_common) + LAZY_OFFSET(sock_common_skc_v6_daddr);
 		} else {
 			sprintf(&buf[strlen(buf)], "%s", "(cannot get IPv6 addresses)");
 			break;
@@ -1505,29 +1505,29 @@ dump_sockets_workhorse(ulong task, ulong flag, struct reference *ref)
         * 7) inode.u (struct socket)   -- offset 0xdc from inode pointer
         */
 
-	readmem(task + OFFSET(task_struct_files), KVADDR, &files_struct_addr,
+	readmem(task + LAZY_OFFSET(task_struct_files), KVADDR, &files_struct_addr,
             sizeof(void *), "task files contents", FAULT_ON_ERROR);
 
         if (files_struct_addr) {
                 if (DIRECT_OFFSET_UNCHECKED(files_struct_max_fdset) >= 0) {
-		 	readmem(files_struct_addr + OFFSET(files_struct_max_fdset),
+		 	readmem(files_struct_addr + LAZY_OFFSET(files_struct_max_fdset),
 		          	KVADDR, &max_fdset, sizeof(int),
 				"files_struct max_fdset", FAULT_ON_ERROR);
-		      	readmem(files_struct_addr + OFFSET(files_struct_max_fds),
+		      	readmem(files_struct_addr + LAZY_OFFSET(files_struct_max_fds),
         	        	KVADDR, &max_fds, sizeof(int), "files_struct max_fds",
                 	   	FAULT_ON_ERROR);
                 }
 		else if (DIRECT_OFFSET_UNCHECKED(files_struct_fdt) >= 0) {
-			readmem(files_struct_addr + OFFSET(files_struct_fdt), KVADDR,
+			readmem(files_struct_addr + LAZY_OFFSET(files_struct_fdt), KVADDR,
 				&fdtable_addr, sizeof(void *), "fdtable buffer",
 				FAULT_ON_ERROR);
 			if (DIRECT_OFFSET_UNCHECKED(fdtable_max_fdset) >= 0)
-		      		readmem(fdtable_addr + OFFSET(fdtable_max_fdset),
+		      		readmem(fdtable_addr + LAZY_OFFSET(fdtable_max_fdset),
         	         		KVADDR, &max_fdset, sizeof(int),
 					"fdtable_struct max_fdset", FAULT_ON_ERROR);
 			else
 				max_fdset = -1;
-		      	readmem(fdtable_addr + OFFSET(fdtable_max_fds),
+		      	readmem(fdtable_addr + LAZY_OFFSET(fdtable_max_fds),
 	      	            	KVADDR, &max_fds, sizeof(int), "fdtable_struct max_fds",
 	               	    	FAULT_ON_ERROR);
     		}
@@ -1541,16 +1541,16 @@ dump_sockets_workhorse(ulong task, ulong flag, struct reference *ref)
 	}
 
 	if (DIRECT_OFFSET_UNCHECKED(fdtable_open_fds) >= 0){
-		readmem(fdtable_addr + OFFSET(fdtable_open_fds), KVADDR,
+		readmem(fdtable_addr + LAZY_OFFSET(fdtable_open_fds), KVADDR,
      	  		&open_fds_addr, sizeof(void *), "files_struct open_fds addr",
 	            	FAULT_ON_ERROR);
-		readmem(fdtable_addr + OFFSET(fdtable_fd), KVADDR, &fd,
+		readmem(fdtable_addr + LAZY_OFFSET(fdtable_fd), KVADDR, &fd,
            		sizeof(void *), "files_struct fd addr", FAULT_ON_ERROR);
 	} else {
-		readmem(files_struct_addr + OFFSET(files_struct_open_fds), KVADDR,
+		readmem(files_struct_addr + LAZY_OFFSET(files_struct_open_fds), KVADDR,
             		&open_fds_addr, sizeof(void *), "files_struct open_fds addr",
 	          	FAULT_ON_ERROR);
-		readmem(files_struct_addr + OFFSET(files_struct_fd), KVADDR, &fd,
+		readmem(files_struct_addr + LAZY_OFFSET(files_struct_fd), KVADDR, &fd,
             		sizeof(void *), "files_struct fd addr", FAULT_ON_ERROR);
 	}
 
@@ -1655,7 +1655,7 @@ sym_socket_dump(ulong file,
 	unsigned int radix;
 
 	file_buf = fill_file_cache(file);
-	dentry = ULONG(file_buf + OFFSET(file_f_dentry));
+	dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
 
 	if (flag & d_FLAG)
 		radix = 10;
@@ -1668,7 +1668,7 @@ sym_socket_dump(ulong file,
         	return FALSE;
 
 	dentry_buf = fill_dentry_cache(dentry);
-	inode = ULONG(dentry_buf + OFFSET(dentry_d_inode));
+	inode = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_inode));
 
     	if (!inode)
         	return FALSE; 
@@ -1679,11 +1679,11 @@ sym_socket_dump(ulong file,
 	switch (SIZE(umode_t))
 	{
 	case SIZEOF_32BIT:
-		umode32 = UINT(inode_buf + OFFSET(inode_i_mode));
+		umode32 = UINT(inode_buf + LAZY_OFFSET(inode_i_mode));
 		break;
 
 	case SIZEOF_16BIT:
-		umode16 = USHORT(inode_buf + OFFSET(inode_i_mode));
+		umode16 = USHORT(inode_buf + LAZY_OFFSET(inode_i_mode));
 		break;
 	}
 
@@ -1701,19 +1701,19 @@ sym_socket_dump(ulong file,
 	switch (net->flags & (SOCK_V1|SOCK_V2))  
 	{
 	case SOCK_V1:
-    		struct_socket = inode + OFFSET(inode_u);
-		sock = ULONG(inode_buf + OFFSET(inode_u) + OFFSET(socket_sk));
+    		struct_socket = inode + LAZY_OFFSET(inode_u);
+		sock = ULONG(inode_buf + LAZY_OFFSET(inode_u) + LAZY_OFFSET(socket_sk));
 		break;
 
 	case SOCK_V2:
 		if (!VALID_SIZE(inet_sock)) 
 			error(FATAL, 
               	           "cannot determine what an inet_sock structure is\n");
-    		struct_socket = inode - OFFSET(socket_alloc_vfs_inode);
+    		struct_socket = inode - LAZY_OFFSET(socket_alloc_vfs_inode);
 		socket_buf = GETBUF(SIZE(socket));
                 readmem(struct_socket, KVADDR, socket_buf,
                         SIZE(socket), "socket buffer", FAULT_ON_ERROR);
-		sock = ULONG(socket_buf + OFFSET(socket_sk));
+		sock = ULONG(socket_buf + LAZY_OFFSET(socket_sk));
 		FREEBUF(socket_buf);
 		break;
 	} 

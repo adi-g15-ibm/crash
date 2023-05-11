@@ -247,7 +247,7 @@ static int
 s390_uvtop(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbose)
 {
 	unsigned long pgd_base;
-	readmem(tc->mm_struct + OFFSET(mm_struct_pgd), KVADDR, 
+	readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), KVADDR, 
 		&pgd_base,sizeof(long), "pgd_base",FAULT_ON_ERROR);
 	return s390_vtop(pgd_base, vaddr, paddr, verbose);
 }
@@ -544,18 +544,18 @@ s390_cpu_of_task(unsigned long task)
 
        if(DIRECT_OFFSET_UNCHECKED(task_struct_processor) >= 0){
                 /* linux 2.4 */
-                readmem(task + OFFSET(task_struct_processor),KVADDR,
+                readmem(task + LAZY_OFFSET(task_struct_processor),KVADDR,
                         &cpu, sizeof(cpu), "task_struct_processor",
                         FAULT_ON_ERROR);
         } else {
 		char thread_info[8192];
 		unsigned long thread_info_addr;
-		readmem(task + OFFSET(task_struct_thread_info),KVADDR,
+		readmem(task + LAZY_OFFSET(task_struct_thread_info),KVADDR,
 			&thread_info_addr, sizeof(thread_info_addr),
 			"thread info addr", FAULT_ON_ERROR);
 		readmem(thread_info_addr,KVADDR,thread_info,sizeof(thread_info),
 			"thread info", FAULT_ON_ERROR);
-		cpu = *((int*) &thread_info[OFFSET(thread_info_cpu)]);
+		cpu = *((int*) &thread_info[LAZY_OFFSET(thread_info_cpu)]);
 	}
 	return cpu;
 }
@@ -646,7 +646,7 @@ s390_back_trace_cmd(struct bt_info *bt)
 			return;
 		}
 		s390_get_lowcore(cpu,lowcore);
-		psw_flags = ULONG(lowcore + OFFSET(s390_lowcore_psw_save_area));
+		psw_flags = ULONG(lowcore + LAZY_OFFSET(s390_lowcore_psw_save_area));
 		if(psw_flags & 0x10000UL){
 				fprintf(fp,"Task runs in userspace\n");
 				s390_print_lowcore(lowcore,bt,0);
@@ -663,7 +663,7 @@ s390_back_trace_cmd(struct bt_info *bt)
 
 	/* get task stack start and end */
 	if(THIS_KERNEL_VERSION >= LINUX(2,6,0)){
-		readmem(bt->task + OFFSET(task_struct_thread_info),KVADDR,
+		readmem(bt->task + LAZY_OFFSET(task_struct_thread_info),KVADDR,
 			&stack_start, sizeof(long), "thread info", 
 			FAULT_ON_ERROR);
 	} else {
@@ -788,7 +788,7 @@ s390_print_lowcore(char* lc, struct bt_info *bt, int show_symbols)
 	char* ptr;
 	unsigned long tmp[4];
 
-	ptr = lc + OFFSET(s390_lowcore_psw_save_area);
+	ptr = lc + LAZY_OFFSET(s390_lowcore_psw_save_area);
 	tmp[0]=ULONG(ptr);
 	tmp[1]=ULONG(ptr + S390_WORD_SIZE);
 
@@ -948,7 +948,7 @@ s390_get_stack_frame(struct bt_info *bt, ulong *eip, ulong *esp)
 		return;
 
 	if(s390_has_cpu(bt) && esp){
-		*eip = ULONG(lowcore + OFFSET(s390_lowcore_psw_save_area) +
+		*eip = ULONG(lowcore + LAZY_OFFSET(s390_lowcore_psw_save_area) +
 			S390_WORD_SIZE) & S390_ADDR_MASK;
 	} else {
 		if(!STRUCT_EXISTS("stack_frame")){

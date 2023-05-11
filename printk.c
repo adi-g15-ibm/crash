@@ -121,27 +121,27 @@ dump_record(struct prb_map *m, unsigned long id, int msg_flags)
 	desc = m->descs + ((id % m->desc_ring_count) * SIZE(prb_desc));
 
 	/* skip non-committed record */
-	state_var = ULONG(desc + OFFSET(prb_desc_state_var) +
-			OFFSET(atomic_long_t_counter));
+	state_var = ULONG(desc + LAZY_OFFSET(prb_desc_state_var) +
+			LAZY_OFFSET(atomic_long_t_counter));
 	state = get_desc_state(id, state_var);
 	if (state != desc_committed && state != desc_finalized)
 		return;
 
 	info = m->infos + ((id % m->desc_ring_count) * SIZE(printk_info));
 
-	seq = ULONGLONG(info + OFFSET(printk_info_seq));
-	caller_id = UINT(info + OFFSET(printk_info_caller_id));
+	seq = ULONGLONG(info + LAZY_OFFSET(printk_info_seq));
+	caller_id = UINT(info + LAZY_OFFSET(printk_info_caller_id));
 	if (CRASHDEBUG(1))
 		fprintf(fp, "seq: %llu caller_id: %x (%s: %u)\n", seq, caller_id,
 			caller_id & 0x80000000 ? "cpu" : "pid", caller_id & ~0x80000000);
 
-	text_len = USHORT(info + OFFSET(printk_info_text_len));
+	text_len = USHORT(info + LAZY_OFFSET(printk_info_text_len));
 
-	begin = ULONG(desc + OFFSET(prb_desc_text_blk_lpos) +
-		      OFFSET(prb_data_blk_lpos_begin)) %
+	begin = ULONG(desc + LAZY_OFFSET(prb_desc_text_blk_lpos) +
+		      LAZY_OFFSET(prb_data_blk_lpos_begin)) %
 			m->text_data_ring_size;
-	next = ULONG(desc + OFFSET(prb_desc_text_blk_lpos) +
-		     OFFSET(prb_data_blk_lpos_next)) %
+	next = ULONG(desc + LAZY_OFFSET(prb_desc_text_blk_lpos) +
+		     LAZY_OFFSET(prb_data_blk_lpos_next)) %
 			m->text_data_ring_size;
 
 	/* skip data-less text blocks */
@@ -149,7 +149,7 @@ dump_record(struct prb_map *m, unsigned long id, int msg_flags)
 		goto out;
 
 	if ((msg_flags & SHOW_LOG_TEXT) == 0) {
-		ts_nsec = ULONGLONG(info + OFFSET(printk_info_ts_nsec));
+		ts_nsec = ULONGLONG(info + LAZY_OFFSET(printk_info_ts_nsec));
 		nanos = (ulonglong)ts_nsec / (ulonglong)1000000000;
 		rem = (ulonglong)ts_nsec % (ulonglong)1000000000;
 		if (msg_flags & SHOW_LOG_CTIME) {
@@ -163,7 +163,7 @@ dump_record(struct prb_map *m, unsigned long id, int msg_flags)
 	}
 
 	if (msg_flags & SHOW_LOG_LEVEL) {
-		level = UCHAR(info + OFFSET(printk_info_level)) >> 5;
+		level = UCHAR(info + LAZY_OFFSET(printk_info_level)) >> 5;
 		sprintf(buf, "<%x>", level);
 		ilen += strlen(buf);
 		fprintf(fp, "%s", buf);
@@ -192,13 +192,13 @@ dump_record(struct prb_map *m, unsigned long id, int msg_flags)
 	}
 
 	if (msg_flags & SHOW_LOG_DICT) {
-		text = info + OFFSET(printk_info_dev_info) +
-				OFFSET(dev_printk_info_subsystem);
+		text = info + LAZY_OFFSET(printk_info_dev_info) +
+				LAZY_OFFSET(dev_printk_info_subsystem);
 		if (strlen(text))
 			fprintf(fp, "\n%sSUBSYSTEM=%s", space(ilen), text);
 
-		text = info + OFFSET(printk_info_dev_info) +
-				OFFSET(dev_printk_info_device);
+		text = info + LAZY_OFFSET(printk_info_dev_info) +
+				LAZY_OFFSET(dev_printk_info_device);
 		if (strlen(text))
 			fprintf(fp, "\n%sDEVICE=%s", space(ilen), text);
 	}
@@ -231,10 +231,10 @@ dump_lockless_record_log(int msg_flags)
 	}
 
 	/* setup descriptor ring */
-	m.desc_ring = m.prb + OFFSET(prb_desc_ring);
-	m.desc_ring_count = 1 << UINT(m.desc_ring + OFFSET(prb_desc_ring_count_bits));
+	m.desc_ring = m.prb + LAZY_OFFSET(prb_desc_ring);
+	m.desc_ring_count = 1 << UINT(m.desc_ring + LAZY_OFFSET(prb_desc_ring_count_bits));
 
-	kaddr = ULONG(m.desc_ring + OFFSET(prb_desc_ring_descs));
+	kaddr = ULONG(m.desc_ring + LAZY_OFFSET(prb_desc_ring_descs));
 	m.descs = GETBUF(SIZE(prb_desc) * m.desc_ring_count);
 	if (!readmem(kaddr, KVADDR, m.descs, SIZE(prb_desc) * m.desc_ring_count,
 		     "prb_desc_ring contents", RETURN_ON_ERROR|QUIET)) {
@@ -242,7 +242,7 @@ dump_lockless_record_log(int msg_flags)
 		goto out_descs;
 	}
 
-	kaddr = ULONG(m.desc_ring + OFFSET(prb_desc_ring_infos));
+	kaddr = ULONG(m.desc_ring + LAZY_OFFSET(prb_desc_ring_infos));
 	m.infos = GETBUF(SIZE(printk_info) * m.desc_ring_count);
 	if (!readmem(kaddr, KVADDR, m.infos, SIZE(printk_info) * m.desc_ring_count,
 		     "prb_info_ring contents", RETURN_ON_ERROR|QUIET)) {
@@ -251,10 +251,10 @@ dump_lockless_record_log(int msg_flags)
 	}
 
 	/* setup text data ring */
-	m.text_data_ring = m.prb + OFFSET(prb_text_data_ring);
-	m.text_data_ring_size = 1 << UINT(m.text_data_ring + OFFSET(prb_data_ring_size_bits));
+	m.text_data_ring = m.prb + LAZY_OFFSET(prb_text_data_ring);
+	m.text_data_ring_size = 1 << UINT(m.text_data_ring + LAZY_OFFSET(prb_data_ring_size_bits));
 
-	kaddr = ULONG(m.text_data_ring + OFFSET(prb_data_ring_data));
+	kaddr = ULONG(m.text_data_ring + LAZY_OFFSET(prb_data_ring_data));
 	m.text_data = GETBUF(m.text_data_ring_size);
 	if (!readmem(kaddr, KVADDR, m.text_data, m.text_data_ring_size,
 		     "prb_text_data_ring contents", RETURN_ON_ERROR|QUIET)) {
@@ -264,10 +264,10 @@ dump_lockless_record_log(int msg_flags)
 
 	/* ready to go */
 
-	tail_id = ULONG(m.desc_ring + OFFSET(prb_desc_ring_tail_id) +
-			OFFSET(atomic_long_t_counter));
-	head_id = ULONG(m.desc_ring + OFFSET(prb_desc_ring_head_id) +
-			OFFSET(atomic_long_t_counter));
+	tail_id = ULONG(m.desc_ring + LAZY_OFFSET(prb_desc_ring_tail_id) +
+			LAZY_OFFSET(atomic_long_t_counter));
+	head_id = ULONG(m.desc_ring + LAZY_OFFSET(prb_desc_ring_head_id) +
+			LAZY_OFFSET(atomic_long_t_counter));
 
 	hq_open();
 

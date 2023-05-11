@@ -729,7 +729,7 @@ ppc64_task_to_stackbase(ulong task)
 	ulong stackbase;
 
 	if (tt->flags & THREAD_INFO_IN_TASK) {
-		readmem(task + OFFSET(task_struct_stack), KVADDR, &stackbase,
+		readmem(task + LAZY_OFFSET(task_struct_stack), KVADDR, &stackbase,
 		    sizeof(void *), "task_struct.stack", FAULT_ON_ERROR);
 		return stackbase;
 	} else if (tt->flags & THREAD_INFO)
@@ -1149,7 +1149,7 @@ ppc64_uvtop(struct task_context *tc, ulong vaddr,
 			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no pg_tables or active_mm?\n");
 	
-			readmem(tc->task + OFFSET(task_struct_active_mm),
+			readmem(tc->task + LAZY_OFFSET(task_struct_active_mm),
 				KVADDR, &active_mm, sizeof(void *),
 				"task active_mm contents", FAULT_ON_ERROR);
 
@@ -1157,16 +1157,16 @@ ppc64_uvtop(struct task_context *tc, ulong vaddr,
 				error(FATAL,
 				     "no active_mm for this kernel thread\n");
 
-			readmem(active_mm + OFFSET(mm_struct_pgd),
+			readmem(active_mm + LAZY_OFFSET(mm_struct_pgd),
 				KVADDR, &pgd, sizeof(long),
 				"mm_struct pgd", FAULT_ON_ERROR);
 		}
 	} else {
 		if ((mm = task_mm(tc->task, TRUE)))
 			pgd = ULONG_PTR(tt->mm_struct +
-				OFFSET(mm_struct_pgd));
+				LAZY_OFFSET(mm_struct_pgd));
 		else
-			readmem(tc->mm_struct + OFFSET(mm_struct_pgd),
+			readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd),
 				KVADDR, &pgd, sizeof(long), "mm_struct pgd",
 				FAULT_ON_ERROR);
 	}
@@ -1461,7 +1461,7 @@ ppc64_processor_speed(void)
         if(symbol_exists("allnodes")) {
                 get_symbol_data("allnodes", sizeof(void *), &node);
                 while(node) {
-                        readmem(node+OFFSET(device_node_type),
+                        readmem(node+LAZY_OFFSET(device_node_type),
                                 KVADDR, &type, sizeof(ulong), "node type",
                                 FAULT_ON_ERROR);
                         if(type != 0) {
@@ -1472,19 +1472,19 @@ ppc64_processor_speed(void)
                                         break;
                         }
 
-                        readmem(node+OFFSET(device_node_allnext),
+                        readmem(node+LAZY_OFFSET(device_node_allnext),
                                 KVADDR, &node, sizeof(ulong), "node allnext",
                                 FAULT_ON_ERROR);
                 }
 		
                 /* now, if we found a CPU node, get the speed property */
                 if(node) {
-                        readmem(node+OFFSET(device_node_properties),
+                        readmem(node+LAZY_OFFSET(device_node_properties),
                                 KVADDR, &properties, sizeof(ulong),
                                 "node properties", FAULT_ON_ERROR);
 
                         while(properties) {
-                                readmem(properties+OFFSET(property_name),
+                                readmem(properties+LAZY_OFFSET(property_name),
                                         KVADDR, &name,
                                         sizeof(ulong), "property name",
                                         FAULT_ON_ERROR);
@@ -1497,7 +1497,7 @@ ppc64_processor_speed(void)
                                         /* found the right cpu property */
 
                                         readmem(properties+
-                                           OFFSET(property_value),
+                                           LAZY_OFFSET(property_value),
                                             KVADDR, &value, sizeof(ulong),
                                             "clock freqency pointer",
                                             FAULT_ON_ERROR);
@@ -1513,7 +1513,7 @@ ppc64_processor_speed(void)
 					/* found the right cpu property */
 
 					readmem(properties+
-					    OFFSET(property_value),
+					    LAZY_OFFSET(property_value),
 					    KVADDR, &value, sizeof(ulong),
 					    "clock freqency pointer",
 					    FAULT_ON_ERROR);
@@ -1528,7 +1528,7 @@ ppc64_processor_speed(void)
                                 /* keep looking */
 
                                 readmem(properties+
-                                    OFFSET(property_next),
+                                    LAZY_OFFSET(property_next),
                                     KVADDR, &properties, sizeof(ulong),
                                     "property next", FAULT_ON_ERROR);
                         }
@@ -1551,7 +1551,7 @@ ppc64_processor_speed(void)
                         get_symbol_data("ppc_md", sizeof(void *),
                         	&ppc_md);
                         readmem(ppc_md +
-                        	OFFSET(machdep_calls_setup_residual),
+                        	LAZY_OFFSET(machdep_calls_setup_residual),
                                 KVADDR, &md_setup_res,
                                 sizeof(ulong), "ppc_md setup_residual",
                                 FAULT_ON_ERROR);
@@ -1559,8 +1559,8 @@ ppc64_processor_speed(void)
 			if(prep_setup_res == md_setup_res) {
                         	/* PREP machine */
                                 readmem(res+
-                                	OFFSET(RESIDUAL_VitalProductData)+
-                                        OFFSET(VPD_ProcessorHz),
+                                	LAZY_OFFSET(RESIDUAL_VitalProductData)+
+                                        LAZY_OFFSET(VPD_ProcessorHz),
                                         KVADDR, &mhz, sizeof(ulong),
                                         "res VitalProductData",
                                         FAULT_ON_ERROR);
@@ -1572,7 +1572,7 @@ ppc64_processor_speed(void)
 		if(!mhz) {
                         /* everything else seems to do this the same way... */
                         readmem(res +
-                        	OFFSET(bd_info_bi_intfreq),
+                        	LAZY_OFFSET(bd_info_bi_intfreq),
                                 KVADDR, &mhz, sizeof(ulong),
                                 "bd_info bi_intfreq", FAULT_ON_ERROR);
 
@@ -1614,12 +1614,12 @@ ppc64_get_task_pgd(ulong task)
         ulong pg_tables;
 
         offset = DIRECT_OFFSET_UNCHECKED(task_struct_thread) >= 0 ?
-                OFFSET(task_struct_thread) : OFFSET(task_struct_tss);
+                LAZY_OFFSET(task_struct_thread) : LAZY_OFFSET(task_struct_tss);
 
         if (DIRECT_OFFSET_UNCHECKED(thread_struct_pg_tables) == INVALID_OFFSET)
                 error(FATAL,
                    "pg_tables does not exist in this kernel's thread_struct\n");
-        offset += OFFSET(thread_struct_pg_tables);
+        offset += LAZY_OFFSET(thread_struct_pg_tables);
 
         readmem(task + offset, KVADDR, &pg_tables,
                 sizeof(ulong), "task thread pg_tables", FAULT_ON_ERROR);
@@ -2851,11 +2851,11 @@ ppc64_dump_irq(int irq)
 
         irq_desc_addr = symbol_value("irq_desc") + (SIZE(irqdesc) * irq);
 
-        readmem(irq_desc_addr + OFFSET(irqdesc_level), KVADDR, &level,
+        readmem(irq_desc_addr + LAZY_OFFSET(irqdesc_level), KVADDR, &level,
                 sizeof(int), "irq_desc entry", FAULT_ON_ERROR);
-        readmem(irq_desc_addr + OFFSET(irqdesc_action), KVADDR, &action,
+        readmem(irq_desc_addr + LAZY_OFFSET(irqdesc_action), KVADDR, &action,
                 sizeof(long), "irq_desc entry", FAULT_ON_ERROR);
-        readmem(irq_desc_addr + OFFSET(irqdesc_ctl), KVADDR, &ctl,
+        readmem(irq_desc_addr + LAZY_OFFSET(irqdesc_ctl), KVADDR, &ctl,
                 sizeof(long), "irq_desc entry", FAULT_ON_ERROR);
 
         fprintf(fp, "    IRQ: %d\n", irq);
@@ -2872,7 +2872,7 @@ ppc64_dump_irq(int irq)
 
         if(ctl) {
                 /* typename */
-                readmem(ctl + OFFSET(hw_interrupt_type_typename), KVADDR, &addr,
+                readmem(ctl + LAZY_OFFSET(hw_interrupt_type_typename), KVADDR, &addr,
                         sizeof(ulong), "typename pointer", FAULT_ON_ERROR);
 
 		fprintf(fp, "         typename: %08lx  ", addr);
@@ -2882,7 +2882,7 @@ ppc64_dump_irq(int irq)
 			fprintf(fp, "\n");
 
                 /* startup...I think this is always 0 */
-                readmem(ctl + OFFSET(hw_interrupt_type_startup), KVADDR, &addr,
+                readmem(ctl + LAZY_OFFSET(hw_interrupt_type_startup), KVADDR, &addr,
                         sizeof(ulong), "interrupt startup", FAULT_ON_ERROR);
                 fprintf(fp, "          startup: ");
                 if(value_symbol(addr)) {
@@ -2891,7 +2891,7 @@ ppc64_dump_irq(int irq)
                         fprintf(fp, "%lx\n", addr);
 
                /* shutdown...I think this is always 0 */
-                readmem(ctl + OFFSET(hw_interrupt_type_shutdown), KVADDR, &addr,
+                readmem(ctl + LAZY_OFFSET(hw_interrupt_type_shutdown), KVADDR, &addr,
                         sizeof(ulong), "interrupt shutdown", FAULT_ON_ERROR);
                 fprintf(fp, "         shutdown: ");
                 if(value_symbol(addr)) {
@@ -2901,7 +2901,7 @@ ppc64_dump_irq(int irq)
 
                 if (DIRECT_OFFSET_UNCHECKED(hw_interrupt_type_handle) >= 0) {
                         /* handle */
-                        readmem(ctl + OFFSET(hw_interrupt_type_handle),
+                        readmem(ctl + LAZY_OFFSET(hw_interrupt_type_handle),
                                 KVADDR, &addr, sizeof(ulong),
                                 "interrupt handle", FAULT_ON_ERROR);
                         fprintf(fp, "           handle: ");
@@ -2913,7 +2913,7 @@ ppc64_dump_irq(int irq)
                 }
 
                 /* enable/disable */
-                readmem(ctl + OFFSET(hw_interrupt_type_enable), KVADDR, &addr,
+                readmem(ctl + LAZY_OFFSET(hw_interrupt_type_enable), KVADDR, &addr,
                         sizeof(ulong), "interrupt enable", FAULT_ON_ERROR);
                 fprintf(fp, "           enable: ");
                 if(value_symbol(addr)) {
@@ -2921,7 +2921,7 @@ ppc64_dump_irq(int irq)
                 } else
                         fprintf(fp, "%lx\n", addr);
 
-                readmem(ctl + OFFSET(hw_interrupt_type_disable), KVADDR, &addr,
+                readmem(ctl + LAZY_OFFSET(hw_interrupt_type_disable), KVADDR, &addr,
                         sizeof(ulong), "interrupt disable", FAULT_ON_ERROR);
                 fprintf(fp, "          disable: ");
                 if(value_symbol(addr)) {
@@ -2937,7 +2937,7 @@ ppc64_dump_irq(int irq)
         while(action) {
                 fprintf(fp, " ACTION: %08lx\n", action);
                /* handler */
-                readmem(action + OFFSET(irqaction_handler), KVADDR, &addr,
+                readmem(action + LAZY_OFFSET(irqaction_handler), KVADDR, &addr,
                         sizeof(ulong), "action handler", FAULT_ON_ERROR);
                 fprintf(fp, "          handler: ");
                 if(value_symbol(addr)) {
@@ -2946,7 +2946,7 @@ ppc64_dump_irq(int irq)
                         fprintf(fp, "0\n");
 
                 /* flags */
-                readmem(action + OFFSET(irqaction_flags), KVADDR, &value,
+                readmem(action + LAZY_OFFSET(irqaction_flags), KVADDR, &value,
                         sizeof(ulong), "action flags", FAULT_ON_ERROR);
                 fprintf(fp, "            flags: %lx  ", value);
 
@@ -2981,12 +2981,12 @@ ppc64_dump_irq(int irq)
                 fprintf(fp, "\n");
 
                 /* mask */
-                readmem(action + OFFSET(irqaction_mask), KVADDR, &value,
+                readmem(action + LAZY_OFFSET(irqaction_mask), KVADDR, &value,
                         sizeof(ulong), "action mask", FAULT_ON_ERROR);
                 fprintf(fp, "             mask: %lx\n", value);
 
                 /* name */
-                readmem(action + OFFSET(irqaction_name), KVADDR, &addr,
+                readmem(action + LAZY_OFFSET(irqaction_name), KVADDR, &addr,
                         sizeof(ulong), "action name", FAULT_ON_ERROR);
 
 		fprintf(fp, "             name: %08lx  ", addr);
@@ -2996,12 +2996,12 @@ ppc64_dump_irq(int irq)
 			fprintf(fp, "\n");
 
                 /* dev_id */
-                readmem(action + OFFSET(irqaction_dev_id), KVADDR, &value,
+                readmem(action + LAZY_OFFSET(irqaction_dev_id), KVADDR, &value,
                         sizeof(ulong), "action dev_id", FAULT_ON_ERROR);
                 fprintf(fp, "           dev_id: %08lx\n", value);
 
                 /* next */
-                readmem(action + OFFSET(irqaction_next), KVADDR, &value,
+                readmem(action + LAZY_OFFSET(irqaction_next), KVADDR, &value,
                         sizeof(ulong), "action next", FAULT_ON_ERROR);
                 fprintf(fp, "             next: %lx\n", value);
 

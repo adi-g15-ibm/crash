@@ -376,22 +376,22 @@ dump_shared_memory(int specified, ulong specified_value, int verbose, ulong task
 	if (symbol_exists("shm_ids")) {
 		ipc_ids_p = symbol_value("shm_ids");
 	} else {
-		readmem(task + OFFSET(task_struct_nsproxy), KVADDR,
+		readmem(task + LAZY_OFFSET(task_struct_nsproxy), KVADDR,
 			&nsproxy_p, sizeof(ulong), "task_struct.nsproxy",
 			FAULT_ON_ERROR);
-		if (!readmem(nsproxy_p + OFFSET(nsproxy_ipc_ns), KVADDR,
+		if (!readmem(nsproxy_p + LAZY_OFFSET(nsproxy_ipc_ns), KVADDR,
 			&ipc_ns_p, sizeof(ulong), "nsproxy.ipc_ns",
 			RETURN_ON_ERROR|QUIET))
 			error(FATAL,
 				"cannot determine ipc_namespace location!\n");
 
 		if (MEMBER_SIZE("ipc_namespace","ids") == sizeof(ulong) * 3)
-			readmem(ipc_ns_p + OFFSET(ipc_namespace_ids) +
+			readmem(ipc_ns_p + LAZY_OFFSET(ipc_namespace_ids) +
 				sizeof(ulong) * 2, KVADDR, &ipc_ids_p,
 				sizeof(ulong), "ipc_namespace.ids[2]",
 				FAULT_ON_ERROR);
 		else
-			ipc_ids_p = ipc_ns_p + OFFSET(ipc_namespace_ids) +
+			ipc_ids_p = ipc_ns_p + LAZY_OFFSET(ipc_namespace_ids) +
 				2 * SIZE(ipc_ids);
 	}
 
@@ -451,22 +451,22 @@ dump_semaphore_arrays(int specified, ulong specified_value, int verbose, ulong t
 	if (symbol_exists("sem_ids")) {
 		ipc_ids_p = symbol_value("sem_ids");
 	} else {
-		readmem(task + OFFSET(task_struct_nsproxy), KVADDR,
+		readmem(task + LAZY_OFFSET(task_struct_nsproxy), KVADDR,
 			&nsproxy_p, sizeof(ulong), "task_struct.nsproxy",
 			FAULT_ON_ERROR);
 		
-		if (!readmem(nsproxy_p + OFFSET(nsproxy_ipc_ns), KVADDR,
+		if (!readmem(nsproxy_p + LAZY_OFFSET(nsproxy_ipc_ns), KVADDR,
 			&ipc_ns_p, sizeof(ulong), "nsproxy.ipc_ns",
 			FAULT_ON_ERROR|QUIET))
 			error(FATAL,
 				"cannot determine ipc_namespace location!\n");
 
 		if (MEMBER_SIZE("ipc_namespace","ids") == sizeof(ulong) * 3)
-			readmem(ipc_ns_p + OFFSET(ipc_namespace_ids),
+			readmem(ipc_ns_p + LAZY_OFFSET(ipc_namespace_ids),
 				KVADDR,	&ipc_ids_p, sizeof(ulong),
 				"ipc_namespace.ids[2]",	FAULT_ON_ERROR);
 		else
-			ipc_ids_p = ipc_ns_p + OFFSET(ipc_namespace_ids);
+			ipc_ids_p = ipc_ns_p + LAZY_OFFSET(ipc_namespace_ids);
 	}
 
 	return ipc_search(ipc_ids_p, specified, specified_value, dump_sem, verbose);
@@ -510,22 +510,22 @@ dump_message_queues(int specified, ulong specified_value, int verbose, ulong tas
 	if (symbol_exists("msg_ids")) {
 		ipc_ids_p = symbol_value("msg_ids");
 	} else {
-		readmem(task + OFFSET(task_struct_nsproxy), KVADDR,
+		readmem(task + LAZY_OFFSET(task_struct_nsproxy), KVADDR,
 			&nsproxy_p, sizeof(ulong), "task_struct.nsproxy",
 			FAULT_ON_ERROR);
-		if (!readmem(nsproxy_p + OFFSET(nsproxy_ipc_ns), KVADDR,
+		if (!readmem(nsproxy_p + LAZY_OFFSET(nsproxy_ipc_ns), KVADDR,
 			&ipc_ns_p, sizeof(ulong), "nsproxy.ipc_ns",
 			FAULT_ON_ERROR|QUIET))
 			error(FATAL,
 				"cannot determine ipc_namespace location!\n");
 
 		if (MEMBER_SIZE("ipc_namespace","ids") == sizeof(ulong) * 3)
-			readmem(ipc_ns_p + OFFSET(ipc_namespace_ids) +
+			readmem(ipc_ns_p + LAZY_OFFSET(ipc_namespace_ids) +
 				sizeof(ulong), KVADDR, &ipc_ids_p,
 				sizeof(ulong), "ipc_namespace.ids[2]",
 				FAULT_ON_ERROR);
 		else
-			ipc_ids_p = ipc_ns_p + OFFSET(ipc_namespace_ids) +
+			ipc_ids_p = ipc_ns_p + LAZY_OFFSET(ipc_namespace_ids) +
 				SIZE(ipc_ids);
 	}
 
@@ -544,9 +544,9 @@ ipc_search_array(ulong ipc_ids_p, int specified, ulong specified_value, int (*fn
 	int found = 0;
 	int allocated = 0;
 
-	readmem(ipc_ids_p + OFFSET(ipc_ids_entries), KVADDR, &entries_p,
+	readmem(ipc_ids_p + LAZY_OFFSET(ipc_ids_entries), KVADDR, &entries_p,
 		sizeof(ulong), "ipc_ids.entries", FAULT_ON_ERROR);
-	readmem(ipc_ids_p + OFFSET(ipc_ids_max_id), KVADDR, &max_id,
+	readmem(ipc_ids_p + LAZY_OFFSET(ipc_ids_max_id), KVADDR, &max_id,
 		sizeof(int), "ipc_ids.max_id", FAULT_ON_ERROR);
 
 	if (max_id < 0) {
@@ -557,7 +557,7 @@ ipc_search_array(ulong ipc_ids_p, int specified, ulong specified_value, int (*fn
 
 	array = (ulong *)GETBUF(sizeof(ulong *) * (max_id + 1));
 	if (DIRECT_OFFSET_UNCHECKED(ipc_id_ary_p) >= 0)
-		readmem(entries_p + OFFSET(ipc_id_ary_p), KVADDR, array,
+		readmem(entries_p + LAZY_OFFSET(ipc_id_ary_p), KVADDR, array,
 			sizeof(ulong *) * (max_id + 1), "ipc_id_ary.p",
 			FAULT_ON_ERROR);
 	else
@@ -602,10 +602,10 @@ ipc_search_idr(ulong ipc_ids_p, int specified, ulong specified_value, int (*fn)(
 	int next_id, total;
 	int found = 0;
 
-	readmem(ipc_ids_p + OFFSET(ipc_ids_in_use), KVADDR, &in_use, 
+	readmem(ipc_ids_p + LAZY_OFFSET(ipc_ids_in_use), KVADDR, &in_use, 
 		sizeof(int), "ipc_ids.in_use", FAULT_ON_ERROR);
 
-	ipcs_idr_p = ipc_ids_p + OFFSET(ipc_ids_ipcs_idr);
+	ipcs_idr_p = ipc_ids_p + LAZY_OFFSET(ipc_ids_ipcs_idr);
 
 	if (!in_use) {
 		if (specified == SPECIFIED_NOTHING && !verbose)
@@ -671,19 +671,19 @@ idr_find(ulong idp, int id)
 	int n;
 	int index;
 
-	readmem(idp + OFFSET(idr_top), KVADDR, &idr_layer_p,
+	readmem(idp + LAZY_OFFSET(idr_top), KVADDR, &idr_layer_p,
 		sizeof(ulong), "idr.top", FAULT_ON_ERROR);
 
 	if (!idr_layer_p)
 		return 0;
 
 	if (DIRECT_OFFSET_UNCHECKED(idr_layer_layer) >= 0) {
-		readmem(idr_layer_p + OFFSET(idr_layer_layer), KVADDR,
+		readmem(idr_layer_p + LAZY_OFFSET(idr_layer_layer), KVADDR,
 			&layer,	sizeof(int), "idr_layer.layer",
 			FAULT_ON_ERROR);
 		n = (layer + 1) * ipcs_table.idr_bits;
 	} else {
-		readmem(idp + OFFSET(idr_layers), KVADDR, &idr_layers,
+		readmem(idp + LAZY_OFFSET(idr_layers), KVADDR, &idr_layers,
 			sizeof(int), "idr.layers", FAULT_ON_ERROR);
 		n = idr_layers * ipcs_table.idr_bits;
 	}
@@ -695,7 +695,7 @@ idr_find(ulong idp, int id)
 	while (n > 0 && idr_layer_p) {
 		n -= ipcs_table.idr_bits;
 		index = (id >> n) & ((1 << ipcs_table.idr_bits) - 1);
-		readmem(idr_layer_p + OFFSET(idr_layer_ary) +
+		readmem(idr_layer_p + LAZY_OFFSET(idr_layer_ary) +
 			sizeof(ulong) * index, KVADDR, &idr_layer_p,
 			sizeof(ulong), "idr_layer.ary", FAULT_ON_ERROR);
 	}
@@ -882,7 +882,7 @@ get_shm_info(struct shm_info *shm_info, ulong shp, int id)
 	char buf[BUFSIZE];
 	ulong filep, dentryp, inodep;
 
-	shm_info->shmid_kernel = shp - OFFSET(shmid_kernel_shm_perm);
+	shm_info->shmid_kernel = shp - LAZY_OFFSET(shmid_kernel_shm_perm);
 
 	/*
 	 * cache shmid_kernel
@@ -890,35 +890,35 @@ get_shm_info(struct shm_info *shm_info, ulong shp, int id)
 	readmem(shm_info->shmid_kernel, KVADDR, buf, SIZE(shmid_kernel),
 		"shmid_kernel", FAULT_ON_ERROR);
 
-	shm_info->key = INT(buf + OFFSET(shmid_kernel_shm_perm) +
-			OFFSET(kern_ipc_perm_key));
+	shm_info->key = INT(buf + LAZY_OFFSET(shmid_kernel_shm_perm) +
+			LAZY_OFFSET(kern_ipc_perm_key));
 	if (DIRECT_OFFSET_UNCHECKED(shmid_kernel_id) >= 0)
-		shm_info->shmid = INT(buf + OFFSET(shmid_kernel_id));
+		shm_info->shmid = INT(buf + LAZY_OFFSET(shmid_kernel_id));
 	else
 		shm_info->shmid = INT(buf +
-				OFFSET(shmid_kernel_shm_perm) +
-				OFFSET(kern_ipc_perm_id));
+				LAZY_OFFSET(shmid_kernel_shm_perm) +
+				LAZY_OFFSET(kern_ipc_perm_id));
 
-	shm_info->uid = UINT(buf + OFFSET(shmid_kernel_shm_perm) +
-			OFFSET(kern_ipc_perm_uid));
+	shm_info->uid = UINT(buf + LAZY_OFFSET(shmid_kernel_shm_perm) +
+			LAZY_OFFSET(kern_ipc_perm_uid));
 
 	if (BITS32())
 		shm_info->perms = USHORT(buf +
-				OFFSET(shmid_kernel_shm_perm) +
-				OFFSET(kern_ipc_perm_mode));
+				LAZY_OFFSET(shmid_kernel_shm_perm) +
+				LAZY_OFFSET(kern_ipc_perm_mode));
 	else
 		shm_info->perms = UINT(buf +
-				OFFSET(shmid_kernel_shm_perm) +
-				OFFSET(kern_ipc_perm_mode));
+				LAZY_OFFSET(shmid_kernel_shm_perm) +
+				LAZY_OFFSET(kern_ipc_perm_mode));
 
-	shm_info->bytes = ULONG(buf + OFFSET(shmid_kernel_shm_segsz));
+	shm_info->bytes = ULONG(buf + LAZY_OFFSET(shmid_kernel_shm_segsz));
 
-	shm_info->nattch = ULONG(buf + OFFSET(shmid_kernel_shm_nattch));
+	shm_info->nattch = ULONG(buf + LAZY_OFFSET(shmid_kernel_shm_nattch));
 
-	filep = ULONG(buf + OFFSET(shmid_kernel_shm_file));
-	readmem(filep + OFFSET(file_f_dentry), KVADDR, &dentryp, sizeof(ulong),
+	filep = ULONG(buf + LAZY_OFFSET(shmid_kernel_shm_file));
+	readmem(filep + LAZY_OFFSET(file_f_dentry), KVADDR, &dentryp, sizeof(ulong),
 		"file.f_dentry", FAULT_ON_ERROR);
-	readmem(dentryp + OFFSET(dentry_d_inode), KVADDR, &inodep,
+	readmem(dentryp + LAZY_OFFSET(dentry_d_inode), KVADDR, &inodep,
 		sizeof(ulong), "dentry.d_inode", FAULT_ON_ERROR);
 	/* 
 	 * shm_inode here is the vfs_inode of struct shmem_inode_info
@@ -931,8 +931,8 @@ get_shm_info(struct shm_info *shm_info, ulong shp, int id)
 	add_rss_swap(inodep, is_file_hugepages(filep), &shm_info->rss,
                  &shm_info->swap);
 
-	shm_info->deleted = UCHAR(buf + OFFSET(shmid_kernel_shm_perm) +
-				OFFSET(kern_ipc_perm_deleted));
+	shm_info->deleted = UCHAR(buf + LAZY_OFFSET(shmid_kernel_shm_perm) +
+				LAZY_OFFSET(kern_ipc_perm_deleted));
 }
 
 static void
@@ -940,7 +940,7 @@ get_sem_info(struct sem_info *sem_info, ulong shp, int id)
 {
 	char buf[BUFSIZE];
 	
-	sem_info->sem_array = shp - OFFSET(sem_array_sem_perm);
+	sem_info->sem_array = shp - LAZY_OFFSET(sem_array_sem_perm);
 
 	/*
 	 * cache sem_array
@@ -948,36 +948,36 @@ get_sem_info(struct sem_info *sem_info, ulong shp, int id)
 	readmem(sem_info->sem_array, KVADDR, buf, SIZE(sem_array),
 		"sem_array", FAULT_ON_ERROR);
 
-	sem_info->key = INT(buf + OFFSET(sem_array_sem_perm) +
-			OFFSET(kern_ipc_perm_key));
+	sem_info->key = INT(buf + LAZY_OFFSET(sem_array_sem_perm) +
+			LAZY_OFFSET(kern_ipc_perm_key));
 
 	if (DIRECT_OFFSET_UNCHECKED(sem_array_sem_id) >= 0)
-		sem_info->semid = INT(buf + OFFSET(sem_array_sem_id));
+		sem_info->semid = INT(buf + LAZY_OFFSET(sem_array_sem_id));
 	else if (DIRECT_OFFSET_UNCHECKED(kern_ipc_perm_id) >= 0)
-		sem_info->semid = INT(buf + OFFSET(sem_array_sem_perm) +
-				OFFSET(kern_ipc_perm_id));
+		sem_info->semid = INT(buf + LAZY_OFFSET(sem_array_sem_perm) +
+				LAZY_OFFSET(kern_ipc_perm_id));
 	else {
 		ulong seq;
-		seq = ULONG(buf + OFFSET(sem_array_sem_perm) +
-				OFFSET(kern_ipc_perm_seq));
+		seq = ULONG(buf + LAZY_OFFSET(sem_array_sem_perm) +
+				LAZY_OFFSET(kern_ipc_perm_seq));
 		sem_info->semid = ipcs_table.seq_multiplier * seq + id;
 	}
 
-	sem_info->uid = UINT(buf + OFFSET(sem_array_sem_perm) +
-			OFFSET(kern_ipc_perm_uid));
+	sem_info->uid = UINT(buf + LAZY_OFFSET(sem_array_sem_perm) +
+			LAZY_OFFSET(kern_ipc_perm_uid));
 
 	if (BITS32())
 		sem_info->perms = USHORT(buf +
-				OFFSET(sem_array_sem_perm) +
-				OFFSET(kern_ipc_perm_mode));
+				LAZY_OFFSET(sem_array_sem_perm) +
+				LAZY_OFFSET(kern_ipc_perm_mode));
 	else
-		sem_info->perms = UINT(buf + OFFSET(sem_array_sem_perm) +
-				OFFSET(kern_ipc_perm_mode));
+		sem_info->perms = UINT(buf + LAZY_OFFSET(sem_array_sem_perm) +
+				LAZY_OFFSET(kern_ipc_perm_mode));
 
-	sem_info->nsems = ULONG(buf + OFFSET(sem_array_sem_nsems));
+	sem_info->nsems = ULONG(buf + LAZY_OFFSET(sem_array_sem_nsems));
 
-	sem_info->deleted = UCHAR(buf + OFFSET(sem_array_sem_perm) +
-				OFFSET(kern_ipc_perm_deleted));
+	sem_info->deleted = UCHAR(buf + LAZY_OFFSET(sem_array_sem_perm) +
+				LAZY_OFFSET(kern_ipc_perm_deleted));
 }
 
 static void
@@ -985,7 +985,7 @@ get_msg_info(struct msg_info *msg_info, ulong shp, int id)
 {
 	char buf[BUFSIZE];
 
-	msg_info->msg_queue = shp - OFFSET(msg_queue_q_perm);
+	msg_info->msg_queue = shp - LAZY_OFFSET(msg_queue_q_perm);
 
 	/*
 	 * cache msg_queue
@@ -993,37 +993,37 @@ get_msg_info(struct msg_info *msg_info, ulong shp, int id)
 	readmem(msg_info->msg_queue, KVADDR, buf, SIZE(msg_queue),
 		"msg_queue", FAULT_ON_ERROR);
 
-	msg_info->key = INT(buf + OFFSET(msg_queue_q_perm) +
-			OFFSET(kern_ipc_perm_key));
+	msg_info->key = INT(buf + LAZY_OFFSET(msg_queue_q_perm) +
+			LAZY_OFFSET(kern_ipc_perm_key));
 
 	if (DIRECT_OFFSET_UNCHECKED(msg_queue_q_id) >= 0)
-		msg_info->msgid = INT(buf + OFFSET(msg_queue_q_id));
+		msg_info->msgid = INT(buf + LAZY_OFFSET(msg_queue_q_id));
 	else if (DIRECT_OFFSET_UNCHECKED(kern_ipc_perm_id) >= 0)
-		msg_info->msgid = INT(buf + OFFSET(msg_queue_q_perm) +
-				OFFSET(kern_ipc_perm_id));
+		msg_info->msgid = INT(buf + LAZY_OFFSET(msg_queue_q_perm) +
+				LAZY_OFFSET(kern_ipc_perm_id));
 	else {
 		ulong seq;
-		seq = ULONG(buf + OFFSET(msg_queue_q_perm) +
-				OFFSET(kern_ipc_perm_seq));
+		seq = ULONG(buf + LAZY_OFFSET(msg_queue_q_perm) +
+				LAZY_OFFSET(kern_ipc_perm_seq));
 		msg_info->msgid = ipcs_table.seq_multiplier * seq + id;
 	}
 
-	msg_info->uid = UINT(buf + OFFSET(msg_queue_q_perm) +
-			OFFSET(kern_ipc_perm_uid));
+	msg_info->uid = UINT(buf + LAZY_OFFSET(msg_queue_q_perm) +
+			LAZY_OFFSET(kern_ipc_perm_uid));
 
 	if (BITS32())
-		msg_info->perms = USHORT(buf + OFFSET(msg_queue_q_perm) +
-				OFFSET(kern_ipc_perm_mode));
+		msg_info->perms = USHORT(buf + LAZY_OFFSET(msg_queue_q_perm) +
+				LAZY_OFFSET(kern_ipc_perm_mode));
 	else
-		msg_info->perms = UINT(buf + OFFSET(msg_queue_q_perm) +
-				OFFSET(kern_ipc_perm_mode));
+		msg_info->perms = UINT(buf + LAZY_OFFSET(msg_queue_q_perm) +
+				LAZY_OFFSET(kern_ipc_perm_mode));
 
-	msg_info->bytes = ULONG(buf + OFFSET(msg_queue_q_cbytes));
+	msg_info->bytes = ULONG(buf + LAZY_OFFSET(msg_queue_q_cbytes));
 
-	msg_info->messages = ULONG(buf + OFFSET(msg_queue_q_qnum));
+	msg_info->messages = ULONG(buf + LAZY_OFFSET(msg_queue_q_qnum));
 	
-	msg_info->deleted = UCHAR(buf + OFFSET(msg_queue_q_perm) +
-				OFFSET(kern_ipc_perm_deleted));
+	msg_info->deleted = UCHAR(buf + LAZY_OFFSET(msg_queue_q_perm) +
+				LAZY_OFFSET(kern_ipc_perm_deleted));
 }
 
 /*
@@ -1035,9 +1035,9 @@ add_rss_swap(ulong inode_p, int hugepage, ulong *rss, ulong *swap)
 {
 	unsigned long mapping_p, nr_pages;
 
-	readmem(inode_p + OFFSET(inode_i_mapping), KVADDR, &mapping_p,
+	readmem(inode_p + LAZY_OFFSET(inode_i_mapping), KVADDR, &mapping_p,
 		sizeof(ulong), "inode.i_mapping", FAULT_ON_ERROR);
-	readmem(mapping_p + OFFSET(address_space_nrpages), KVADDR, &nr_pages,
+	readmem(mapping_p + LAZY_OFFSET(address_space_nrpages), KVADDR, &nr_pages,
 		sizeof(ulong), "address_space.nrpages",
 		FAULT_ON_ERROR);
 
@@ -1047,16 +1047,16 @@ add_rss_swap(ulong inode_p, int hugepage, ulong *rss, ulong *swap)
 			unsigned long i_sb_p, hsb_p, hstate_p;
 			unsigned int order;
 
-			readmem(inode_p + OFFSET(inode_i_sb), KVADDR, &i_sb_p,
+			readmem(inode_p + LAZY_OFFSET(inode_i_sb), KVADDR, &i_sb_p,
 				sizeof(ulong), "inode.i_sb",
 				FAULT_ON_ERROR);
-			readmem(i_sb_p + OFFSET(super_block_s_fs_info),
+			readmem(i_sb_p + LAZY_OFFSET(super_block_s_fs_info),
 				KVADDR,	&hsb_p, sizeof(ulong),
 				"super_block.s_fs_info", FAULT_ON_ERROR);
-			readmem(hsb_p + OFFSET(hugetlbfs_sb_info_hstate),
+			readmem(hsb_p + LAZY_OFFSET(hugetlbfs_sb_info_hstate),
 				KVADDR,	&hstate_p, sizeof(ulong),
 				"hugetlbfs_sb_info.hstate", FAULT_ON_ERROR);
-			readmem(hstate_p + OFFSET(hstate_order), KVADDR,
+			readmem(hstate_p + LAZY_OFFSET(hstate_order), KVADDR,
 				&order,	sizeof(uint), "hstate.order",
 				FAULT_ON_ERROR);
 			pages_per_hugepage = 1 << order;
@@ -1088,7 +1088,7 @@ add_rss_swap(ulong inode_p, int hugepage, ulong *rss, ulong *swap)
 		unsigned long swapped;
 
 		*rss += nr_pages;
-		readmem(inode_p - OFFSET(shmem_inode_info_vfs_inode) +
+		readmem(inode_p - LAZY_OFFSET(shmem_inode_info_vfs_inode) +
 			OFFSET(shmem_inode_info_swapped), KVADDR,
 			&swapped, sizeof(ulong), "shmem_inode_info.swapped",
 			FAULT_ON_ERROR);
@@ -1102,7 +1102,7 @@ is_file_hugepages(ulong file_p)
 	unsigned long f_op, sfd_p;
 
 again:
-	readmem(file_p + OFFSET(file_f_op), KVADDR, &f_op, sizeof(ulong),
+	readmem(file_p + LAZY_OFFSET(file_f_op), KVADDR, &f_op, sizeof(ulong),
 		"file.f_op", FAULT_ON_ERROR);
 	if (f_op == ipcs_table.hugetlbfs_f_op_addr)
 		return 1;
@@ -1114,11 +1114,11 @@ again:
 		} else {
 			if (f_op == ipcs_table.shm_f_op_addr) {
 				readmem(file_p +
-					OFFSET(file_private_data),
+					LAZY_OFFSET(file_private_data),
 					KVADDR,	&sfd_p, sizeof(ulong),
 					"file.private_data", FAULT_ON_ERROR);
 				readmem(sfd_p +
-					OFFSET(shm_file_data_file),
+					LAZY_OFFSET(shm_file_data_file),
 					KVADDR,	&file_p, sizeof(ulong),
 					"shm_file_data.file", FAULT_ON_ERROR);
 				goto again;

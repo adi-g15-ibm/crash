@@ -1127,13 +1127,13 @@ set_kvm_iohole(char *optarg)
 			return;
 		}
 
-		nr_map = INT(buf + OFFSET(e820map_nr_map));
+		nr_map = INT(buf + LAZY_OFFSET(e820map_nr_map));
 
 		for (i = 0; i < nr_map; i++) {
                 	e820entry = buf + sizeof(int) + (SIZE(e820entry) * i);
-                	addr = ULONGLONG(e820entry + OFFSET(e820entry_addr));
-			size = ULONGLONG(e820entry + OFFSET(e820entry_size));
-                	type = UINT(e820entry + OFFSET(e820entry_type));
+                	addr = ULONGLONG(e820entry + LAZY_OFFSET(e820entry_addr));
+			size = ULONGLONG(e820entry + LAZY_OFFSET(e820entry_size));
+                	type = UINT(e820entry + LAZY_OFFSET(e820entry_type));
 
 			if (type != E820_RAM)
 				continue;

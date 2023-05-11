@@ -643,7 +643,7 @@ arm_get_crash_notes(void)
 		offset = roundup(offset + note->n_namesz, 4);
 		p = buf + offset; /* start of elf_prstatus */
 
-		BCOPY(p + OFFSET(elf_prstatus_pr_reg), &panic_task_regs[i],
+		BCOPY(p + LAZY_OFFSET(elf_prstatus_pr_reg), &panic_task_regs[i],
 		      sizeof(panic_task_regs[i]));
 
 		found++;
@@ -1234,7 +1234,7 @@ arm_uvtop(struct task_context *tc, ulong uvaddr, physaddr_t *paddr, int verbose)
         if (is_kernel_thread(tc->task) && IS_KVADDR(uvaddr)) {
 		ulong active_mm;
 
-		readmem(tc->task + OFFSET(task_struct_active_mm),
+		readmem(tc->task + LAZY_OFFSET(task_struct_active_mm),
 			KVADDR, &active_mm, sizeof(void *),
 			"task active_mm contents", FAULT_ON_ERROR);
 
@@ -1242,7 +1242,7 @@ arm_uvtop(struct task_context *tc, ulong uvaddr, physaddr_t *paddr, int verbose)
 			error(FATAL,
 			     "no active_mm for this kernel thread\n");
 
-		readmem(active_mm + OFFSET(mm_struct_pgd),
+		readmem(active_mm + LAZY_OFFSET(mm_struct_pgd),
 			KVADDR, &pgd, sizeof(long),
 			"mm_struct pgd", FAULT_ON_ERROR);
 	} else {
@@ -1250,9 +1250,9 @@ arm_uvtop(struct task_context *tc, ulong uvaddr, physaddr_t *paddr, int verbose)
 
 		mm = task_mm(tc->task, TRUE);
 		if (mm)
-			pgd = ULONG_PTR(tt->mm_struct + OFFSET(mm_struct_pgd));
+			pgd = ULONG_PTR(tt->mm_struct + LAZY_OFFSET(mm_struct_pgd));
 		else
-			readmem(tc->mm_struct + OFFSET(mm_struct_pgd),
+			readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd),
 				KVADDR, &pgd, sizeof(long), "mm_struct pgd",
 				FAULT_ON_ERROR);
 	}
@@ -1311,7 +1311,7 @@ arm_get_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 	if (!fill_thread_info(bt->tc->thread_info))
 		return FALSE;
 
-	cpu_context = tt->thread_info + OFFSET(thread_info_cpu_context);
+	cpu_context = tt->thread_info + LAZY_OFFSET(thread_info_cpu_context);
 
 #define GET_REG(ptr, cp, off) ((*ptr) = (*((ulong *)((cp) + OFFSET(off)))))
 	GET_REG(spp, cpu_context, cpu_context_save_sp);

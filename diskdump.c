@@ -2399,26 +2399,26 @@ diskdump_display_regs(int cpu, FILE *ofp)
 		    "    R10: %016llx  R11: %016llx  R12: %016llx\n"
 		    "    R13: %016llx  R14: %016llx  R15: %016llx\n"
 		    "    CS: %04x  SS: %04x\n",
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rip)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsp)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_eflags)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rax)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbx)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rcx)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdx)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsi)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdi)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbp)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r8)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r9)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r10)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r11)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r12)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r13)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r14)),
-		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r15)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_cs)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_ss))
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rip)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rsp)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_eflags)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rax)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rbx)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rcx)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rdx)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rsi)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rdi)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rbp)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r8)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r9)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r10)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r11)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r12)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r13)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r14)),
+		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r15)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ss))
 		);
 	}
 
@@ -2486,7 +2486,7 @@ diskdump_display_regs(int cpu, FILE *ofp)
 			error(INFO, "invalid NT_PRSTATUS note for cpu %d\n", cpu);
 			return;
 		}
-		user_regs = (char *)note64 + len - SIZE(elf_prstatus) + OFFSET(elf_prstatus_pr_reg);
+		user_regs = (char *)note64 + len - SIZE(elf_prstatus) + LAZY_OFFSET(elf_prstatus_pr_reg);
 		fprintf(ofp,
 			"    X0: %016lx   X1: %016lx   X2: %016lx\n"
 			"    X3: %016lx   X4: %016lx   X5: %016lx\n"
@@ -2553,22 +2553,22 @@ diskdump_display_regs(int cpu, FILE *ofp)
 		    "    CS: %04x       DS: %04x       ES: %04x       FS: %04x\n"
 		    "    GS: %04x       SS: %04x\n"
 		    "    EBP: %08x  EFLAGS: %08x\n",
-		    UINT(user_regs + OFFSET(user_regs_struct_eax)),
-		    UINT(user_regs + OFFSET(user_regs_struct_ebx)),
-		    UINT(user_regs + OFFSET(user_regs_struct_ecx)),
-		    UINT(user_regs + OFFSET(user_regs_struct_edx)),
-		    UINT(user_regs + OFFSET(user_regs_struct_esp)),
-		    UINT(user_regs + OFFSET(user_regs_struct_eip)),
-		    UINT(user_regs + OFFSET(user_regs_struct_esi)),
-		    UINT(user_regs + OFFSET(user_regs_struct_edi)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_cs)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_ds)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_es)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_fs)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_gs)),
-		    USHORT(user_regs + OFFSET(user_regs_struct_ss)),
-		    UINT(user_regs + OFFSET(user_regs_struct_ebp)),
-		    UINT(user_regs + OFFSET(user_regs_struct_eflags))
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_eax)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_ebx)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_ecx)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_edx)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_esp)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_eip)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_esi)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_edi)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ds)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_es)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_fs)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_gs)),
+		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ss)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_ebp)),
+		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_eflags))
 		);
 	}
 
@@ -2727,7 +2727,7 @@ zram_object_addr(ulong pool, ulong handle, unsigned char *zram_buf)
 	phys_to_page(PTOB(obj >> OBJ_INDEX_BITS), &page);
 	obj_idx = (obj & OBJ_INDEX_MASK);
 
-	readmem(page + OFFSET(page_private), KVADDR, &zspage,
+	readmem(page + LAZY_OFFSET(page_private), KVADDR, &zspage,
 			sizeof(void *), "page_private", FAULT_ON_ERROR);
 	readmem(zspage, KVADDR, &zspage_s, sizeof(struct zspage), "zspage", FAULT_ON_ERROR);
 
@@ -2735,10 +2735,10 @@ zram_object_addr(ulong pool, ulong handle, unsigned char *zram_buf)
 	if (zspage_s.magic != ZSPAGE_MAGIC)
 		error(FATAL, "zspage magic incorrect: %x\n", zspage_s.magic);
 
-	class = pool + OFFSET(zspoll_size_class);
+	class = pool + LAZY_OFFSET(zspoll_size_class);
 	class += (class_idx * sizeof(void *));
 	readmem(class, KVADDR, &class, sizeof(void *), "size_class", FAULT_ON_ERROR);
-	readmem(class + OFFSET(size_class_size), KVADDR,
+	readmem(class + LAZY_OFFSET(size_class_size), KVADDR,
 			&size, sizeof(unsigned int), "size of class_size", FAULT_ON_ERROR);
 	off = (size * obj_idx) & (~machdep->pagemask);
 	if (off + size <= PAGESIZE()) {
@@ -2839,15 +2839,15 @@ static int get_disk_name_private_data(ulonglong pte_val, ulonglong vaddr,
 		swap_info += (SIZE(swap_info_struct) * __swp_type(pte_val));
 	}
 
-	readmem(swap_info + OFFSET(swap_info_struct_bdev), KVADDR, &bdev,
+	readmem(swap_info + LAZY_OFFSET(swap_info_struct_bdev), KVADDR, &bdev,
 			sizeof(void *), "swap_info_struct_bdev", FAULT_ON_ERROR);
-	readmem(bdev + OFFSET(block_device_bd_disk), KVADDR, &bd_disk,
+	readmem(bdev + LAZY_OFFSET(block_device_bd_disk), KVADDR, &bd_disk,
 			sizeof(void *), "block_device_bd_disk", FAULT_ON_ERROR);
 	if (name)
-		readmem(bd_disk + OFFSET(gendisk_disk_name), KVADDR, name,
+		readmem(bd_disk + LAZY_OFFSET(gendisk_disk_name), KVADDR, name,
 			strlen("zram"), "gendisk_disk_name", FAULT_ON_ERROR);
 	if (private_data)
-		readmem(bd_disk + OFFSET(gendisk_private_data), KVADDR,
+		readmem(bd_disk + LAZY_OFFSET(gendisk_private_data), KVADDR,
 			private_data, sizeof(void *), "gendisk_private_data",
 			FAULT_ON_ERROR);
 
@@ -2903,7 +2903,7 @@ try_zram_decompress(ulonglong pte_val, unsigned char *buf, ulong len, ulonglong 
 	if (!get_disk_name_private_data(pte_val, vaddr, NULL, &zram))
 		return 0;
 
-	readmem(zram + OFFSET(zram_compressor), KVADDR, name,
+	readmem(zram + LAZY_OFFSET(zram_compressor), KVADDR, name,
 		sizeof(name), "zram compressor", FAULT_ON_ERROR);
 	if (STREQ(name, "lzo")) {
 #ifdef LZO
@@ -2947,7 +2947,7 @@ try_zram_decompress(ulonglong pte_val, unsigned char *buf, ulong len, ulonglong 
 	zram_table_entry += (index * SIZE(zram_table_entry));
 	readmem(zram_table_entry, KVADDR, &entry,
 		sizeof(void *), "entry of table", FAULT_ON_ERROR);
-	readmem(zram_table_entry + OFFSET(zram_table_flag), KVADDR, &flags,
+	readmem(zram_table_entry + LAZY_OFFSET(zram_table_flag), KVADDR, &flags,
 		sizeof(void *), "zram_table_flag", FAULT_ON_ERROR);
 	if (!entry || (flags & ZRAM_FLAG_SAME_BIT)) {
 		memset(buf, entry, len);
@@ -2959,7 +2959,7 @@ try_zram_decompress(ulonglong pte_val, unsigned char *buf, ulong len, ulonglong 
 		goto out;
 	}
 
-	readmem(zram + OFFSET(zram_mempoll), KVADDR, &zram,
+	readmem(zram + LAZY_OFFSET(zram_mempoll), KVADDR, &zram,
 		sizeof(void *), "zram_mempoll", FAULT_ON_ERROR);
 
 	obj_addr = zram_object_addr(zram, entry, zram_buf);

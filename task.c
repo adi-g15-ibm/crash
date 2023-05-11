@@ -556,18 +556,18 @@ task_init(void)
 		if (STREQ(MEMBER_TYPE_NAME("idr", "idr_rt"), "xarray")) {
 			tt->refresh_task_table = refresh_xarray_task_table;
 			tt->pid_xarray = symbol_value("init_pid_ns") +
-				OFFSET(pid_namespace_idr) + OFFSET(idr_idr_rt);
+				LAZY_OFFSET(pid_namespace_idr) + LAZY_OFFSET(idr_idr_rt);
 			tt->flags |= PID_XARRAY;
 		} else if STREQ(MEMBER_TYPE_NAME("idr", "idr_rt"), "radix_tree_root") {
 			if (MEMBER_EXISTS("radix_tree_root", "rnode")) {
 				tt->refresh_task_table = refresh_radix_tree_task_table;
 				tt->pid_radix_tree = symbol_value("init_pid_ns") +
-					OFFSET(pid_namespace_idr) + OFFSET(idr_idr_rt);
+					LAZY_OFFSET(pid_namespace_idr) + LAZY_OFFSET(idr_idr_rt);
 				tt->flags |= PID_RADIX_TREE;
 			} else if (MEMBER_EXISTS("radix_tree_root", "xa_head")) {
 				tt->refresh_task_table = refresh_xarray_task_table;
 				tt->pid_xarray = symbol_value("init_pid_ns") +
-					OFFSET(pid_namespace_idr) + OFFSET(idr_idr_rt);
+					LAZY_OFFSET(pid_namespace_idr) + LAZY_OFFSET(idr_idr_rt);
 				tt->flags |= PID_XARRAY;
 			}
 		} else 
@@ -770,7 +770,7 @@ irqstacks_init(void)
 
 		if (MEMBER_EXISTS("irq_ctx", "tinfo"))
 			tt->hardirq_tasks[i] = 
-				ULONG(thread_info_buf+OFFSET(thread_info_task));
+				ULONG(thread_info_buf+LAZY_OFFSET(thread_info_task));
 		else {
 			hardirq_next_sp = ULONG(thread_info_buf);
 			tt->hardirq_tasks[i] = stkptr_to_task(hardirq_next_sp);
@@ -818,7 +818,7 @@ irqstacks_init(void)
 
 		if (MEMBER_EXISTS("irq_ctx", "tinfo")) 
 			tt->softirq_tasks[i] =
-				ULONG(thread_info_buf+OFFSET(thread_info_task));
+				ULONG(thread_info_buf+LAZY_OFFSET(thread_info_task));
 		else {
 			tt->softirq_tasks[i] = stkptr_to_task(ULONG(thread_info_buf));
 			/* Checking if softirq => hardirq nested stack */
@@ -1015,7 +1015,7 @@ verify_task(struct task_context *tc, int level)
 	switch (level)
 	{
 	case 1:
-        	if (!readmem(tc->task + OFFSET(task_struct_next_task),
+        	if (!readmem(tc->task + LAZY_OFFSET(task_struct_next_task),
 	    	    KVADDR, &next_task, sizeof(void *), "next_task", readflag)) {
 			return FALSE;
         	}
@@ -1127,7 +1127,7 @@ retry:
 	BZERO(ld, sizeof(struct list_data));
 	ld->flags |= RETURN_ON_LIST_ERROR;
 	ld->start = symbol_value("init_task_union");
-	ld->member_offset = OFFSET(task_struct_next_task);
+	ld->member_offset = LAZY_OFFSET(task_struct_next_task);
 
 	if (!hq_open()) {
 		error(INFO, "cannot hash task_struct entries\n");
@@ -1326,7 +1326,7 @@ retry_pidhash:
 
 			}
 
-                        if (!readmem(next + OFFSET(task_struct_pidhash_next),
+                        if (!readmem(next + LAZY_OFFSET(task_struct_pidhash_next),
                             KVADDR, &pnext, sizeof(void *),
                             "pidhash_next entry", QUIET|RETURN_ON_ERROR)) {
                                 error(INFO, "%scannot read from task: %lx\n",
@@ -1420,11 +1420,11 @@ retry_pidhash:
  *  tasks, and populates the local task table with their essential data.
  */
 
-#define HASH_TO_TASK(X) ((ulong)(X) - (OFFSET(task_struct_pids) + \
-                         OFFSET(pid_link_pid) + OFFSET(pid_hash_chain)))
+#define HASH_TO_TASK(X) ((ulong)(X) - (LAZY_OFFSET(task_struct_pids) + \
+                         LAZY_OFFSET(pid_link_pid) + LAZY_OFFSET(pid_hash_chain)))
 
-#define TASK_TO_HASH(X) ((ulong)(X) + (OFFSET(task_struct_pids) + \
-                         OFFSET(pid_link_pid) + OFFSET(pid_hash_chain)))
+#define TASK_TO_HASH(X) ((ulong)(X) + (LAZY_OFFSET(task_struct_pids) + \
+                         LAZY_OFFSET(pid_link_pid) + LAZY_OFFSET(pid_hash_chain)))
 
 static void
 refresh_pid_hash_task_table(void)
@@ -1607,8 +1607,8 @@ retry_pid_hash:
  *  Adapt to yet another scheme, using later 2.6 hlist_head and hlist_nodes.
  */
 
-#define HLIST_TO_TASK(X) ((ulong)(X) - (OFFSET(task_struct_pids) + \
-                           OFFSET(pid_pid_chain)))
+#define HLIST_TO_TASK(X) ((ulong)(X) - (LAZY_OFFSET(task_struct_pids) + \
+                           LAZY_OFFSET(pid_pid_chain)))
 
 static void
 refresh_hlist_task_table(void)
@@ -1752,8 +1752,8 @@ retry_pid_hash:
 
 		kpp = pid_hash[i];
 		next = (ulong)HLIST_TO_TASK(kpp);
-		pnext = ULONG(nodebuf + OFFSET(hlist_node_next));
-		pprev = ULONG(nodebuf + OFFSET(hlist_node_pprev));
+		pnext = ULONG(nodebuf + LAZY_OFFSET(hlist_node_next));
+		pprev = ULONG(nodebuf + LAZY_OFFSET(hlist_node_pprev));
 
 		if (CRASHDEBUG(1)) 
 			console("pid_hash[%d]: %lx task: %lx (node: %lx) next: %lx pprev: %lx\n",
@@ -1800,8 +1800,8 @@ retry_pid_hash:
 
 			kpp = (ulong)pnext;
 			next = (ulong)HLIST_TO_TASK(kpp);
-			pnext = ULONG(nodebuf + OFFSET(hlist_node_next));
-			pprev = ULONG(nodebuf + OFFSET(hlist_node_pprev));
+			pnext = ULONG(nodebuf + LAZY_OFFSET(hlist_node_next));
+			pprev = ULONG(nodebuf + LAZY_OFFSET(hlist_node_pprev));
 
 			if (CRASHDEBUG(1)) 
 				console("  chained task: %lx (node: %lx) next: %lx pprev: %lx\n",
@@ -1965,11 +1965,11 @@ retry_pid_hash:
 		}
 
 		kpp = pid_hash[i];
-		next = ULONG(nodebuf + OFFSET(pid_link_pid)); 
+		next = ULONG(nodebuf + LAZY_OFFSET(pid_link_pid)); 
 		if (next)
-			next -= OFFSET(task_struct_pids);
-		pnext = ULONG(nodebuf + OFFSET(hlist_node_next));
-		pprev = ULONG(nodebuf + OFFSET(hlist_node_pprev));
+			next -= LAZY_OFFSET(task_struct_pids);
+		pnext = ULONG(nodebuf + LAZY_OFFSET(hlist_node_next));
+		pprev = ULONG(nodebuf + LAZY_OFFSET(hlist_node_pprev));
 
 		if (CRASHDEBUG(1)) 
 			console("pid_hash[%d]: %lx task: %lx (node: %lx) next: %lx pprev: %lx\n",
@@ -2017,11 +2017,11 @@ retry_pid_hash:
                         }
 
 			kpp = (ulong)pnext;
-			next = ULONG(nodebuf + OFFSET(pid_link_pid));
+			next = ULONG(nodebuf + LAZY_OFFSET(pid_link_pid));
 			if (next)
-				next -= OFFSET(task_struct_pids);
-			pnext = ULONG(nodebuf + OFFSET(hlist_node_next));
-			pprev = ULONG(nodebuf + OFFSET(hlist_node_pprev));
+				next -= LAZY_OFFSET(task_struct_pids);
+			pnext = ULONG(nodebuf + LAZY_OFFSET(hlist_node_next));
+			pprev = ULONG(nodebuf + LAZY_OFFSET(hlist_node_pprev));
 
 			if (CRASHDEBUG(1)) 
 				console("  chained task: %lx (node: %lx) next: %lx pprev: %lx\n",
@@ -2182,7 +2182,7 @@ retry_pid_hash:
 			continue;
 
 		kpp = pid_hash[i];
-		upid = pid_hash[i] - OFFSET(upid_pid_chain);
+		upid = pid_hash[i] - LAZY_OFFSET(upid_pid_chain);
 		chained = 0;
 do_chained:
         	if (!readmem(upid, KVADDR, nodebuf, SIZE(upid), 
@@ -2195,10 +2195,10 @@ do_chained:
                         goto retry_pid_hash;
 		}
 
-		pnext = ULONG(nodebuf + OFFSET(upid_pid_chain) + OFFSET(hlist_node_next));
-		pprev = ULONG(nodebuf + OFFSET(upid_pid_chain) + OFFSET(hlist_node_pprev));
-		upid_nr = UINT(nodebuf + OFFSET(upid_nr));
-		upid_ns = ULONG(nodebuf + OFFSET(upid_ns));
+		pnext = ULONG(nodebuf + LAZY_OFFSET(upid_pid_chain) + LAZY_OFFSET(hlist_node_next));
+		pprev = ULONG(nodebuf + LAZY_OFFSET(upid_pid_chain) + LAZY_OFFSET(hlist_node_pprev));
+		upid_nr = UINT(nodebuf + LAZY_OFFSET(upid_nr));
+		upid_ns = ULONG(nodebuf + LAZY_OFFSET(upid_ns));
 		/*
 		 *  Use init_pid_ns level 0 (PIDTYPE_PID).
 		 */
@@ -2213,9 +2213,9 @@ do_chained:
 			goto chain_next;
 		}
 
-		pid = upid - OFFSET(pid_numbers);
+		pid = upid - LAZY_OFFSET(pid_numbers);
 
-		if (!readmem(pid + OFFSET(pid_tasks), KVADDR, &pid_tasks_0, 
+		if (!readmem(pid + LAZY_OFFSET(pid_tasks), KVADDR, &pid_tasks_0, 
 		    sizeof(void *), "pid tasks", RETURN_ON_ERROR|QUIET)) {
                         error(INFO, "\npid_hash[%d]: cannot read pid.tasks[0]\n", i);
                         if (DUMPFILE())
@@ -2228,7 +2228,7 @@ do_chained:
 		if (pid_tasks_0 == 0)
 			goto chain_next;
 
-		next = pid_tasks_0 - OFFSET(task_struct_pids);
+		next = pid_tasks_0 - LAZY_OFFSET(task_struct_pids);
 
 		if (CRASHDEBUG(1)) {
 			if (chained)
@@ -2271,7 +2271,7 @@ chain_next:
 				continue;
 			}
 			kpp = pnext;
-			upid = pnext - OFFSET(upid_pid_chain);
+			upid = pnext - LAZY_OFFSET(upid_pid_chain);
 			chained++;
 			goto do_chained;
 		}
@@ -2462,16 +2462,16 @@ retry_radix_tree:
 			goto retry_radix_tree;
 		}
 
-		upid_ns = ULONG(pidbuf + OFFSET(pid_numbers) + OFFSET(upid_ns));
+		upid_ns = ULONG(pidbuf + LAZY_OFFSET(pid_numbers) + LAZY_OFFSET(upid_ns));
 		if (upid_ns != tt->init_pid_ns)
 			continue;
-		pid_tasks_0 = ULONG(pidbuf + OFFSET(pid_tasks));
+		pid_tasks_0 = ULONG(pidbuf + LAZY_OFFSET(pid_tasks));
 		if (!pid_tasks_0)
 			continue;
 		if (DIRECT_OFFSET_UNCHECKED(task_struct_pids) >= 0)
-			task = pid_tasks_0 - OFFSET(task_struct_pids);
+			task = pid_tasks_0 - LAZY_OFFSET(task_struct_pids);
 		else
-			task = pid_tasks_0 - OFFSET(task_struct_pid_links);
+			task = pid_tasks_0 - LAZY_OFFSET(task_struct_pid_links);
 
 		if (CRASHDEBUG(1))
 			console("pid: %lx  ns: %lx  tasks[0]: %lx task: %lx\n",
@@ -2678,16 +2678,16 @@ retry_xarray:
 			goto retry_xarray;
 		}
 
-		upid_ns = ULONG(pidbuf + OFFSET(pid_numbers) + OFFSET(upid_ns));
+		upid_ns = ULONG(pidbuf + LAZY_OFFSET(pid_numbers) + LAZY_OFFSET(upid_ns));
 		if (upid_ns != tt->init_pid_ns)
 			continue;
-		pid_tasks_0 = ULONG(pidbuf + OFFSET(pid_tasks));
+		pid_tasks_0 = ULONG(pidbuf + LAZY_OFFSET(pid_tasks));
 		if (!pid_tasks_0)
 			continue;
 		if (DIRECT_OFFSET_UNCHECKED(task_struct_pids) >= 0)
-			task = pid_tasks_0 - OFFSET(task_struct_pids);
+			task = pid_tasks_0 - LAZY_OFFSET(task_struct_pids);
 		else
-			task = pid_tasks_0 - OFFSET(task_struct_pid_links);
+			task = pid_tasks_0 - LAZY_OFFSET(task_struct_pid_links);
 
 		if (CRASHDEBUG(1))
 			console("pid: %lx  ns: %lx  tasks[0]: %lx task: %lx\n",
@@ -2904,29 +2904,29 @@ add_context(ulong task, char *tp)
 
 	tc = tt->context_array + tt->running_tasks;
 
-        pid_addr = (pid_t *)(tp + OFFSET(task_struct_pid));
-	tgid_addr = (pid_t *)(tp + OFFSET(task_struct_tgid));
-        comm_addr = (char *)(tp + OFFSET(task_struct_comm));
+        pid_addr = (pid_t *)(tp + LAZY_OFFSET(task_struct_pid));
+	tgid_addr = (pid_t *)(tp + LAZY_OFFSET(task_struct_tgid));
+        comm_addr = (char *)(tp + LAZY_OFFSET(task_struct_comm));
 	if (tt->flags & THREAD_INFO) {
 		if (tt->flags & THREAD_INFO_IN_TASK) 
-			tc->thread_info = task + OFFSET(task_struct_thread_info);
+			tc->thread_info = task + LAZY_OFFSET(task_struct_thread_info);
 		else
-			tc->thread_info = ULONG(tp + OFFSET(task_struct_thread_info));
+			tc->thread_info = ULONG(tp + LAZY_OFFSET(task_struct_thread_info));
 		fill_thread_info(tc->thread_info);
 		if (tt->flags & THREAD_INFO_IN_TASK && DIRECT_OFFSET_UNCHECKED(task_struct_cpu) >= 0)
-                	processor_addr = (int *) (tp + OFFSET(task_struct_cpu));
+                	processor_addr = (int *) (tp + LAZY_OFFSET(task_struct_cpu));
 		else
 			processor_addr = (int *) (tt->thread_info + 
-				OFFSET(thread_info_cpu));
+				LAZY_OFFSET(thread_info_cpu));
 	} else if (DIRECT_OFFSET_UNCHECKED(task_struct_processor) >= 0)
-                processor_addr = (int *) (tp + OFFSET(task_struct_processor));
+                processor_addr = (int *) (tp + LAZY_OFFSET(task_struct_processor));
         else if (DIRECT_OFFSET_UNCHECKED(task_struct_cpu) >= 0)
-                processor_addr = (int *) (tp + OFFSET(task_struct_cpu));
+                processor_addr = (int *) (tp + LAZY_OFFSET(task_struct_cpu));
 	if (DIRECT_OFFSET_UNCHECKED(task_struct_p_pptr) >= 0)
-        	parent_addr = (ulong *)(tp + OFFSET(task_struct_p_pptr));
+        	parent_addr = (ulong *)(tp + LAZY_OFFSET(task_struct_p_pptr));
 	else
-        	parent_addr = (ulong *)(tp + OFFSET(task_struct_parent));
-        mm_addr = (ulong *)(tp + OFFSET(task_struct_mm));
+        	parent_addr = (ulong *)(tp + LAZY_OFFSET(task_struct_parent));
+        mm_addr = (ulong *)(tp + LAZY_OFFSET(task_struct_mm));
         has_cpu = task_has_cpu(task, tp);
 
         tc->pid = (ulong)(*pid_addr);
@@ -4113,7 +4113,7 @@ show_milliseconds(struct task_context *tc, struct psinfo *psi)
 				runq = rq_sp->value + kt->__per_cpu_offset[c];
 			else
 				runq = rq_sp->value;
-			readmem(runq + OFFSET(rq_timestamp), KVADDR, &rq_clock,
+			readmem(runq + LAZY_OFFSET(rq_timestamp), KVADDR, &rq_clock,
 				sizeof(ulonglong), "per-cpu rq clock",
 				FAULT_ON_ERROR);
 
@@ -4142,7 +4142,7 @@ show_milliseconds(struct task_context *tc, struct psinfo *psi)
 			runq = rq_sp->value + kt->__per_cpu_offset[tc->processor];
 		else
 			runq = rq_sp->value;
-		readmem(runq + OFFSET(rq_timestamp), KVADDR, &rq_clock,
+		readmem(runq + LAZY_OFFSET(rq_timestamp), KVADDR, &rq_clock,
 			sizeof(ulonglong), "per-cpu rq clock",
 			FAULT_ON_ERROR);
 		translate_nanoseconds(rq_clock, buf);
@@ -4163,7 +4163,7 @@ show_milliseconds(struct task_context *tc, struct psinfo *psi)
 					kt->__per_cpu_offset[tcp->processor];
 			else
 				runq = rq_sp->value;
-			readmem(runq + OFFSET(rq_timestamp), KVADDR, &rq_clock,
+			readmem(runq + LAZY_OFFSET(rq_timestamp), KVADDR, &rq_clock,
 				sizeof(ulonglong), "per-cpu rq clock",
 				FAULT_ON_ERROR);
 			delta = rq_clock - task_last_run(tcp->task);
@@ -4244,10 +4244,10 @@ show_task_args(struct task_context *tc)
 		MEMBER_OFFSET_INIT(mm_struct_env_end, "mm_struct", "env_end");
 	}
 	
-	arg_start = ULONG(tt->mm_struct + OFFSET(mm_struct_arg_start));
-	arg_end = ULONG(tt->mm_struct + OFFSET(mm_struct_arg_end));
-	env_start = ULONG(tt->mm_struct + OFFSET(mm_struct_env_start));
-	env_end = ULONG(tt->mm_struct + OFFSET(mm_struct_env_end));
+	arg_start = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_arg_start));
+	arg_end = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_arg_end));
+	env_start = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_env_start));
+	env_end = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_env_end));
 
 	if (CRASHDEBUG(1)) {
 		fprintf(fp, "arg_start: %lx arg_end: %lx (%ld)\n", 
@@ -4379,11 +4379,11 @@ show_task_rlimit(struct task_context *tc)
 	fill_task_struct(tc->task);
 
 	if (in_task_struct) {
-		BCOPY(tt->task_struct + OFFSET(task_struct_rlim),
+		BCOPY(tt->task_struct + LAZY_OFFSET(task_struct_rlim),
 			rlimit_buffer, rlimit_index * SIZE(rlimit));
 	} else if (in_signal_struct) {
-		rlim_addr = ULONG(tt->task_struct + OFFSET(task_struct_signal));
-        	if (!readmem(rlim_addr + OFFSET(signal_struct_rlim), 
+		rlim_addr = ULONG(tt->task_struct + LAZY_OFFSET(task_struct_signal));
+        	if (!readmem(rlim_addr + LAZY_OFFSET(signal_struct_rlim), 
 		    KVADDR, rlimit_buffer, rlimit_index * SIZE(rlimit),
                     "signal_struct rlimit array", RETURN_ON_ERROR)) {
 			FREEBUF(rlimit_buffer);
@@ -4559,46 +4559,46 @@ show_task_times(struct task_context *tcp, ulong flags)
 			if (start_time_timespec())
 				tsp->start_time = 
 					ULONG(tt->task_struct +
-					OFFSET(task_struct_start_time));
+					LAZY_OFFSET(task_struct_start_time));
 			else
 				tsp->start_time = 
 					ULONGLONG(tt->task_struct +
-					OFFSET(task_struct_start_time));
+					LAZY_OFFSET(task_struct_start_time));
 		} else {
 			start_time_timespec();
 			tsp->start_time = ULONG(tt->task_struct +
-				OFFSET(task_struct_start_time));
+				LAZY_OFFSET(task_struct_start_time));
 		}
 
 		if (DIRECT_OFFSET_UNCHECKED(task_struct_times) >= 0) {
 			tsp->tms_utime = ULONG(tt->task_struct +
-                        	OFFSET(task_struct_times) +
-				OFFSET(tms_tms_utime));
+                        	LAZY_OFFSET(task_struct_times) +
+				LAZY_OFFSET(tms_tms_utime));
                 	tsp->tms_stime = ULONG(tt->task_struct +
-                        	OFFSET(task_struct_times) +
-                        	OFFSET(tms_tms_stime));
+                        	LAZY_OFFSET(task_struct_times) +
+                        	LAZY_OFFSET(tms_tms_stime));
 		} else if (DIRECT_OFFSET_UNCHECKED(task_struct_utime) >= 0) {
 			if (use_utime_stime) {
 				tsp->utime = ULONG(tt->task_struct +
-					OFFSET(task_struct_utime));
+					LAZY_OFFSET(task_struct_utime));
 				tsp->stime = ULONG(tt->task_struct +
-					OFFSET(task_struct_stime));
+					LAZY_OFFSET(task_struct_stime));
 			} else if (use_kernel_timeval) {
                                 BCOPY(tt->task_struct +
-                                        OFFSET(task_struct_utime), &tsp->kutime,
+                                        LAZY_OFFSET(task_struct_utime), &tsp->kutime,
 					sizeof(struct kernel_timeval));
                                 BCOPY(tt->task_struct +
-                                        OFFSET(task_struct_stime), &tsp->kstime,
+                                        LAZY_OFFSET(task_struct_stime), &tsp->kstime,
 					sizeof(struct kernel_timeval));
 			} else if (VALID_STRUCT(cputime_t)) {
 				/* since linux 2.6.11 */
 				if (SIZE(cputime_t) == 8) {
 					uint64_t utime_64, stime_64;
 					BCOPY(tt->task_struct + 
-						OFFSET(task_struct_utime), 
+						LAZY_OFFSET(task_struct_utime), 
 						&utime_64, 8);
 					BCOPY(tt->task_struct + 
-						OFFSET(task_struct_stime), 
+						LAZY_OFFSET(task_struct_stime), 
 						&stime_64, 8);
 					/* convert from micro-sec. to sec. */
 					tsp->old_utime.tv_sec = utime_64 / 1000000;
@@ -4606,20 +4606,20 @@ show_task_times(struct task_context *tcp, ulong flags)
 				} else {
 					uint32_t utime_32, stime_32;
 					BCOPY(tt->task_struct + 
-						OFFSET(task_struct_utime), 
+						LAZY_OFFSET(task_struct_utime), 
 						&utime_32, 4);
 					BCOPY(tt->task_struct + 
-						OFFSET(task_struct_stime), 
+						LAZY_OFFSET(task_struct_stime), 
 						&stime_32, 4);
 					tsp->old_utime.tv_sec = utime_32;
 					tsp->old_stime.tv_sec = stime_32;
 				}
 			} else {
 				BCOPY(tt->task_struct + 
-					OFFSET(task_struct_utime), 
+					LAZY_OFFSET(task_struct_utime), 
 					&tsp->utime, sizeof(struct timeval));
 				BCOPY(tt->task_struct + 
-					OFFSET(task_struct_stime), 
+					LAZY_OFFSET(task_struct_stime), 
 					&tsp->stime, sizeof(struct timeval));
 			}
 		}
@@ -4761,9 +4761,9 @@ parent_of(ulong task)
 	ulong parent;
 
         if (DIRECT_OFFSET_UNCHECKED(task_struct_parent) >= 0)
-                offset = OFFSET(task_struct_parent);
+                offset = LAZY_OFFSET(task_struct_parent);
 	else
-                offset = OFFSET(task_struct_p_pptr);
+                offset = LAZY_OFFSET(task_struct_p_pptr);
 
 	readmem(task+offset, KVADDR, &parent,
 	    sizeof(void *), "task parent", FAULT_ON_ERROR);
@@ -5122,7 +5122,7 @@ task_to_stackbase(ulong task)
 	ulong stackbase;
 
 	if (tt->flags & THREAD_INFO_IN_TASK) {
-		readmem(task + OFFSET(task_struct_stack), KVADDR, &stackbase,
+		readmem(task + LAZY_OFFSET(task_struct_stack), KVADDR, &stackbase,
 		    sizeof(void *), "task_struct.stack", FAULT_ON_ERROR);
 		return stackbase;
 	} else if (tt->flags & THREAD_INFO)
@@ -5328,9 +5328,9 @@ panic_context_adjusted(struct task_context *tc)
         fill_task_struct(tc->task);
 
         pgrp = tt->last_task_read ?
-                UINT(tt->task_struct + OFFSET(task_struct_pgrp)) : 0;
+                UINT(tt->task_struct + LAZY_OFFSET(task_struct_pgrp)) : 0;
         tgid = tt->last_task_read ?
-                UINT(tt->task_struct + OFFSET(task_struct_tgid)) : 0;
+                UINT(tt->task_struct + LAZY_OFFSET(task_struct_tgid)) : 0;
 
         if (pgrp && tgid && (pgrp == tgid) && !pid_exists((ulong)pgrp)) {
                 tc->pid = (ulong)pgrp;
@@ -5936,11 +5936,11 @@ task_state(ulong task)
 		return 0;
 
 	if (SIZE(task_struct_state) == sizeof(ulong))
-		state = ULONG(tt->task_struct + OFFSET(task_struct_state));
+		state = ULONG(tt->task_struct + LAZY_OFFSET(task_struct_state));
 	else
-		state = UINT(tt->task_struct + OFFSET(task_struct_state));
+		state = UINT(tt->task_struct + LAZY_OFFSET(task_struct_state));
 	exit_state = DIRECT_OFFSET_UNCHECKED(task_struct_exit_state) >= 0 ?
-		ULONG(tt->task_struct + OFFSET(task_struct_exit_state)) : 0;
+		ULONG(tt->task_struct + LAZY_OFFSET(task_struct_exit_state)) : 0;
 
         return (state | exit_state);
 }
@@ -5958,10 +5958,10 @@ task_flags(ulong task)
 	if (tt->last_task_read) {
 		if (SIZE(task_struct_flags) == sizeof(unsigned int))
 			flags = UINT(tt->task_struct +
-				     OFFSET(task_struct_flags));
+				     LAZY_OFFSET(task_struct_flags));
 		else
 			flags = ULONG(tt->task_struct +
-				      OFFSET(task_struct_flags));
+				      LAZY_OFFSET(task_struct_flags));
 	} else
 		flags = 0;
 
@@ -5982,9 +5982,9 @@ task_policy(ulong task)
 		return policy;
 
 	if (SIZE(task_struct_policy) == sizeof(unsigned int))
-		policy = 1 << UINT(tt->task_struct + OFFSET(task_struct_policy));
+		policy = 1 << UINT(tt->task_struct + LAZY_OFFSET(task_struct_policy));
 	else
-		policy = 1 << ULONG(tt->task_struct + OFFSET(task_struct_policy));
+		policy = 1 << ULONG(tt->task_struct + LAZY_OFFSET(task_struct_policy));
 
 	return policy;
 }
@@ -6000,7 +6000,7 @@ task_tgid(ulong task)
         fill_task_struct(task);
 
         tgid = tt->last_task_read ?
-                 UINT(tt->task_struct + OFFSET(task_struct_tgid)) : 0;
+                 UINT(tt->task_struct + LAZY_OFFSET(task_struct_tgid)) : 0;
 
         return (ulong)tgid;
 }
@@ -6016,15 +6016,15 @@ task_last_run(ulong task)
 
 	if (DIRECT_OFFSET_UNCHECKED(task_struct_last_run) >= 0) {
         	last_run = tt->last_task_read ?  ULONG(tt->task_struct + 
-			OFFSET(task_struct_last_run)) : 0;
+			LAZY_OFFSET(task_struct_last_run)) : 0;
 		timestamp = (ulonglong)last_run;
 	} else if (DIRECT_OFFSET_UNCHECKED(task_struct_timestamp) >= 0)
         	timestamp = tt->last_task_read ?  ULONGLONG(tt->task_struct + 
-			OFFSET(task_struct_timestamp)) : 0;
+			LAZY_OFFSET(task_struct_timestamp)) : 0;
 	else if (DIRECT_OFFSET_UNCHECKED(sched_info_last_arrival) >= 0)
         	timestamp = tt->last_task_read ?  ULONGLONG(tt->task_struct + 
-			OFFSET(task_struct_sched_info) + 
-			OFFSET(sched_info_last_arrival)) : 0;
+			LAZY_OFFSET(task_struct_sched_info) + 
+			LAZY_OFFSET(sched_info_last_arrival)) : 0;
 	
         return timestamp;
 }
@@ -6043,7 +6043,7 @@ task_mm(ulong task, int fill)
 	if (!tt->last_task_read)
 		return 0;
 
-	mm_struct = ULONG(tt->task_struct + OFFSET(task_struct_mm));
+	mm_struct = ULONG(tt->task_struct + LAZY_OFFSET(task_struct_mm));
 
 	if (fill && mm_struct)
 		fill_mm_struct(mm_struct);
@@ -6125,17 +6125,17 @@ task_has_cpu(ulong task, char *local_task)
 
 	if (DIRECT_OFFSET_UNCHECKED(task_struct_has_cpu) >= 0) {
 		if (local_task) 
-			has_cpu = INT(local_task+OFFSET(task_struct_has_cpu));
-		else if (!readmem((ulong)(task+OFFSET(task_struct_has_cpu)), 
+			has_cpu = INT(local_task+LAZY_OFFSET(task_struct_has_cpu));
+		else if (!readmem((ulong)(task+LAZY_OFFSET(task_struct_has_cpu)), 
 			KVADDR, &has_cpu, sizeof(int), 
 		    	"task_struct has_cpu", RETURN_ON_ERROR))
 				has_cpu = FALSE;	
 	} else if (DIRECT_OFFSET_UNCHECKED(task_struct_cpus_runnable) >= 0) {
                 if (local_task) 
                         cpus_runnable = ULONG(local_task +
-				OFFSET(task_struct_cpus_runnable));
+				LAZY_OFFSET(task_struct_cpus_runnable));
 		else if (!readmem((ulong)(task + 
-			OFFSET(task_struct_cpus_runnable)),
+			LAZY_OFFSET(task_struct_cpus_runnable)),
                         KVADDR, &cpus_runnable, sizeof(ulong),
                         "task_struct cpus_runnable", RETURN_ON_ERROR))
                                 cpus_runnable = ~0UL;
@@ -8302,7 +8302,7 @@ get_idle_threads(ulong *tasklist, int nr_cpus)
 			readmem(runq, KVADDR, runqbuf,
                         	SIZE(runqueue), "runqueues entry (per_cpu)",
                         	FAULT_ON_ERROR);		
-			tasklist[i] = ULONG(runqbuf + OFFSET(runqueue_idle)); 
+			tasklist[i] = ULONG(runqbuf + LAZY_OFFSET(runqueue_idle)); 
 			if (IS_KVADDR(tasklist[i]))
 				cnt++;
 		}
@@ -8313,7 +8313,7 @@ get_idle_threads(ulong *tasklist, int nr_cpus)
 			readmem(runq, KVADDR, runqbuf,
                         	SIZE(runqueue), "runqueues entry (old)",
                         	FAULT_ON_ERROR);		
-			tasklist[i] = ULONG(runqbuf + OFFSET(runqueue_idle)); 
+			tasklist[i] = ULONG(runqbuf + LAZY_OFFSET(runqueue_idle)); 
 			if (IS_KVADDR(tasklist[i]))
 				cnt++;
 		}
@@ -8343,7 +8343,7 @@ get_idle_threads(ulong *tasklist, int nr_cpus)
 		for (i = 0; i < nr_cpus; i++, runq += SIZE(pcpu_info)) {
 			readmem(runq, KVADDR, runqbuf, SIZE(pcpu_info),
 				"pcpu info", FAULT_ON_ERROR);
-			tasklist[i] = ULONG(runqbuf + OFFSET(pcpu_info_idle));
+			tasklist[i] = ULONG(runqbuf + LAZY_OFFSET(pcpu_info_idle));
 			if (IS_KVADDR(tasklist[i]))
 				cnt++;
 		}
@@ -8395,8 +8395,8 @@ get_idle_task(int cpu, char *runqbuf)
 {
 	ulong idle_task;
 
-	idle_task = ULONG(runqbuf + OFFSET(runqueue_cpu) +
-		(SIZE(cpu_s) * cpu_idx(cpu)) + OFFSET(cpu_s_idle));
+	idle_task = ULONG(runqbuf + LAZY_OFFSET(runqueue_cpu) +
+		(SIZE(cpu_s) * cpu_idx(cpu)) + LAZY_OFFSET(cpu_s_idle));
 
 	if (IS_KVADDR(idle_task)) 
 		return idle_task;
@@ -8416,8 +8416,8 @@ get_curr_task(int cpu, char *runqbuf)
 {
         ulong curr_task;
 
-        curr_task = ULONG(runqbuf + OFFSET(runqueue_cpu) +
-                (SIZE(cpu_s) * cpu_idx(cpu)) + OFFSET(cpu_s_curr));
+        curr_task = ULONG(runqbuf + LAZY_OFFSET(runqueue_cpu) +
+                (SIZE(cpu_s) * cpu_idx(cpu)) + LAZY_OFFSET(cpu_s_curr));
 
         if (IS_KVADDR(curr_task)) 
                 return curr_task;
@@ -8470,12 +8470,12 @@ get_active_set(void)
 			readmem(runq, KVADDR, pcpu_info_buf, 
 				SIZE(pcpu_info), "pcpu_info", FAULT_ON_ERROR);
 			vcpu_struct= ULONG(pcpu_info_buf +
-				OFFSET(pcpu_info_vcpu));
+				LAZY_OFFSET(pcpu_info_vcpu));
 			readmem(vcpu_struct, KVADDR, vcpu_struct_buf, 
 				SIZE(vcpu_struct), "pcpu_info->vcpu",
 				FAULT_ON_ERROR);
 			tt->active_set[i] = ULONG(vcpu_struct_buf +
-				OFFSET(vcpu_struct_rq) + OFFSET(runqueue_curr));
+				LAZY_OFFSET(vcpu_struct_rq) + LAZY_OFFSET(runqueue_curr));
 			if (IS_KVADDR(tt->active_set[i]))
 				cnt++;
 		}
@@ -8493,7 +8493,7 @@ get_active_set(void)
                                 FAULT_ON_ERROR);
 
 	               	tt->active_set[i] = ULONG(runqbuf + 
-				OFFSET(runqueue_curr));
+				LAZY_OFFSET(runqueue_curr));
 			if (IS_KVADDR(tt->active_set[i]))
 				cnt++;
 		}
@@ -8504,7 +8504,7 @@ get_active_set(void)
 	                	SIZE(runqueue), "(old) runqueues curr",
 	                        FAULT_ON_ERROR);
 	               	tt->active_set[i] = ULONG(runqbuf + 
-				OFFSET(runqueue_curr));
+				LAZY_OFFSET(runqueue_curr));
 			if (IS_KVADDR(tt->active_set[i]))
 				cnt++;
 		}
@@ -8890,7 +8890,7 @@ dump_on_rq_timestamp(void)
 		else
 			runq = rq_sp->value;
 
-		readmem(runq + OFFSET(rq_timestamp), KVADDR, &timestamp,
+		readmem(runq + LAZY_OFFSET(rq_timestamp), KVADDR, &timestamp,
 			sizeof(ulonglong), "per-cpu rq timestamp",
 			FAULT_ON_ERROR);
 
@@ -8994,7 +8994,7 @@ dump_on_rq_lag(void)
 		else
 			runq = rq_sp->value;
 
-		readmem(runq + OFFSET(rq_timestamp), KVADDR, &timestamp,
+		readmem(runq + LAZY_OFFSET(rq_timestamp), KVADDR, &timestamp,
 				sizeof(ulonglong), "per-cpu rq timestamp",
 				FAULT_ON_ERROR);
 
@@ -9054,7 +9054,7 @@ dump_on_rq_milliseconds(void)
 		else
 			runq = rq_sp->value;
 
-		readmem(runq + OFFSET(rq_timestamp), KVADDR, &rq_timestamp,
+		readmem(runq + LAZY_OFFSET(rq_timestamp), KVADDR, &rq_timestamp,
 			sizeof(ulonglong), "per-cpu rq timestamp",
 			FAULT_ON_ERROR);
 
@@ -9131,7 +9131,7 @@ start_again:
 		next = runqueue_head = symbol_value("runqueue_head");
 		offs = 0;
         } else if (DIRECT_OFFSET_UNCHECKED(task_struct_next_run) >= 0) {
-		offs = OFFSET(task_struct_next_run);
+		offs = LAZY_OFFSET(task_struct_next_run);
 		next = runqueue_head = symbol_value("init_task_union");
 	} else
 		error(FATAL, 
@@ -9227,21 +9227,21 @@ dump_runqueues(void)
 
                 readmem(runq, KVADDR, runqbuf, SIZE(runqueue), 
 			"runqueues array entry", FAULT_ON_ERROR);
-		active = ULONG(runqbuf + OFFSET(runqueue_active));
-		expired = ULONG(runqbuf + OFFSET(runqueue_expired));
-		arrays = runq + OFFSET(runqueue_arrays);
+		active = ULONG(runqbuf + LAZY_OFFSET(runqueue_active));
+		expired = ULONG(runqbuf + LAZY_OFFSET(runqueue_expired));
+		arrays = runq + LAZY_OFFSET(runqueue_arrays);
 
 		console("active: %lx\n", active);
 		console("expired: %lx\n", expired);
 		console("arrays: %lx\n", arrays);
 
-		offset = active == arrays ? OFFSET(runqueue_arrays) :
-			OFFSET(runqueue_arrays) + SIZE(prio_array);
+		offset = active == arrays ? LAZY_OFFSET(runqueue_arrays) :
+			LAZY_OFFSET(runqueue_arrays) + SIZE(prio_array);
 		offset = active - runq;
 		dump_prio_array(RUNQ_ACTIVE, active, &runqbuf[offset]);
 
-		offset = expired == arrays ? OFFSET(runqueue_arrays) :
-			OFFSET(runqueue_arrays) + SIZE(prio_array);
+		offset = expired == arrays ? LAZY_OFFSET(runqueue_arrays) :
+			LAZY_OFFSET(runqueue_arrays) + SIZE(prio_array);
 		offset = expired - runq;
 		dump_prio_array(RUNQ_EXPIRED, expired, &runqbuf[offset]);
 	}
@@ -9264,7 +9264,7 @@ dump_prio_array(int which, ulong k_prio_array, char *u_prio_array)
 	console("dump_prio_array[%d]: %lx %lx\n",
 		which, k_prio_array, (ulong)u_prio_array);
 
-	nr_active = INT(u_prio_array + OFFSET(prio_array_nr_active));
+	nr_active = INT(u_prio_array + LAZY_OFFSET(prio_array_nr_active));
 	console("nr_active: %d\n", nr_active);
 
 	fprintf(fp, "  %s PRIO_ARRAY: %lx\n",  
@@ -9276,7 +9276,7 @@ dump_prio_array(int which, ulong k_prio_array, char *u_prio_array)
 	ld = &list_data;
 
 	for (i = tot = 0; i < 140; i++) {
-		offset =  OFFSET(prio_array_queue) + (i * SIZE(list_head));
+		offset =  LAZY_OFFSET(prio_array_queue) + (i * SIZE(list_head));
 		kvaddr = k_prio_array + offset;
 		uvaddr = (ulong)u_prio_array + offset;
 		BCOPY((char *)uvaddr, (char *)&list_head[0], sizeof(ulong)*2);
@@ -9297,7 +9297,7 @@ dump_prio_array(int which, ulong k_prio_array, char *u_prio_array)
 
 		BZERO(ld, sizeof(struct list_data));
 		ld->start = list_head[0];
-		ld->list_head_offset = OFFSET(task_struct_run_list);
+		ld->list_head_offset = LAZY_OFFSET(task_struct_run_list);
 		ld->end = kvaddr;
 		hq_open();
 		cnt = do_list(ld);
@@ -9403,7 +9403,7 @@ dump_task_runq_entry(struct task_context *tc, int current)
 {
 	int prio;
 
-	readmem(tc->task + OFFSET(task_struct_prio), KVADDR, 
+	readmem(tc->task + LAZY_OFFSET(task_struct_prio), KVADDR, 
 		&prio, sizeof(int), "task prio", FAULT_ON_ERROR);
 	fprintf(fp, "[%3d] ", prio);
 	fprintf(fp, "PID: %-5ld  TASK: %lx  COMMAND: \"%s\"",
@@ -9427,7 +9427,7 @@ print_group_header_fair(int depth, ulong cfs_rq, void *t)
 		fprintf(fp, " <%s>", tgi->name);
 
 	if (DIRECT_OFFSET_UNCHECKED(cfs_rq_throttled) >= 0) {
-		readmem(cfs_rq + OFFSET(cfs_rq_throttled), KVADDR,
+		readmem(cfs_rq + LAZY_OFFSET(cfs_rq_throttled), KVADDR,
 			&throttled, sizeof(int), "cfs_rq throttled",
 			FAULT_ON_ERROR);
 		if (throttled)
@@ -9448,7 +9448,7 @@ print_parent_task_group_fair(void *t, int cpu)
 	else
 		return;
 
-	readmem(tgi->task_group + OFFSET(task_group_cfs_rq),
+	readmem(tgi->task_group + LAZY_OFFSET(task_group_cfs_rq),
 		KVADDR, &cfs_rq_c, sizeof(ulong),
 		"task_group cfs_rq", FAULT_ON_ERROR);
 	readmem(cfs_rq_c + cpu * sizeof(ulong), KVADDR, &cfs_rq_p,
@@ -9470,12 +9470,12 @@ dump_tasks_in_lower_dequeued_cfs_rq(int depth, ulong cfs_rq, int cpu,
 		if (tgi_array[i]->use == 0 || tgi_array[i]->depth - depth != 1)
 			continue;
 
-		readmem(cfs_rq + OFFSET(cfs_rq_tg), KVADDR, &group,
+		readmem(cfs_rq + LAZY_OFFSET(cfs_rq_tg), KVADDR, &group,
 			sizeof(ulong), "cfs_rq tg", FAULT_ON_ERROR);
 		if (group != tgi_array[i]->parent->task_group)
 			continue;
 
-		readmem(tgi_array[i]->task_group + OFFSET(task_group_cfs_rq),
+		readmem(tgi_array[i]->task_group + LAZY_OFFSET(task_group_cfs_rq),
 			KVADDR, &cfs_rq_c, sizeof(ulong), "task_group cfs_rq",
 			FAULT_ON_ERROR);
 		readmem(cfs_rq_c + cpu * sizeof(ulong), KVADDR, &cfs_rq_p,
@@ -9483,7 +9483,7 @@ dump_tasks_in_lower_dequeued_cfs_rq(int depth, ulong cfs_rq, int cpu,
 		if (cfs_rq == cfs_rq_p)
 			continue;
 
-		readmem(cfs_rq_p + OFFSET(cfs_rq_nr_running), KVADDR,
+		readmem(cfs_rq_p + LAZY_OFFSET(cfs_rq_nr_running), KVADDR,
 			&nr_running, sizeof(int), "cfs_rq nr_running",
 			FAULT_ON_ERROR);
 		if (nr_running == 0) {
@@ -9513,10 +9513,10 @@ dump_tasks_in_cfs_rq(ulong cfs_rq)
 	total = 0;
 
 	if (DIRECT_OFFSET_UNCHECKED(sched_entity_my_q) >= 0) {
-		readmem(cfs_rq + OFFSET(cfs_rq_curr), KVADDR, &curr, 
+		readmem(cfs_rq + LAZY_OFFSET(cfs_rq_curr), KVADDR, &curr, 
 			sizeof(ulong), "curr", FAULT_ON_ERROR);
 		if (curr) {
-			readmem(curr + OFFSET(sched_entity_my_q), KVADDR, 
+			readmem(curr + LAZY_OFFSET(sched_entity_my_q), KVADDR, 
 				&curr_my_q, sizeof(ulong), "curr->my_q", 
 				FAULT_ON_ERROR);
 			if (curr_my_q)
@@ -9524,14 +9524,14 @@ dump_tasks_in_cfs_rq(ulong cfs_rq)
 		}
 	}
 
-	readmem(cfs_rq + OFFSET(cfs_rq_rb_leftmost), KVADDR, &leftmost,
+	readmem(cfs_rq + LAZY_OFFSET(cfs_rq_rb_leftmost), KVADDR, &leftmost,
 		sizeof(ulong), "rb_leftmost", FAULT_ON_ERROR);
-	root = (struct rb_root *)(cfs_rq + OFFSET(cfs_rq_tasks_timeline));
+	root = (struct rb_root *)(cfs_rq + LAZY_OFFSET(cfs_rq_tasks_timeline));
 
 	for (node = rb_first(root); leftmost && node; node = rb_next(node)) {
 		if (DIRECT_OFFSET_UNCHECKED(sched_entity_my_q) >= 0) {
-			readmem((ulong)node - OFFSET(sched_entity_run_node)
-				+ OFFSET(sched_entity_my_q), KVADDR, &my_q,
+			readmem((ulong)node - LAZY_OFFSET(sched_entity_run_node)
+				+ LAZY_OFFSET(sched_entity_my_q), KVADDR, &my_q,
 				sizeof(ulong), "my_q", FAULT_ON_ERROR);
 			if (my_q) {
 				total += dump_tasks_in_cfs_rq(my_q);
@@ -9539,8 +9539,8 @@ dump_tasks_in_cfs_rq(ulong cfs_rq)
 			}
 		}
 
-		tc = task_to_context((ulong)node - OFFSET(task_struct_se) -
-				     OFFSET(sched_entity_run_node));
+		tc = task_to_context((ulong)node - LAZY_OFFSET(task_struct_se) -
+				     LAZY_OFFSET(sched_entity_run_node));
 		if (!tc)
 			continue;
 		if (hq_enter((ulong)tc)) {
@@ -9571,7 +9571,7 @@ dump_tasks_in_task_group_cfs_rq(int depth, ulong cfs_rq, int cpu,
 	curr_my_q = curr = 0;
 
 	if (depth) {
-		readmem(cfs_rq + OFFSET(cfs_rq_tg), KVADDR,
+		readmem(cfs_rq + LAZY_OFFSET(cfs_rq_tg), KVADDR,
 			&tg, sizeof(ulong), "cfs_rq tg",
 			FAULT_ON_ERROR);
 		for (i = 0; i < tgi_p; i++) {
@@ -9585,10 +9585,10 @@ dump_tasks_in_task_group_cfs_rq(int depth, ulong cfs_rq, int cpu,
 	}
 
 	if (DIRECT_OFFSET_UNCHECKED(sched_entity_my_q) >= 0) {
-		readmem(cfs_rq + OFFSET(cfs_rq_curr), KVADDR, &curr,
+		readmem(cfs_rq + LAZY_OFFSET(cfs_rq_curr), KVADDR, &curr,
 			sizeof(ulong), "curr", FAULT_ON_ERROR);
 		if (curr) {
-			readmem(curr + OFFSET(sched_entity_my_q), KVADDR,
+			readmem(curr + LAZY_OFFSET(sched_entity_my_q), KVADDR,
 				&curr_my_q, sizeof(ulong), "curr->my_q",
 				FAULT_ON_ERROR);
 			if (curr_my_q) {
@@ -9602,21 +9602,21 @@ dump_tasks_in_task_group_cfs_rq(int depth, ulong cfs_rq, int cpu,
 	/*
 	 *  check if "curr" is the task that is current running task
 	 */
-	if (!curr_my_q && ctc && (curr - OFFSET(task_struct_se)) == ctc->task) {
+	if (!curr_my_q && ctc && (curr - LAZY_OFFSET(task_struct_se)) == ctc->task) {
 		/* curr is not in the rb tree, so let's print it here */
 		total++;
 		INDENT(5 + 3 * depth);
 		dump_task_runq_entry(ctc, 1);
 	}
 
-	readmem(cfs_rq + OFFSET(cfs_rq_rb_leftmost), KVADDR, &leftmost,
+	readmem(cfs_rq + LAZY_OFFSET(cfs_rq_rb_leftmost), KVADDR, &leftmost,
 		sizeof(ulong), "rb_leftmost", FAULT_ON_ERROR);
-	root = (struct rb_root *)(cfs_rq + OFFSET(cfs_rq_tasks_timeline));
+	root = (struct rb_root *)(cfs_rq + LAZY_OFFSET(cfs_rq_tasks_timeline));
 
 	for (node = rb_first(root); leftmost && node; node = rb_next(node)) {
 		if (DIRECT_OFFSET_UNCHECKED(sched_entity_my_q) >= 0) {
-			readmem((ulong)node - OFFSET(sched_entity_run_node)
-				+ OFFSET(sched_entity_my_q), KVADDR, &my_q,
+			readmem((ulong)node - LAZY_OFFSET(sched_entity_run_node)
+				+ LAZY_OFFSET(sched_entity_my_q), KVADDR, &my_q,
 				sizeof(ulong), "my_q", FAULT_ON_ERROR);
 			if (my_q) {
 				total++;
@@ -9626,8 +9626,8 @@ dump_tasks_in_task_group_cfs_rq(int depth, ulong cfs_rq, int cpu,
 			}
 		}
 
-		tc = task_to_context((ulong)node - OFFSET(task_struct_se) -
-				     OFFSET(sched_entity_run_node));
+		tc = task_to_context((ulong)node - LAZY_OFFSET(task_struct_se) -
+				     LAZY_OFFSET(sched_entity_run_node));
 		if (!tc)
 			continue;
 		if (hq_enter((ulong)tc)) {
@@ -9692,14 +9692,14 @@ dump_on_rq_tasks(void)
 		for (i = 0; i < RUNNING_TASKS(); i++, tc++) {
 
 			if (DIRECT_OFFSET_UNCHECKED(task_struct_on_rq) >= 0) {
-				readmem(tc->task + OFFSET(task_struct_on_rq),
+				readmem(tc->task + LAZY_OFFSET(task_struct_on_rq),
 					KVADDR, &on_rq, sizeof(int),
 					"task on_rq", FAULT_ON_ERROR);
 			} else {
-				readmem(tc->task + OFFSET(task_struct_se), KVADDR,
+				readmem(tc->task + LAZY_OFFSET(task_struct_se), KVADDR,
 					buf, SIZE(sched_entity), "task se",
 					FAULT_ON_ERROR);
-				on_rq = INT(buf + OFFSET(sched_entity_on_rq));
+				on_rq = INT(buf + LAZY_OFFSET(sched_entity_on_rq));
 			}
 
 			if (!on_rq || tc->processor != cpu)
@@ -9742,7 +9742,7 @@ cfs_rq_offset_init(void)
 		if (DIRECT_OFFSET_UNCHECKED(cfs_rq_rb_leftmost) == INVALID_OFFSET && 
 		    DIRECT_OFFSET_UNCHECKED(cfs_rq_tasks_timeline) >= 0 &&
 		    MEMBER_EXISTS("rb_root_cached", "rb_leftmost"))
-			ASSIGN_OFFSET(cfs_rq_rb_leftmost) = OFFSET(cfs_rq_tasks_timeline) + 
+			ASSIGN_LAZY_OFFSET(cfs_rq_rb_leftmost) = LAZY_OFFSET(cfs_rq_tasks_timeline) + 
 				MEMBER_OFFSET("rb_root_cached", "rb_leftmost");
 		MEMBER_OFFSET_INIT(cfs_rq_nr_running, "cfs_rq", "nr_running");
 		MEMBER_OFFSET_INIT(cfs_rq_curr, "cfs_rq", "curr");
@@ -9858,18 +9858,18 @@ dump_CFS_runqueues(void)
 			readmem(cfs_rq, KVADDR, cfs_rq_buf, SIZE(cfs_rq),
 				"per-cpu cfs_rq", FAULT_ON_ERROR);
 			root = (struct rb_root *)(cfs_rq + 
-				OFFSET(cfs_rq_tasks_timeline));
+				LAZY_OFFSET(cfs_rq_tasks_timeline));
 		} else {
-			cfs_rq = runq + OFFSET(rq_cfs);
-			root = (struct rb_root *)(runq + OFFSET(rq_cfs) + 
-				OFFSET(cfs_rq_tasks_timeline));
+			cfs_rq = runq + LAZY_OFFSET(rq_cfs);
+			root = (struct rb_root *)(runq + LAZY_OFFSET(rq_cfs) + 
+				LAZY_OFFSET(cfs_rq_tasks_timeline));
 		}
 
-		prio_array = runq + OFFSET(rq_rt) + OFFSET(rt_rq_active);
+		prio_array = runq + LAZY_OFFSET(rq_rt) + LAZY_OFFSET(rt_rq_active);
 		fprintf(fp, "  RT PRIO_ARRAY: %lx\n",  prio_array);
 
 		tot = dump_RT_prio_array(prio_array,
-			&runqbuf[OFFSET(rq_rt) + OFFSET(rt_rq_active)]);
+			&runqbuf[LAZY_OFFSET(rq_rt) + LAZY_OFFSET(rt_rq_active)]);
 		if (!tot) {
 			INDENT(5);
 			fprintf(fp, "[no tasks queued]\n");
@@ -9903,7 +9903,7 @@ print_group_header_rt(ulong rt_rq, void *t)
 		fprintf(fp, " <%s>", tgi->name);
 
 	if (DIRECT_OFFSET_UNCHECKED(task_group_rt_bandwidth) >= 0) {
-		readmem(rt_rq + OFFSET(rt_rq_rt_throttled), KVADDR,
+		readmem(rt_rq + LAZY_OFFSET(rt_rq_rt_throttled), KVADDR,
 			&throttled, sizeof(int), "rt_rq rt_throttled",
 			FAULT_ON_ERROR);
 		if (throttled)
@@ -9926,13 +9926,13 @@ print_parent_task_group_rt(void *t, int cpu)
 	else
 		return;
 
-	readmem(tgi->task_group + OFFSET(task_group_rt_rq),
+	readmem(tgi->task_group + LAZY_OFFSET(task_group_rt_rq),
 		KVADDR, &rt_rq_c, sizeof(ulong),
 		"task_group rt_rq", FAULT_ON_ERROR);
 	readmem(rt_rq_c + cpu * sizeof(ulong), KVADDR, &rt_rq_p,
 		sizeof(ulong), "task_group rt_rq", FAULT_ON_ERROR);
 
-	readmem(rt_rq_p + OFFSET(rt_rq_highest_prio), KVADDR, &prio,
+	readmem(rt_rq_p + LAZY_OFFSET(rt_rq_highest_prio), KVADDR, &prio,
 		sizeof(int), "rt_rq highest prio", FAULT_ON_ERROR);
 
 	INDENT(-1 + 6 * tgi->depth);
@@ -9956,12 +9956,12 @@ dump_tasks_in_lower_dequeued_rt_rq(int depth, ulong rt_rq, int cpu)
 		if (tgi_array[i]->use == 0 || delta < 1)
 			continue;
 
-		readmem(rt_rq + OFFSET(rt_rq_tg), KVADDR, &group,
+		readmem(rt_rq + LAZY_OFFSET(rt_rq_tg), KVADDR, &group,
 			sizeof(ulong), "rt_rq tg", FAULT_ON_ERROR);
 		if (group != tgi_array[i]->parent->task_group)
 			continue;
 
-		readmem(tgi_array[i]->task_group + OFFSET(task_group_rt_rq),
+		readmem(tgi_array[i]->task_group + LAZY_OFFSET(task_group_rt_rq),
 			KVADDR, &rt_rq_c, sizeof(ulong), "task_group rt_rq",
 			FAULT_ON_ERROR);
 		readmem(rt_rq_c + cpu * sizeof(ulong), KVADDR, &rt_rq_p,
@@ -9969,7 +9969,7 @@ dump_tasks_in_lower_dequeued_rt_rq(int depth, ulong rt_rq, int cpu)
 		if (rt_rq == rt_rq_p)
 			continue;
 
-		readmem(rt_rq_p + OFFSET(rt_rq_rt_nr_running), KVADDR,
+		readmem(rt_rq_p + LAZY_OFFSET(rt_rq_rt_nr_running), KVADDR,
 			&nr_running, sizeof(int), "rt_rq rt_nr_running",
 			FAULT_ON_ERROR);
 		if (nr_running == 0) {
@@ -9980,7 +9980,7 @@ dump_tasks_in_lower_dequeued_rt_rq(int depth, ulong rt_rq, int cpu)
 
 		print_parent_task_group_rt(tgi_array[i], cpu);
 
-		readmem(rt_rq_p + OFFSET(rt_rq_highest_prio), KVADDR,
+		readmem(rt_rq_p + LAZY_OFFSET(rt_rq_highest_prio), KVADDR,
 			&prio, sizeof(int), "rt_rq highest_prio",
 			FAULT_ON_ERROR);
 		INDENT(5 + 6 * depth);
@@ -10009,7 +10009,7 @@ dump_RT_prio_array(ulong k_prio_array, char *u_prio_array)
 	ld = &list_data;
 
 	for (i = tot = 0; i < qheads; i++) {
-		offset =  OFFSET(rt_prio_array_queue) + (i * SIZE(list_head));
+		offset =  LAZY_OFFSET(rt_prio_array_queue) + (i * SIZE(list_head));
 		kvaddr = k_prio_array + offset;
 		uvaddr = (ulong)u_prio_array + offset;
 		BCOPY((char *)uvaddr, (char *)&list_head[0], sizeof(ulong)*2);
@@ -10026,15 +10026,15 @@ dump_RT_prio_array(ulong k_prio_array, char *u_prio_array)
 		ld->flags |= LIST_ALLOCATE;
 		if (DIRECT_OFFSET_UNCHECKED(task_struct_rt) >= 0 &&
 		    DIRECT_OFFSET_UNCHECKED(sched_rt_entity_run_list) >= 0)
-			ld->list_head_offset = OFFSET(sched_rt_entity_run_list);
+			ld->list_head_offset = LAZY_OFFSET(sched_rt_entity_run_list);
 		else
-			ld->list_head_offset = OFFSET(task_struct_run_list);
+			ld->list_head_offset = LAZY_OFFSET(task_struct_run_list);
 		ld->end = kvaddr;
 		cnt = do_list(ld);
 		for (c = 0; c < cnt; c++) {
 			task_addr = ld->list_ptr[c];
 			if (DIRECT_OFFSET_UNCHECKED(sched_rt_entity_my_q) >= 0) {
-				readmem(ld->list_ptr[c] + OFFSET(sched_rt_entity_my_q),
+				readmem(ld->list_ptr[c] + LAZY_OFFSET(sched_rt_entity_my_q),
 					KVADDR, &my_q, sizeof(ulong), "my_q",
 					FAULT_ON_ERROR);
 				if (my_q) {
@@ -10044,16 +10044,16 @@ dump_RT_prio_array(ulong k_prio_array, char *u_prio_array)
 						FAULT_ON_ERROR);
 
 					tot += dump_RT_prio_array(
-						my_q + OFFSET(rt_rq_active),
-						&rt_rq_buf[OFFSET(rt_rq_active)]);
+						my_q + LAZY_OFFSET(rt_rq_active),
+						&rt_rq_buf[LAZY_OFFSET(rt_rq_active)]);
 					FREEBUF(rt_rq_buf);
 					continue;
 				}
 			}
 			if (DIRECT_OFFSET_UNCHECKED(task_struct_rt) >= 0)
-				task_addr -= OFFSET(task_struct_rt);
+				task_addr -= LAZY_OFFSET(task_struct_rt);
 			else
-				task_addr -= OFFSET(task_struct_run_list);
+				task_addr -= LAZY_OFFSET(task_struct_run_list);
 
 			if (!(tc = task_to_context(task_addr)))
 				continue;
@@ -10081,13 +10081,13 @@ dump_tasks_in_task_group_rt_rq(int depth, ulong rt_rq, int cpu)
 	ulong my_q, task_addr, tg, k_prio_array;
 	char *rt_rq_buf, *u_prio_array;
 
-	k_prio_array = rt_rq +  OFFSET(rt_rq_active);
+	k_prio_array = rt_rq +  LAZY_OFFSET(rt_rq_active);
 	rt_rq_buf = GETBUF(SIZE(rt_rq));
 	readmem(rt_rq, KVADDR, rt_rq_buf, SIZE(rt_rq), "rt_rq", FAULT_ON_ERROR);
-	u_prio_array = &rt_rq_buf[OFFSET(rt_rq_active)];
+	u_prio_array = &rt_rq_buf[LAZY_OFFSET(rt_rq_active)];
 
 	if (depth) {
-		readmem(rt_rq + OFFSET(rt_rq_tg), KVADDR,
+		readmem(rt_rq + LAZY_OFFSET(rt_rq_tg), KVADDR,
 			&tg, sizeof(ulong), "rt_rq tg",
 			FAULT_ON_ERROR);
 		for (i = 0; i < tgi_p; i++) {
@@ -10105,7 +10105,7 @@ dump_tasks_in_task_group_rt_rq(int depth, ulong rt_rq, int cpu)
 	ld = &list_data;
 
 	for (i = tot = 0; i < qheads; i++) {
-		offset =  OFFSET(rt_prio_array_queue) + (i * SIZE(list_head));
+		offset =  LAZY_OFFSET(rt_prio_array_queue) + (i * SIZE(list_head));
 		kvaddr = k_prio_array + offset;
 		uvaddr = (ulong)u_prio_array + offset;
 		BCOPY((char *)uvaddr, (char *)&list_head[0], sizeof(ulong)*2);
@@ -10122,9 +10122,9 @@ dump_tasks_in_task_group_rt_rq(int depth, ulong rt_rq, int cpu)
 		ld->flags |= LIST_ALLOCATE;
 		if (DIRECT_OFFSET_UNCHECKED(task_struct_rt) >= 0 &&
 		    DIRECT_OFFSET_UNCHECKED(sched_rt_entity_run_list) >= 0)
-			ld->list_head_offset = OFFSET(sched_rt_entity_run_list);
+			ld->list_head_offset = LAZY_OFFSET(sched_rt_entity_run_list);
 		else
-			ld->list_head_offset = OFFSET(task_struct_run_list);
+			ld->list_head_offset = LAZY_OFFSET(task_struct_run_list);
 		ld->end = kvaddr;
 		cnt = do_list(ld);
 		for (c = 0; c < cnt; c++) {
@@ -10132,11 +10132,11 @@ dump_tasks_in_task_group_rt_rq(int depth, ulong rt_rq, int cpu)
 			if (DIRECT_OFFSET_UNCHECKED(sched_rt_entity_my_q) == INVALID_OFFSET)
 				goto is_task;
 
-			readmem(ld->list_ptr[c] + OFFSET(sched_rt_entity_my_q),
+			readmem(ld->list_ptr[c] + LAZY_OFFSET(sched_rt_entity_my_q),
 				KVADDR, &my_q, sizeof(ulong), "my_q",
 				FAULT_ON_ERROR);
 			if (!my_q) {
-				task_addr -= OFFSET(task_struct_rt);
+				task_addr -= LAZY_OFFSET(task_struct_rt);
 				goto is_task;
 			}
 
@@ -10177,14 +10177,14 @@ get_task_group_name(ulong group)
 	int len;
 
 	tmp = NULL;
-	readmem(group + OFFSET(task_group_css) + OFFSET(cgroup_subsys_state_cgroup),
+	readmem(group + LAZY_OFFSET(task_group_css) + LAZY_OFFSET(cgroup_subsys_state_cgroup),
 		KVADDR, &cgroup, sizeof(ulong),
 		"task_group css cgroup", FAULT_ON_ERROR);
 	if (cgroup == 0)
 		return NULL;
 
 	if (DIRECT_OFFSET_UNCHECKED(cgroup_dentry) >= 0) {
-		readmem(cgroup + OFFSET(cgroup_dentry), KVADDR, &dentry, sizeof(ulong),
+		readmem(cgroup + LAZY_OFFSET(cgroup_dentry), KVADDR, &dentry, sizeof(ulong),
 			"cgroup dentry", FAULT_ON_ERROR);
 		if (dentry == 0)
 			return NULL;
@@ -10192,9 +10192,9 @@ get_task_group_name(ulong group)
 		dentry_buf = GETBUF(SIZE(dentry));
 		readmem(dentry, KVADDR, dentry_buf, SIZE(dentry),
 			"dentry", FAULT_ON_ERROR);
-		len = UINT(dentry_buf + OFFSET(dentry_d_name) + OFFSET(qstr_len));
+		len = UINT(dentry_buf + LAZY_OFFSET(dentry_d_name) + LAZY_OFFSET(qstr_len));
 		tmp = GETBUF(len + 1);
-		name = ULONG(dentry_buf + OFFSET(dentry_d_name) + OFFSET(qstr_name));
+		name = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_name) + LAZY_OFFSET(qstr_name));
 		readmem(name, KVADDR, tmp, len, "qstr name", FAULT_ON_ERROR);
 	
 		FREEBUF(dentry_buf);
@@ -10208,12 +10208,12 @@ get_task_group_name(ulong group)
 	    DIRECT_OFFSET_UNCHECKED(kernfs_node_parent) == INVALID_OFFSET)
 		return NULL;
 
-	readmem(cgroup + OFFSET(cgroup_kn), KVADDR, &kernfs_node, sizeof(ulong),
+	readmem(cgroup + LAZY_OFFSET(cgroup_kn), KVADDR, &kernfs_node, sizeof(ulong),
 		"cgroup kn", FAULT_ON_ERROR);
 	if (kernfs_node == 0)
 		return NULL;
 
-	readmem(kernfs_node + OFFSET(kernfs_node_parent), KVADDR, &parent, 
+	readmem(kernfs_node + LAZY_OFFSET(kernfs_node_parent), KVADDR, &parent, 
 		sizeof(ulong), "kernfs_node parent", FAULT_ON_ERROR);
 	if (!parent) {
 		tmp = GETBUF(2);
@@ -10221,7 +10221,7 @@ get_task_group_name(ulong group)
 		return tmp;
 	}
 
-	readmem(kernfs_node + OFFSET(kernfs_node_name), KVADDR, &name, 
+	readmem(kernfs_node + LAZY_OFFSET(kernfs_node_name), KVADDR, &name, 
 		sizeof(ulong), "kernfs_node name", FAULT_ON_ERROR);
 	if (!name || !read_string(name, buf, BUFSIZE-1))
 		return NULL;
@@ -10266,7 +10266,7 @@ fill_task_group_info_array(int depth, ulong group, char *group_buf, int i)
 		tgi_array = tgi_array_new;
 	}
 
-	offset = OFFSET(task_group_children);
+	offset = LAZY_OFFSET(task_group_children);
 	kvaddr = group + offset;
 	uvaddr = (ulong)(group_buf + offset);
 	BCOPY((char *)uvaddr, (char *)&list_head[0], sizeof(ulong)*2);
@@ -10276,11 +10276,11 @@ fill_task_group_info_array(int depth, ulong group, char *group_buf, int i)
 
 	next = list_head[0];
 	while (next != kvaddr) {
-		group = next - OFFSET(task_group_siblings);
+		group = next - LAZY_OFFSET(task_group_siblings);
 		readmem(group, KVADDR, group_buf, SIZE(task_group),
 			"task_group", FAULT_ON_ERROR);
-		next = ULONG(group_buf + OFFSET(task_group_siblings) +
-			OFFSET(list_head_next));
+		next = ULONG(group_buf + LAZY_OFFSET(task_group_siblings) +
+			LAZY_OFFSET(list_head_next));
 		fill_task_group_info_array(depth + 1, group, group_buf, d);
 	}
 }
@@ -10317,9 +10317,9 @@ dump_tasks_by_task_group(void)
 	readmem(root_task_group, KVADDR, buf, SIZE(task_group),
 		"task_group", FAULT_ON_ERROR);
 	if (DIRECT_OFFSET_UNCHECKED(task_group_rt_rq) >= 0)
-		rt_rq = ULONG(buf + OFFSET(task_group_rt_rq));
+		rt_rq = ULONG(buf + LAZY_OFFSET(task_group_rt_rq));
 	if (DIRECT_OFFSET_UNCHECKED(task_group_cfs_rq) >= 0)
-		cfs_rq = ULONG(buf + OFFSET(task_group_cfs_rq));
+		cfs_rq = ULONG(buf + LAZY_OFFSET(task_group_cfs_rq));
 
 	fill_task_group_info_array(0, root_task_group, buf, -1);
 	sort_task_group_info_array();
@@ -10759,10 +10759,10 @@ dump_signal_data(struct task_context *tc, ulong flags)
 
 	if (DIRECT_OFFSET_UNCHECKED(task_struct_sig) >= 0)
 		signal_struct = ULONG(tt->task_struct + 
-			OFFSET(task_struct_sig));
+			LAZY_OFFSET(task_struct_sig));
 	else if (DIRECT_OFFSET_UNCHECKED(task_struct_signal) >= 0)
 		signal_struct = ULONG(tt->task_struct + 
-			OFFSET(task_struct_signal));
+			LAZY_OFFSET(task_struct_signal));
 
 	size = MAX(SIZE(signal_struct), VALID_SIZE(signal_queue) ?  
 		SIZE(signal_queue) : SIZE(sigqueue));
@@ -10788,10 +10788,10 @@ dump_signal_data(struct task_context *tc, ulong flags)
 		}
 		if (DIRECT_OFFSET_UNCHECKED(signal_struct_count) >= 0)
 			fprintf(fp, "COUNT: %d\n",
-				INT(signal_buf + OFFSET(signal_struct_count)));
+				INT(signal_buf + LAZY_OFFSET(signal_struct_count)));
 		else if (DIRECT_OFFSET_UNCHECKED(signal_struct_nr_threads) >= 0)
 			fprintf(fp, "NR_THREADS: %d\n",
-				INT(signal_buf + OFFSET(signal_struct_nr_threads)));
+				INT(signal_buf + LAZY_OFFSET(signal_struct_nr_threads)));
 		else
 			fprintf(fp, "\n");
 
@@ -10806,7 +10806,7 @@ dump_signal_data(struct task_context *tc, ulong flags)
 
 		if (DIRECT_OFFSET_UNCHECKED(task_struct_sighand) >= 0) {
 			sighand_struct = ULONG(tt->task_struct +
-	                        OFFSET(task_struct_sighand));
+	                        LAZY_OFFSET(task_struct_sighand));
 			readmem(sighand_struct, KVADDR, signal_buf,
 				SIZE(sighand_struct), "sighand_struct buffer",
 				FAULT_ON_ERROR);
@@ -10824,21 +10824,21 @@ dump_signal_data(struct task_context *tc, ulong flags)
 	
 			if (use_sighand) {
 				kaddr = sighand_struct + 
-					OFFSET(sighand_struct_action) +
+					LAZY_OFFSET(sighand_struct_action) +
 					((i-1) * SIZE(k_sigaction));
 				uaddr = signal_buf + 
-					OFFSET(sighand_struct_action) +
+					LAZY_OFFSET(sighand_struct_action) +
 					((i-1) * SIZE(k_sigaction));
 			} else {
 				kaddr = signal_struct + 
-					OFFSET(signal_struct_action) +
+					LAZY_OFFSET(signal_struct_action) +
 					((i-1) * SIZE(k_sigaction));
 				uaddr = signal_buf + 
-					OFFSET(signal_struct_action) +
+					LAZY_OFFSET(signal_struct_action) +
 					((i-1) * SIZE(k_sigaction));
 			}
 	
-			handler = ULONG(uaddr + OFFSET(sigaction_sa_handler));
+			handler = ULONG(uaddr + LAZY_OFFSET(sigaction_sa_handler));
 			switch ((long)handler)
 			{
 			case -1:
@@ -10857,7 +10857,7 @@ dump_signal_data(struct task_context *tc, ulong flags)
 			}
 	
 			mask = sigaction_mask((ulong)uaddr);
-			sa_flags = ULONG(uaddr + OFFSET(sigaction_sa_flags));
+			sa_flags = ULONG(uaddr + LAZY_OFFSET(sigaction_sa_flags));
 	
 			fprintf(fp, "%s%s %s %016llx %lx ",
 				space(MINSPACE-1), 
@@ -10919,10 +10919,10 @@ dump_signal_data(struct task_context *tc, ulong flags)
 		*/
 		if (DIRECT_OFFSET_UNCHECKED(task_struct_sigpending) >= 0)
 			sigpending = INT(tt->task_struct + 
-				OFFSET(task_struct_sigpending));
+				LAZY_OFFSET(task_struct_sigpending));
 		else if (DIRECT_OFFSET_UNCHECKED(thread_info_flags) >= 0) {
 			fill_thread_info(tc->thread_info);
-			ti_flags = UINT(tt->thread_info + OFFSET(thread_info_flags));
+			ti_flags = UINT(tt->thread_info + LAZY_OFFSET(thread_info_flags));
 			sigpending = ti_flags & (1<<TIF_SIGPENDING);
 		}
 		if (flags & TASK_INDENT)
@@ -10953,11 +10953,11 @@ dump_signal_data(struct task_context *tc, ulong flags)
 
 		if (DIRECT_OFFSET_UNCHECKED(task_struct_sigqueue) >= 0) 
 			sigqueue = ULONG(tt->task_struct + 
-				OFFSET(task_struct_sigqueue));
+				LAZY_OFFSET(task_struct_sigqueue));
 	
 		else if (DIRECT_OFFSET_UNCHECKED(task_struct_pending) >= 0) 
 			sigqueue = ULONG(tt->task_struct +
-				OFFSET(task_struct_pending) +
+				LAZY_OFFSET(task_struct_pending) +
 				OFFSET_OPTION(sigpending_head, 
 				sigpending_list));
 	
@@ -10981,8 +10981,8 @@ dump_signal_data(struct task_context *tc, ulong flags)
 	    DIRECT_OFFSET_UNCHECKED(signal_struct_shared_pending) >= 0) {
 
 		fprintf(fp, "SHARED_PENDING\n");
-		shared_pending = signal_struct + OFFSET(signal_struct_shared_pending);
-		signal = shared_pending + OFFSET(sigpending_signal);
+		shared_pending = signal_struct + LAZY_OFFSET(signal_struct_shared_pending);
+		signal = shared_pending + LAZY_OFFSET(sigpending_signal);
 		readmem(signal, KVADDR, signal_buf,SIZE(sigpending_signal),
 			"signal", FAULT_ON_ERROR);
 		sigset = task_signal(0, (ulong*)signal_buf);
@@ -10991,7 +10991,7 @@ dump_signal_data(struct task_context *tc, ulong flags)
 		fprintf(fp, "    SIGNAL: %016llx\n", sigset);
                 sigqueue = (shared_pending + 
 			OFFSET_OPTION(sigpending_head, sigpending_list) + 
-			OFFSET(list_head_next));
+			LAZY_OFFSET(list_head_next));
 		readmem(sigqueue,KVADDR, signal_buf,
 			SIZE(sigqueue), "sigqueue", FAULT_ON_ERROR);
 		sigqueue = ULONG(signal_buf);
@@ -11030,14 +11030,14 @@ static void sigqueue_list(ulong sigqueue) {
 
 		if (DIRECT_OFFSET_UNCHECKED(signal_queue_next) >= 0 && 
 		    DIRECT_OFFSET_UNCHECKED(signal_queue_info) >= 0) {
-                	next = ULONG(signal_buf + OFFSET(signal_queue_next));
-                	sig = INT(signal_buf + OFFSET(signal_queue_info) +
-				 OFFSET(siginfo_si_signo));
+                	next = ULONG(signal_buf + LAZY_OFFSET(signal_queue_next));
+                	sig = INT(signal_buf + LAZY_OFFSET(signal_queue_info) +
+				 LAZY_OFFSET(siginfo_si_signo));
 		} else {
 			next = ULONG(signal_buf +
                         	OFFSET_OPTION(sigqueue_next, sigqueue_list));
-                	sig = INT(signal_buf + OFFSET(sigqueue_info) + 
-				OFFSET(siginfo_si_signo));
+                	sig = INT(signal_buf + LAZY_OFFSET(sigqueue_info) + 
+				LAZY_OFFSET(siginfo_si_signo));
 		}
 
 		if (sigqueue_save == next)
@@ -11073,11 +11073,11 @@ task_signal(ulong task, ulong *signal)
 
         if (DIRECT_OFFSET_UNCHECKED(sigpending_signal) >= 0) {
                 sigset_ptr = (ulong *)(tt->task_struct +
-                        OFFSET(task_struct_pending) +
-                        OFFSET(sigpending_signal));
+                        LAZY_OFFSET(task_struct_pending) +
+                        LAZY_OFFSET(sigpending_signal));
 	} else if (DIRECT_OFFSET_UNCHECKED(task_struct_signal) >= 0) {
                 sigset_ptr = (ulong *)(tt->task_struct +
-                        OFFSET(task_struct_signal));
+                        LAZY_OFFSET(task_struct_signal));
         } else
 		return 0;
 	} else if (signal) {
@@ -11117,7 +11117,7 @@ task_blocked(ulong task)
         if (!tt->last_task_read)
                 return 0;
 
-        sigset_ptr = (ulong *)(tt->task_struct + OFFSET(task_struct_blocked));
+        sigset_ptr = (ulong *)(tt->task_struct + LAZY_OFFSET(task_struct_blocked));
 
         sigset = (ulonglong)(sigset_ptr[1]) << 32;
         sigset |= (ulonglong)(sigset_ptr[0]);
@@ -11132,7 +11132,7 @@ sigaction_mask(ulong sigaction)
         ulong *sigset_ptr;
 
 	sigset = 0;
-	sigset_ptr = (ulong *)(sigaction + OFFSET(sigaction_sa_mask));
+	sigset_ptr = (ulong *)(sigaction + LAZY_OFFSET(sigaction_sa_mask));
 
         switch (_NSIG_WORDS)
         {
@@ -11233,7 +11233,7 @@ check_stack_overflow(void)
 		}
 
 		if (DIRECT_OFFSET_UNCHECKED(thread_info_task) >= 0) {
-			task = ULONG(buf + OFFSET(thread_info_task));
+			task = ULONG(buf + LAZY_OFFSET(thread_info_task));
 			if (task != tc->task) {
 				print_task_header(fp, tc, 0);
 				fprintf(fp, 
@@ -11247,13 +11247,13 @@ check_stack_overflow(void)
 			switch (cpu_size)
 			{
 			case 1:
-				cpu = UCHAR(buf + OFFSET(thread_info_cpu));
+				cpu = UCHAR(buf + LAZY_OFFSET(thread_info_cpu));
 				break;
 			case 2:
-				cpu = USHORT(buf + OFFSET(thread_info_cpu));
+				cpu = USHORT(buf + LAZY_OFFSET(thread_info_cpu));
 				break;
 			case 4:
-				cpu = UINT(buf + OFFSET(thread_info_cpu));
+				cpu = UINT(buf + LAZY_OFFSET(thread_info_cpu));
 				break;
 			default:
 				cpu = 0;

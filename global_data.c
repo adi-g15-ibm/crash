@@ -137,5 +137,6 @@ struct extension_table *extension_table = NULL;
  */
 struct offset_table offset_table = { 0 };
 struct task_offset_table task_offset_table = { 0 };
+long _lazy_offset_cache[NUM_LAZY_OFFSETS] = { [0 ... NUM_LAZY_OFFSETS-1] = UNINITIALISED_OFFSET };
 struct size_table size_table = { 0 };
 struct array_table array_table = { 0 };

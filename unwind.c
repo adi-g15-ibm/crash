@@ -519,8 +519,8 @@ unw_access_fr_v1 (struct unw_frame_info *info, int regnum, struct ia64_fpreg *va
 #ifdef REDHAT
 		struct bt_info *bt = (struct bt_info *)info->task;
 		addr = (struct ia64_fpreg *)
-			(bt->task + OFFSET(task_struct_thread) +
-			OFFSET(thread_struct_fph) +
+			(bt->task + LAZY_OFFSET(task_struct_thread) +
+			LAZY_OFFSET(thread_struct_fph) +
 			((regnum - 32) * sizeof(struct ia64_fpreg)));
 #else
 		struct task_struct *t = info->task;
@@ -574,8 +574,8 @@ unw_access_fr_v2 (struct unw_frame_info *info, int regnum, struct ia64_fpreg *va
 #ifdef REDHAT
                 struct bt_info *bt = (struct bt_info *)info->task;
                 addr = (struct ia64_fpreg *)
-                        (bt->task + OFFSET(task_struct_thread) +
-                        OFFSET(thread_struct_fph) +
+                        (bt->task + LAZY_OFFSET(task_struct_thread) +
+                        LAZY_OFFSET(thread_struct_fph) +
                         ((regnum - 32) * sizeof(struct ia64_fpreg)));
 #else
                 struct task_struct *t = info->task;
@@ -630,8 +630,8 @@ unw_access_fr_v3 (struct unw_frame_info *info, int regnum, struct ia64_fpreg *va
 #ifdef REDHAT
                 struct bt_info *bt = (struct bt_info *)info->task;
                 addr = (struct ia64_fpreg *)
-                        (bt->task + OFFSET(task_struct_thread) +
-                        OFFSET(thread_struct_fph) +
+                        (bt->task + LAZY_OFFSET(task_struct_thread) +
+                        LAZY_OFFSET(thread_struct_fph) +
                         ((regnum - 32) * sizeof(struct ia64_fpreg)));
 #else
                 struct task_struct *t = info->task;
@@ -1973,7 +1973,7 @@ unw_init_from_interruption(struct unw_frame_info *info, struct bt_info *bt, ulon
 	memset(info, 0, sizeof(*info));
 
 	rbslimit = (unsigned long) t + IA64_RBS_OFFSET;
-	rbstop = IA64_GET_STACK_ULONG(sw + OFFSET(switch_stack_ar_bspstore));
+	rbstop = IA64_GET_STACK_ULONG(sw + LAZY_OFFSET(switch_stack_ar_bspstore));
 	if (rbstop - (unsigned long) t >= IA64_STK_OFFSET)
 		rbstop = rbslimit;
 
@@ -1989,7 +1989,7 @@ unw_init_from_interruption(struct unw_frame_info *info, struct bt_info *bt, ulon
 	info->task = (struct task_struct *)bt;
 	info->sw  = (struct switch_stack *)sw;
 	info->sp = info->psp = stktop;
-	info->pr = IA64_GET_STACK_ULONG(sw + OFFSET(switch_stack_pr));
+	info->pr = IA64_GET_STACK_ULONG(sw + LAZY_OFFSET(switch_stack_pr));
 
 	info->cfm_loc = (unsigned long *) (pt + offsetof(struct pt_regs, cr_ifs));
 	info->unat_loc = (unsigned long *) (pt + offsetof(struct pt_regs, ar_unat));
@@ -2144,7 +2144,7 @@ unw_switch_from_osinit_v3(struct unw_frame_info *info, struct bt_info *bt,
 		readmem(sos + offset_kr, KVADDR, &kr_current, sizeof(ulong),
 		        "ia64_sal_os_state prev_IA64_KR_CURRENT",
 		        FAULT_ON_ERROR);
-		readmem(kr_current + OFFSET(task_struct_pid), KVADDR, &pid,
+		readmem(kr_current + LAZY_OFFSET(task_struct_pid), KVADDR, &pid,
 		        sizeof(pid_t), "task_struct pid", FAULT_ON_ERROR);
 
 		if (pid)
@@ -2254,7 +2254,7 @@ unw_init_frame_info (struct unw_frame_info *info, struct bt_info *bt, ulong sw)
 	memset(info, 0, sizeof(*info));
 
 	rbslimit = (unsigned long) t + IA64_RBS_OFFSET;
-        readmem(sw + OFFSET(switch_stack_ar_bspstore), KVADDR,
+        readmem(sw + LAZY_OFFSET(switch_stack_ar_bspstore), KVADDR,
                 &rbstop, sizeof(ulong), "switch_stack ar_bspstore",
 		FAULT_ON_ERROR);
 	if (rbstop - (unsigned long) t >= IA64_STK_OFFSET)
@@ -2272,13 +2272,13 @@ unw_init_frame_info (struct unw_frame_info *info, struct bt_info *bt, ulong sw)
 	info->task = (struct task_struct *)bt;
 	info->sw  = (struct switch_stack *)sw;
 	info->sp = info->psp = (unsigned long) (sw + SIZE(switch_stack)) - 16;
-        info->cfm_loc = (ulong *)(sw + OFFSET(switch_stack_ar_pfs));
+        info->cfm_loc = (ulong *)(sw + LAZY_OFFSET(switch_stack_ar_pfs));
     	ar_pfs = IA64_GET_STACK_ULONG(info->cfm_loc); 
 	sol = (ar_pfs >> 7) & 0x7f;
 	info->bsp = (unsigned long) 
 		ia64_rse_skip_regs((unsigned long *) info->regstk.top, -sol);
-        info->ip = IA64_GET_STACK_ULONG(sw + OFFSET(switch_stack_b0)); 
-        info->pr = IA64_GET_STACK_ULONG(sw + OFFSET(switch_stack_pr)); 
+        info->ip = IA64_GET_STACK_ULONG(sw + LAZY_OFFSET(switch_stack_b0)); 
+        info->pr = IA64_GET_STACK_ULONG(sw + LAZY_OFFSET(switch_stack_pr)); 
 
 	find_save_locs(info);
 }

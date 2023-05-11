@@ -4593,7 +4593,7 @@ static void do_radix_tree_iter(ulong node, uint height, char *path,
 		ulong slot;
 		ulong shift = (height - 1) * RADIX_TREE_MAP_SHIFT;
 
-		readmem(node + OFFSET(radix_tree_node_slots) +
+		readmem(node + LAZY_OFFSET(radix_tree_node_slots) +
 			sizeof(void *) * off, KVADDR, &slot, sizeof(void *),
 			"radix_tree_node.slot[off]", FAULT_ON_ERROR);
 		if (!slot)
@@ -4658,11 +4658,11 @@ int do_radix_tree_traverse(ulong ptr, int is_root, struct radix_tree_ops *ops)
 			node_p &= ~RADIX_TREE_INTERNAL_NODE;
 
 		if (DIRECT_OFFSET_UNCHECKED(radix_tree_node_height) >= 0) {
-			readmem(node_p + OFFSET(radix_tree_node_height), KVADDR,
+			readmem(node_p + LAZY_OFFSET(radix_tree_node_height), KVADDR,
 				&height, sizeof(uint), "radix_tree_node height",
 				FAULT_ON_ERROR);
 		} else if (DIRECT_OFFSET_UNCHECKED(radix_tree_node_shift) >= 0) {
-			readmem(node_p + OFFSET(radix_tree_node_shift), KVADDR,
+			readmem(node_p + LAZY_OFFSET(radix_tree_node_shift), KVADDR,
 				&shift, sizeof(shift), "radix_tree_node shift",
 				FAULT_ON_ERROR);
 			height = (shift / RADIX_TREE_MAP_SHIFT) + 1;
@@ -4673,18 +4673,18 @@ int do_radix_tree_traverse(ulong ptr, int is_root, struct radix_tree_ops *ops)
 			goto error_height;
 	} else {
 		if (DIRECT_OFFSET_UNCHECKED(radix_tree_root_height) >= 0) {
-			readmem(ptr + OFFSET(radix_tree_root_height), KVADDR, &height,
+			readmem(ptr + LAZY_OFFSET(radix_tree_root_height), KVADDR, &height,
 				sizeof(uint), "radix_tree_root height", FAULT_ON_ERROR);
 		}
 
-		readmem(ptr + OFFSET(radix_tree_root_rnode), KVADDR, &node_p,
+		readmem(ptr + LAZY_OFFSET(radix_tree_root_rnode), KVADDR, &node_p,
 			sizeof(void *), "radix_tree_root rnode", FAULT_ON_ERROR);
 		is_internal = (node_p & RADIX_TREE_INTERNAL_NODE);
 		if (node_p & RADIX_TREE_INTERNAL_NODE)
 			node_p &= ~RADIX_TREE_INTERNAL_NODE;
 
 		if (is_internal && DIRECT_OFFSET_UNCHECKED(radix_tree_node_shift) >= 0) {
-			readmem(node_p + OFFSET(radix_tree_node_shift), KVADDR, &shift,
+			readmem(node_p + LAZY_OFFSET(radix_tree_node_shift), KVADDR, &shift,
 				sizeof(shift), "radix_tree_node shift", FAULT_ON_ERROR);
 			height = (shift / RADIX_TREE_MAP_SHIFT) + 1;
 		}
@@ -4745,7 +4745,7 @@ do_xarray_iter(ulong node, uint height, char *path,
 		ulong slot;
 		ulong shift = (height - 1) * XA_CHUNK_SHIFT;
 
-		readmem(node + OFFSET(xa_node_slots) +
+		readmem(node + LAZY_OFFSET(xa_node_slots) +
 			sizeof(void *) * off, KVADDR, &slot, sizeof(void *),
 			"xa_node.slots[off]", FAULT_ON_ERROR);
 		if (!slot)
@@ -4799,7 +4799,7 @@ do_xarray_traverse(ulong ptr, int is_root, struct xarray_ops *ops)
 			node_p &= ~XARRAY_TAG_MASK;
 
 		if (DIRECT_OFFSET_UNCHECKED(xa_node_shift) >= 0) {
-			readmem(node_p + OFFSET(xa_node_shift), KVADDR,
+			readmem(node_p + LAZY_OFFSET(xa_node_shift), KVADDR,
 				&shift, sizeof(shift), "xa_node shift",
 				FAULT_ON_ERROR);
 			height = (shift / XA_CHUNK_SHIFT) + 1;
@@ -4807,14 +4807,14 @@ do_xarray_traverse(ulong ptr, int is_root, struct xarray_ops *ops)
 			error(FATAL, "-N option is not supported or applicable"
 				" for xarrays on this architecture or kernel\n");
 	} else {
-		readmem(ptr + OFFSET(xarray_xa_head), KVADDR, &node_p,
+		readmem(ptr + LAZY_OFFSET(xarray_xa_head), KVADDR, &node_p,
 			sizeof(void *), "xarray xa_head", FAULT_ON_ERROR);
 		is_internal = ((node_p & XARRAY_TAG_MASK) == XARRAY_TAG_INTERNAL);
 		if (node_p & XARRAY_TAG_MASK)
 			node_p &= ~XARRAY_TAG_MASK;
 
 		if (is_internal && DIRECT_OFFSET_UNCHECKED(xa_node_shift) >= 0) {
-			readmem(node_p + OFFSET(xa_node_shift), KVADDR, &shift,
+			readmem(node_p + LAZY_OFFSET(xa_node_shift), KVADDR, &shift,
 				sizeof(shift), "xa_node shift", FAULT_ON_ERROR);
 			height = (shift / XA_CHUNK_SHIFT) + 1;
 		}
@@ -5002,7 +5002,7 @@ do_rbtree(struct tree_data *td)
 	if (td->flags & TREE_NODE_POINTER)
 		start = td->start;
 	else
-		readmem(td->start + OFFSET(rb_root_rb_node), KVADDR,
+		readmem(td->start + LAZY_OFFSET(rb_root_rb_node), KVADDR,
 			&start, sizeof(void *), "rb_root rb_node", FAULT_ON_ERROR);
 
 	rbtree_iteration(start, td, pos);
@@ -5039,9 +5039,9 @@ rbtree_iteration(ulong node_p, struct tree_data *td, char *pos)
 		error(FATAL, "\nduplicate tree entry: %lx\n", node_p);
 
 	if ((td->flags & TREE_LINEAR_ORDER) &&
-	    readmem(node_p+OFFSET(rb_node_rb_left), KVADDR, &new_p,
+	    readmem(node_p+LAZY_OFFSET(rb_node_rb_left), KVADDR, &new_p,
 	    sizeof(void *), "rb_node rb_left", RETURN_ON_ERROR) && new_p) {
-		if (readmem(new_p+OFFSET(rb_node_rb_left), KVADDR, &test_p,
+		if (readmem(new_p+LAZY_OFFSET(rb_node_rb_left), KVADDR, &test_p,
 			sizeof(void *), "rb_node rb_left", RETURN_ON_ERROR|QUIET)) {
 			sprintf(new_pos, "%s/l", pos);
 			rbtree_iteration(new_p, td, new_pos);
@@ -5084,9 +5084,9 @@ rbtree_iteration(ulong node_p, struct tree_data *td, char *pos)
 	}
 
 	if (!(td->flags & TREE_LINEAR_ORDER) &&
-	    readmem(node_p+OFFSET(rb_node_rb_left), KVADDR, &new_p,
+	    readmem(node_p+LAZY_OFFSET(rb_node_rb_left), KVADDR, &new_p,
 	    sizeof(void *), "rb_node rb_left", RETURN_ON_ERROR) && new_p) {
-		if (readmem(new_p+OFFSET(rb_node_rb_left), KVADDR, &test_p,
+		if (readmem(new_p+LAZY_OFFSET(rb_node_rb_left), KVADDR, &test_p,
 			sizeof(void *), "rb_node rb_left", RETURN_ON_ERROR|QUIET)) {
 			sprintf(new_pos, "%s/l", pos);
 			rbtree_iteration(new_p, td, new_pos);
@@ -5095,9 +5095,9 @@ rbtree_iteration(ulong node_p, struct tree_data *td, char *pos)
 					node_p, new_p);
 	}
 
-	if (readmem(node_p+OFFSET(rb_node_rb_right), KVADDR, &new_p,
+	if (readmem(node_p+LAZY_OFFSET(rb_node_rb_right), KVADDR, &new_p,
 	    sizeof(void *), "rb_node rb_right", RETURN_ON_ERROR) && new_p) {
-		if (readmem(new_p+OFFSET(rb_node_rb_left), KVADDR, &test_p,
+		if (readmem(new_p+LAZY_OFFSET(rb_node_rb_left), KVADDR, &test_p,
 			sizeof(void *), "rb_node rb_left", RETURN_ON_ERROR|QUIET)) {
 			sprintf(new_pos, "%s/r", pos);
 			rbtree_iteration(new_p, td, new_pos);
@@ -6905,10 +6905,10 @@ rb_last(struct rb_root *root)
 	struct rb_node nloc;
 
 	/* meet destroyed data */
-	if (!accessible((ulong)(root + OFFSET(rb_root_rb_node))))
+	if (!accessible((ulong)(root + LAZY_OFFSET(rb_root_rb_node))))
 		return NULL;
 
-	readmem((ulong)(root + OFFSET(rb_root_rb_node)), KVADDR, &node,
+	readmem((ulong)(root + LAZY_OFFSET(rb_root_rb_node)), KVADDR, &node,
 		sizeof(node), "rb_root node", FAULT_ON_ERROR);
 
 	while (1) {
@@ -6946,13 +6946,13 @@ percpu_counter_sum_positive(ulong fbc)
 	if (DIRECT_OFFSET_UNCHECKED(percpu_counter_count) == INVALID_OFFSET)
 		return 0;
 
-	readmem(fbc + OFFSET(percpu_counter_count), KVADDR, &ret,
+	readmem(fbc + LAZY_OFFSET(percpu_counter_count), KVADDR, &ret,
 		sizeof(long long), "percpu_counter.count", FAULT_ON_ERROR);
 
 	if (DIRECT_OFFSET_UNCHECKED(percpu_counter_counters) == INVALID_OFFSET) /* !CONFIG_SMP */
 		return (ret < 0) ? 0 : ret;
 
-	readmem(fbc + OFFSET(percpu_counter_counters), KVADDR, &addr,
+	readmem(fbc + LAZY_OFFSET(percpu_counter_counters), KVADDR, &addr,
 		sizeof(void *), "percpu_counter.counters", FAULT_ON_ERROR);
 
 	for (i = 0; i < kt->cpus; i++) {
