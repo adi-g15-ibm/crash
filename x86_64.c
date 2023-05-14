@@ -494,15 +494,15 @@ x86_64_init(int when)
 		MEMBER_OFFSET_INIT(thread_struct_rip, "thread_struct", "rip");
 		MEMBER_OFFSET_INIT(thread_struct_rsp, "thread_struct", "rsp");
 		MEMBER_OFFSET_INIT(thread_struct_rsp0, "thread_struct", "rsp0");
-		if (DIRECT_OFFSET_UNCHECKED(thread_struct_rip) == INVALID_OFFSET)
+		if (OFFSET(thread_struct_rip) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(thread_struct_rip, "thread_struct", "ip");
-		if (DIRECT_OFFSET_UNCHECKED(thread_struct_rsp) == INVALID_OFFSET)
+		if (OFFSET(thread_struct_rsp) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(thread_struct_rsp, "thread_struct", "sp");
-		if (DIRECT_OFFSET_UNCHECKED(thread_struct_rsp0) == INVALID_OFFSET)
+		if (OFFSET(thread_struct_rsp0) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(thread_struct_rsp0, "thread_struct", "sp0");
 		STRUCT_SIZE_INIT(tss_struct, "tss_struct");
 		MEMBER_OFFSET_INIT(tss_struct_ist, "tss_struct", "ist");
-		if (DIRECT_OFFSET_UNCHECKED(tss_struct_ist) == INVALID_OFFSET) {
+		if (LAZY_OFFSET(tss_struct_ist) == INVALID_OFFSET) {
 			long x86_tss_offset, ist_offset;
 			x86_tss_offset = MEMBER_OFFSET("tss_struct", "x86_tss");
 			ist_offset = MEMBER_OFFSET("x86_hw_tss", "ist");
@@ -513,17 +513,17 @@ x86_64_init(int when)
 		}
 		MEMBER_OFFSET_INIT(user_regs_struct_rip,
 			"user_regs_struct", "rip");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rip) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rip) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rip,
 				"user_regs_struct", "ip");
 		MEMBER_OFFSET_INIT(user_regs_struct_rsp,
 			"user_regs_struct", "rsp");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rsp) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rsp) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rsp,
 				"user_regs_struct", "sp");
 		MEMBER_OFFSET_INIT(user_regs_struct_eflags,
 			"user_regs_struct", "eflags");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_eflags) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_eflags) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_eflags,
 				"user_regs_struct", "flags");
 		MEMBER_OFFSET_INIT(user_regs_struct_cs,
@@ -532,37 +532,37 @@ x86_64_init(int when)
 			"user_regs_struct", "ss");
 		MEMBER_OFFSET_INIT(user_regs_struct_rax,
 			"user_regs_struct", "rax");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rax) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rax) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rax,
 				"user_regs_struct", "ax");
 		MEMBER_OFFSET_INIT(user_regs_struct_rbx,
 			"user_regs_struct", "rbx");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rbx) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rbx) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rbx,
 				"user_regs_struct", "bx");
 		MEMBER_OFFSET_INIT(user_regs_struct_rcx,
 			"user_regs_struct", "rcx");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rcx) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rcx) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rcx,
 				"user_regs_struct", "cx");
 		MEMBER_OFFSET_INIT(user_regs_struct_rdx,
 			"user_regs_struct", "rdx");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rdx) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rdx) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rdx,
 				"user_regs_struct", "dx");
 		MEMBER_OFFSET_INIT(user_regs_struct_rsi,
 			"user_regs_struct", "rsi");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rsi) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rsi) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rsi,
 				"user_regs_struct", "si");
 		MEMBER_OFFSET_INIT(user_regs_struct_rdi,
 			"user_regs_struct", "rdi");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rdi) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rdi) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rdi,
 				"user_regs_struct", "di");
 		MEMBER_OFFSET_INIT(user_regs_struct_rbp,
 			"user_regs_struct", "rbp");
-		if (DIRECT_OFFSET_UNCHECKED(user_regs_struct_rbp) == INVALID_OFFSET)
+		if (OFFSET(user_regs_struct_rbp) == INVALID_OFFSET)
 			MEMBER_OFFSET_INIT(user_regs_struct_rbp,
 				"user_regs_struct", "bp");
 		MEMBER_OFFSET_INIT(user_regs_struct_r8,
@@ -1195,7 +1195,7 @@ x86_64_cpu_pda_init(void)
 				break;
 		}
 
-		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_level4_pgt) >= 0) {
+		if (LAZY_OFFSET(x8664_pda_level4_pgt) >= 0) {
 			level4_pgt = ULONG(cpu_pda_buf + LAZY_OFFSET(x8664_pda_level4_pgt));
 			if (!VALID_LEVEL4_PGT_ADDR(level4_pgt))
 				break;
@@ -1205,7 +1205,7 @@ x86_64_cpu_pda_init(void)
 			break;
 		cpus++;
 
-		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_data_offset) >= 0) {
+		if (LAZY_OFFSET(x8664_pda_data_offset) >= 0) {
 			data_offset = ULONG(cpu_pda_buf + 
 				LAZY_OFFSET(x8664_pda_data_offset));
                         kt->__per_cpu_offset[i] = data_offset;
@@ -3905,7 +3905,7 @@ in_exception_stack:
 	    (STREQ(rip_symbol, "thread_return") || 
 	     STREQ(rip_symbol, "schedule") || 
 	     STREQ(rip_symbol, "__schedule"))) {
-		if ((machdep->flags & ORC) && DIRECT_OFFSET_UNCHECKED(inactive_task_frame_ret_addr) >= 0) {
+		if ((machdep->flags & ORC) && LAZY_OFFSET(inactive_task_frame_ret_addr) >= 0) {
 			/*
 			 * %rsp should have the address of inactive_task_frame, so
 			 * skip the registers before ret_addr to adjust rsp.
@@ -5016,25 +5016,25 @@ x86_64_get_dumpfile_stack_frame(struct bt_info *bt_in, ulong *rip, ulong *rsp)
 		    0,
 		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
 		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_ss)),
-		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_rip)),
-        	    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_rsp)),
-		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_eflags)))) {
+		    ULONG(user_regs + OFFSET(user_regs_struct_rip)),
+        	    ULONG(user_regs + OFFSET(user_regs_struct_rsp)),
+		    ULONG(user_regs + OFFSET(user_regs_struct_eflags)))) {
 			bt->stkptr = ULONG(user_regs + 
-				LAZY_OFFSET(user_regs_struct_rsp));
+				OFFSET(user_regs_struct_rsp));
 			if (x86_64_in_irqstack(bt)) {
 				ur_rip = ULONG(user_regs + 
-					LAZY_OFFSET(user_regs_struct_rip));
+					OFFSET(user_regs_struct_rip));
 				ur_rsp = ULONG(user_regs + 
-					LAZY_OFFSET(user_regs_struct_rsp));
+					OFFSET(user_regs_struct_rsp));
 				goto skip_stage;
 			}
 		}
 	} else if (ELF_NOTES_VALID() && bt->machdep) {
 		user_regs = bt->machdep;
 		ur_rip = ULONG(user_regs +
-			LAZY_OFFSET(user_regs_struct_rip));
+			OFFSET(user_regs_struct_rip));
 		ur_rsp = ULONG(user_regs +
-			LAZY_OFFSET(user_regs_struct_rsp));
+			OFFSET(user_regs_struct_rsp));
 	}
 
 	/*
@@ -5270,8 +5270,8 @@ skip_stage:
 	 */ 
 	if (bt->flags & BT_KDUMP_ELF_REGS) {
 		user_regs = bt->machdep;
-		ur_rip = ULONG(user_regs + LAZY_OFFSET(user_regs_struct_rip));
-		ur_rsp = ULONG(user_regs + LAZY_OFFSET(user_regs_struct_rsp));
+		ur_rip = ULONG(user_regs + OFFSET(user_regs_struct_rip));
+		ur_rsp = ULONG(user_regs + OFFSET(user_regs_struct_rsp));
 		if (!in_alternate_stack(bt->tc->processor, ur_rsp) && 
 		    !stkptr_to_task(ur_rsp)) {
 			if (CRASHDEBUG(1))
@@ -5319,10 +5319,10 @@ x86_64_get_sp(struct bt_info *bt)
 
         if (tt->flags & THREAD_INFO) {
                 readmem(bt->task + LAZY_OFFSET(task_struct_thread) +
-			LAZY_OFFSET(thread_struct_rsp), KVADDR,
+			OFFSET(thread_struct_rsp), KVADDR,
                         &rsp, sizeof(void *),
                         "thread_struct rsp", FAULT_ON_ERROR);
-		if ((machdep->flags & ORC) && DIRECT_OFFSET_UNCHECKED(inactive_task_frame_bp) >= 0) {
+		if ((machdep->flags & ORC) && LAZY_OFFSET(inactive_task_frame_bp) >= 0) {
 			readmem(rsp + LAZY_OFFSET(inactive_task_frame_bp), KVADDR, &bt->bptr,
 				sizeof(void *), "inactive_task_frame.bp", FAULT_ON_ERROR);
 		}
@@ -5343,12 +5343,12 @@ x86_64_get_pc(struct bt_info *bt)
 {
         ulong offset, rip;
 
-	if (DIRECT_OFFSET_UNCHECKED(thread_struct_rip) == INVALID_OFFSET)
+	if (OFFSET(thread_struct_rip) == INVALID_OFFSET)
 		return machdep->machspec->thread_return;
 
         if (tt->flags & THREAD_INFO) {
                 readmem(bt->task + LAZY_OFFSET(task_struct_thread) +
-                        LAZY_OFFSET(thread_struct_rip), KVADDR,
+                        OFFSET(thread_struct_rip), KVADDR,
                         &rip, sizeof(void *),
                         "thread_struct rip", FAULT_ON_ERROR);
 		if (rip)
@@ -5731,7 +5731,7 @@ x86_64_get_smp_cpus(void)
 			if (!CPU_PDA_READ(i, cpu_pda_buf))
 				break;
 		}
-		if (DIRECT_OFFSET_UNCHECKED(x8664_pda_level4_pgt) >= 0) {
+		if (LAZY_OFFSET(x8664_pda_level4_pgt) >= 0) {
 			level4_pgt = ULONG(cpu_pda_buf + LAZY_OFFSET(x8664_pda_level4_pgt));
 			if (!VALID_LEVEL4_PGT_ADDR(level4_pgt))
 				break;
@@ -5993,15 +5993,15 @@ x86_64_display_memmap(void)
         readmem(e820, KVADDR, &buf[0], SIZE(e820map),
                 "e820map", FAULT_ON_ERROR);
 
-        nr_map = INT(buf + LAZY_OFFSET(e820map_nr_map));
+        nr_map = INT(buf + OFFSET(e820map_nr_map));
 
         fprintf(fp, "      PHYSICAL ADDRESS RANGE         TYPE\n");
 
         for (i = 0; i < nr_map; i++) {
                 e820entry_ptr = buf + sizeof(int) + (SIZE(e820entry) * i);
-                addr = ULONGLONG(e820entry_ptr + LAZY_OFFSET(e820entry_addr));
-                size = ULONGLONG(e820entry_ptr + LAZY_OFFSET(e820entry_size));
-                type = UINT(e820entry_ptr + LAZY_OFFSET(e820entry_type));
+                addr = ULONGLONG(e820entry_ptr + OFFSET(e820entry_addr));
+                size = ULONGLONG(e820entry_ptr + OFFSET(e820entry_size));
+                type = UINT(e820entry_ptr + OFFSET(e820entry_type));
 		fprintf(fp, "%016llx - %016llx  ", addr, addr+size);
 		if (type >= (sizeof(e820type)/sizeof(char *))) {
 			if (type == 12)
@@ -6410,10 +6410,10 @@ x86_64_ORC_init(void)
 	/*
 	 *  Nice to have, but not required. 
 	 */
-	if (DIRECT_OFFSET_UNCHECKED(module_arch) >= 0 &&
-	    DIRECT_OFFSET_UNCHECKED(mod_arch_specific_num_orcs) >= 0 &&
-	    DIRECT_OFFSET_UNCHECKED(mod_arch_specific_orc_unwind_ip) >= 0 &&
-	    DIRECT_OFFSET_UNCHECKED(mod_arch_specific_orc_unwind) >= 0) {
+	if (LAZY_OFFSET(module_arch) >= 0 &&
+	    LAZY_OFFSET(mod_arch_specific_num_orcs) >= 0 &&
+	    LAZY_OFFSET(mod_arch_specific_orc_unwind_ip) >= 0 &&
+	    LAZY_OFFSET(mod_arch_specific_orc_unwind) >= 0) {
 		orc->module_ORC = TRUE;
 	} else {
 		orc->module_ORC = FALSE;
@@ -7661,8 +7661,8 @@ x86_64_xendump_panic_task(struct xendump_data *xd)
 	ulong task;
 	off_t cpu_user_regs_rsp = MEMBER_OFFSET("cpu_user_regs", "ss") - sizeof(ulong);
 
-	if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
-	    DIRECT_OFFSET_UNCHECKED(cpu_user_regs_esp) == INVALID_OFFSET)
+	if (LAZY_OFFSET(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
+	    LAZY_OFFSET(cpu_user_regs_esp) == INVALID_OFFSET)
 		return NO_TASK;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
@@ -7713,7 +7713,7 @@ x86_64_get_xendump_regs(struct xendump_data *xd, struct bt_info *bt, ulong *rip,
 	off_t cpu_user_regs_rsp = MEMBER_OFFSET("cpu_user_regs", "ss") - sizeof(ulong);
 	off_t cpu_user_regs_rip = MEMBER_OFFSET("cpu_user_regs", "cs") - sizeof(ulong);
 
-        if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
+        if (LAZY_OFFSET(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
             cpu_user_regs_rip == INVALID_OFFSET ||
             cpu_user_regs_rsp == INVALID_OFFSET)
                 goto generic;
@@ -9068,8 +9068,8 @@ GART_init(void)
 	MEMBER_OFFSET_INIT(resource_end, "resource", "end");
 
 	if (VALID_STRUCT(resource) && 
-	    DIRECT_OFFSET_UNCHECKED(resource_start) >= 0 && 
-	    DIRECT_OFFSET_UNCHECKED(resource_end) >= 0) {
+	    LAZY_OFFSET(resource_start) >= 0 && 
+	    LAZY_OFFSET(resource_end) >= 0) {
 		if (!readmem(sp->value, KVADDR, resource,
 		    SIZE(resource), "GART resource", RETURN_ON_ERROR))
 			return;

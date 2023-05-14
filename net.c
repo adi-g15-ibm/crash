@@ -145,7 +145,7 @@ net_init(void)
 			error(WARNING, 
 				"net_init: unknown device type for net device");
 	}
-	if (DIRECT_OFFSET_UNCHECKED(task_struct_nsproxy) >= 0)
+	if (LAZY_OFFSET(task_struct_nsproxy) >= 0)
 		MEMBER_OFFSET_INIT(nsproxy_net_ns, "nsproxy", "net_ns");
 
 	if (net->flags & NETDEV_INIT) {
@@ -162,7 +162,7 @@ net_init(void)
         	MEMBER_OFFSET_INIT(neighbour_nud_state,  
 			"neighbour", "nud_state");
 		MEMBER_OFFSET_INIT(neigh_table_nht_ptr, "neigh_table", "nht");
-		if (DIRECT_OFFSET_UNCHECKED(neigh_table_nht_ptr) >= 0) {
+		if (LAZY_OFFSET(neigh_table_nht_ptr) >= 0) {
 			MEMBER_OFFSET_INIT(neigh_table_hash_mask,
 				"neigh_hash_table", "hash_mask");
 			MEMBER_OFFSET_INIT(neigh_table_hash_shift,
@@ -188,7 +188,7 @@ net_init(void)
 		STRUCT_SIZE_INIT(sock, "sock");
 
                 MEMBER_OFFSET_INIT(sock_family, "sock", "family");
-		if (DIRECT_OFFSET_UNCHECKED(sock_family) >= 0) {
+		if (LAZY_OFFSET(sock_family) >= 0) {
                 	MEMBER_OFFSET_INIT(sock_daddr, "sock", "daddr");
                 	MEMBER_OFFSET_INIT(sock_rcv_saddr, "sock", "rcv_saddr");
                 	MEMBER_OFFSET_INIT(sock_dport, "sock", "dport");
@@ -271,7 +271,7 @@ net_init(void)
 			}	
 
 			if (VALID_STRUCT(inet_sock) && 
-			    DIRECT_OFFSET_UNCHECKED(inet_sock_inet) == INVALID_OFFSET) {
+			    LAZY_OFFSET(inet_sock_inet) == INVALID_OFFSET) {
 				/*
 				 *  gdb can't seem to figure out the inet_sock
 				 *  in later 2.6 kernels, returning this:
@@ -578,7 +578,7 @@ show_net_devices_v3(ulong task)
 	ld =  &list_data;
 	BZERO(ld, sizeof(struct list_data));
 	ld->flags |= LIST_ALLOCATE;
-	if (DIRECT_OFFSET_UNCHECKED(nsproxy_net_ns) >= 0) {
+	if (LAZY_OFFSET(nsproxy_net_ns) >= 0) {
 		readmem(task + LAZY_OFFSET(task_struct_nsproxy), KVADDR, &nsproxy_p,
 			sizeof(ulong), "task_struct.nsproxy", FAULT_ON_ERROR);
 		if (!readmem(nsproxy_p + LAZY_OFFSET(nsproxy_net_ns), KVADDR, &net_ns_p,
@@ -654,19 +654,19 @@ dump_arp(void)
 	 * Around 2.6.37 neigh_hash_table struct has been introduced
 	 * and pointer to it has been added to neigh_table.
 	 */
-	if (DIRECT_OFFSET_UNCHECKED(neigh_table_nht_ptr) >= 0) {
+	if (LAZY_OFFSET(neigh_table_nht_ptr) >= 0) {
 		readmem(arp_tbl + LAZY_OFFSET(neigh_table_nht_ptr),
 			KVADDR, &nht, sizeof(nht),
 			"neigh_table nht", FAULT_ON_ERROR);
 		/* NB! Re-use of offsets like neigh_table_hash_mask
 		 * with neigh_hash_table structure */
 		if (DIRECT_OFFSET_UNCHECKED(neigh_table_hash_mask) >= 0) {
-			readmem(nht + LAZY_OFFSET(neigh_table_hash_mask),
+			readmem(nht + OFFSET(neigh_table_hash_mask),
 				KVADDR, &hash_mask, sizeof(hash_mask),
 				"neigh_hash_table hash_mask", FAULT_ON_ERROR);
 
 			nhash_buckets = hash_mask + 1;
-		} else if (DIRECT_OFFSET_UNCHECKED(neigh_table_hash_shift) >= 0) {
+		} else if (LAZY_OFFSET(neigh_table_hash_shift) >= 0) {
 			readmem(nht + LAZY_OFFSET(neigh_table_hash_shift),
 				KVADDR, &hash_mask, sizeof(hash_mask),
 				"neigh_hash_table hash_shift", FAULT_ON_ERROR);
@@ -674,7 +674,7 @@ dump_arp(void)
 			nhash_buckets = 1U << hash_mask;
 		}
 	} else if (DIRECT_OFFSET_UNCHECKED(neigh_table_hash_mask) >= 0) {
-		readmem(arp_tbl + LAZY_OFFSET(neigh_table_hash_mask),
+		readmem(arp_tbl + OFFSET(neigh_table_hash_mask),
 			KVADDR, &hash_mask, sizeof(hash_mask),
 			"neigh_table hash_mask", FAULT_ON_ERROR);
 
@@ -697,15 +697,15 @@ dump_arp(void)
 		KVADDR, &key_len, sizeof(key_len),
 		"neigh_table key_len", FAULT_ON_ERROR);
 
-	if (DIRECT_OFFSET_UNCHECKED(neigh_table_nht_ptr) >= 0) {
-		readmem(nht + LAZY_OFFSET(neigh_table_hash_buckets),
+	if (LAZY_OFFSET(neigh_table_nht_ptr) >= 0) {
+		readmem(nht + OFFSET(neigh_table_hash_buckets),
 			KVADDR, &hash, sizeof(hash),
 			"neigh_hash_table hash_buckets ptr", FAULT_ON_ERROR);
 
 		readmem(hash, KVADDR, hash_buckets, hash_bytes,
 			"neigh_hash_table hash_buckets", FAULT_ON_ERROR);
 	} else if (hash_mask) {
-		readmem(arp_tbl + LAZY_OFFSET(neigh_table_hash_buckets), 
+		readmem(arp_tbl + OFFSET(neigh_table_hash_buckets), 
 			KVADDR, &hash, sizeof(hash),
 			"neigh_table hash_buckets pointer", FAULT_ON_ERROR);
 		
@@ -713,7 +713,7 @@ dump_arp(void)
 			KVADDR, hash_buckets, hash_bytes,
 			"neigh_table hash_buckets", FAULT_ON_ERROR);
 	} else
-		readmem(arp_tbl + LAZY_OFFSET(neigh_table_hash_buckets), 
+		readmem(arp_tbl + OFFSET(neigh_table_hash_buckets), 
 			KVADDR, hash_buckets, hash_bytes,
 			"neigh_table hash_buckets", FAULT_ON_ERROR);
 
@@ -962,7 +962,7 @@ get_device_ip6_address(ulong devaddr, char **bufp, long buflen)
 	 * 502a2ffd7376 ("ipv6: convert idev_list to list macros")
 	 * v2.6.35-rc1~473^2~733
 	 */
-	if (DIRECT_OFFSET_UNCHECKED(inet6_ifaddr_if_list) >= 0) {
+	if (LAZY_OFFSET(inet6_ifaddr_if_list) >= 0) {
 		struct list_data list_data, *ld;
 		ulong cnt = 0, i;
 
@@ -996,7 +996,7 @@ get_device_ip6_address(ulong devaddr, char **bufp, long buflen)
 		return;
 	}
 
-	if (DIRECT_OFFSET_UNCHECKED(inet6_ifaddr_if_next) == INVALID_OFFSET)
+	if (LAZY_OFFSET(inet6_ifaddr_if_next) == INVALID_OFFSET)
 		return;
 
 	readmem(ip6_ptr + LAZY_OFFSET(inet6_dev_addr_list), KVADDR,
@@ -1204,13 +1204,13 @@ get_sock_info(ulong sock, char *buf)
 		break;
 
 	case SOCK_V2:
-		if (DIRECT_OFFSET_UNCHECKED(ipv6_pinfo_rcv_saddr) >= 0 &&
-		    DIRECT_OFFSET_UNCHECKED(ipv6_pinfo_daddr) >= 0) {
+		if (LAZY_OFFSET(ipv6_pinfo_rcv_saddr) >= 0 &&
+		    LAZY_OFFSET(ipv6_pinfo_daddr) >= 0) {
 			ipv6_rcv_saddr = ipv6_pinfo + LAZY_OFFSET(ipv6_pinfo_rcv_saddr);
 			ipv6_daddr = ipv6_pinfo + LAZY_OFFSET(ipv6_pinfo_daddr);
-		} else if (DIRECT_OFFSET_UNCHECKED(sock_sk_common) >= 0 &&
-			   DIRECT_OFFSET_UNCHECKED(sock_common_skc_v6_daddr) >= 0 &&
-			   DIRECT_OFFSET_UNCHECKED(sock_common_skc_v6_rcv_saddr) >= 0) {
+		} else if (LAZY_OFFSET(sock_sk_common) >= 0 &&
+			   LAZY_OFFSET(sock_common_skc_v6_daddr) >= 0 &&
+			   LAZY_OFFSET(sock_common_skc_v6_rcv_saddr) >= 0) {
 			ipv6_rcv_saddr = sock + LAZY_OFFSET(sock_sk_common) + LAZY_OFFSET(sock_common_skc_v6_rcv_saddr);
 			ipv6_daddr = sock + LAZY_OFFSET(sock_sk_common) + LAZY_OFFSET(sock_common_skc_v6_daddr);
 		} else {
@@ -1509,7 +1509,7 @@ dump_sockets_workhorse(ulong task, ulong flag, struct reference *ref)
             sizeof(void *), "task files contents", FAULT_ON_ERROR);
 
         if (files_struct_addr) {
-                if (DIRECT_OFFSET_UNCHECKED(files_struct_max_fdset) >= 0) {
+                if (LAZY_OFFSET(files_struct_max_fdset) >= 0) {
 		 	readmem(files_struct_addr + LAZY_OFFSET(files_struct_max_fdset),
 		          	KVADDR, &max_fdset, sizeof(int),
 				"files_struct max_fdset", FAULT_ON_ERROR);
@@ -1517,11 +1517,11 @@ dump_sockets_workhorse(ulong task, ulong flag, struct reference *ref)
         	        	KVADDR, &max_fds, sizeof(int), "files_struct max_fds",
                 	   	FAULT_ON_ERROR);
                 }
-		else if (DIRECT_OFFSET_UNCHECKED(files_struct_fdt) >= 0) {
+		else if (LAZY_OFFSET(files_struct_fdt) >= 0) {
 			readmem(files_struct_addr + LAZY_OFFSET(files_struct_fdt), KVADDR,
 				&fdtable_addr, sizeof(void *), "fdtable buffer",
 				FAULT_ON_ERROR);
-			if (DIRECT_OFFSET_UNCHECKED(fdtable_max_fdset) >= 0)
+			if (LAZY_OFFSET(fdtable_max_fdset) >= 0)
 		      		readmem(fdtable_addr + LAZY_OFFSET(fdtable_max_fdset),
         	         		KVADDR, &max_fdset, sizeof(int),
 					"fdtable_struct max_fdset", FAULT_ON_ERROR);
@@ -1533,14 +1533,14 @@ dump_sockets_workhorse(ulong task, ulong flag, struct reference *ref)
     		}
 	}
 
-	if ((DIRECT_OFFSET_UNCHECKED(files_struct_fdt) >= 0 && !fdtable_addr) ||
+	if ((LAZY_OFFSET(files_struct_fdt) >= 0 && !fdtable_addr) ||
 	    !files_struct_addr || (max_fdset == 0) || (max_fds == 0)) {
 		if (!NET_REFERENCE_CHECK(ref))
 			fprintf(fp, "No open sockets.\n");
 		return;
 	}
 
-	if (DIRECT_OFFSET_UNCHECKED(fdtable_open_fds) >= 0){
+	if (LAZY_OFFSET(fdtable_open_fds) >= 0){
 		readmem(fdtable_addr + LAZY_OFFSET(fdtable_open_fds), KVADDR,
      	  		&open_fds_addr, sizeof(void *), "files_struct open_fds addr",
 	            	FAULT_ON_ERROR);

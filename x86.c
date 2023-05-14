@@ -2288,10 +2288,10 @@ x86_uvtop(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbose)
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) >= 0) 
+	    	if (LAZY_OFFSET(thread_struct_cr3) >= 0) 
                 	pgd = (ulong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
+			if (LAZY_OFFSET(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no cr3 or active_mm?\n");
 
                 	readmem(tc->task + LAZY_OFFSET(task_struct_active_mm), 
@@ -2423,10 +2423,10 @@ x86_uvtop_xen_wpt(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int v
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) >= 0) 
+	    	if (LAZY_OFFSET(thread_struct_cr3) >= 0) 
                 	pgd = (ulong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
+			if (LAZY_OFFSET(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no cr3 or active_mm?\n");
 
                 	readmem(tc->task + LAZY_OFFSET(task_struct_active_mm), 
@@ -2588,10 +2588,10 @@ x86_uvtop_PAE(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbo
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) >= 0) 
+	    	if (LAZY_OFFSET(thread_struct_cr3) >= 0) 
                 	pgd = (ulonglong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
+			if (LAZY_OFFSET(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no cr3 or active_mm?\n");
 
                 	readmem(tc->task + LAZY_OFFSET(task_struct_active_mm), 
@@ -2738,10 +2738,10 @@ x86_uvtop_xen_wpt_PAE(struct task_context *tc, ulong vaddr, physaddr_t *paddr, i
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) >= 0) 
+	    	if (LAZY_OFFSET(thread_struct_cr3) >= 0) 
                 	pgd = (ulonglong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (DIRECT_OFFSET_UNCHECKED(task_struct_active_mm) == INVALID_OFFSET)
+			if (LAZY_OFFSET(task_struct_active_mm) == INVALID_OFFSET)
 				error(FATAL, "no cr3 or active_mm?\n");
 
                 	readmem(tc->task + LAZY_OFFSET(task_struct_active_mm), 
@@ -3477,7 +3477,7 @@ x86_get_task_pgd(ulong task)
 
 	offset = OFFSET_OPTION(task_struct_thread, task_struct_tss);
 
-	if (DIRECT_OFFSET_UNCHECKED(thread_struct_cr3) == INVALID_OFFSET)
+	if (LAZY_OFFSET(thread_struct_cr3) == INVALID_OFFSET)
 		error(FATAL, 
 		    "cr3 does not exist in this kernel's thread_struct\n"); 
 
@@ -3720,7 +3720,7 @@ x86_get_pc(struct bt_info *bt)
 			readmem(bt->task + TASK_OFFSET(task_struct_thread_eip), KVADDR,
 				&eip, sizeof(void *), 
 				"thread_struct eip", FAULT_ON_ERROR);
-		else if (DIRECT_OFFSET_UNCHECKED(inactive_task_frame_ret_addr) >= 0) {
+		else if (LAZY_OFFSET(inactive_task_frame_ret_addr) >= 0) {
 			readmem(bt->task + TASK_OFFSET(task_struct_thread_esp), KVADDR,
 	offset = OFFSET_option(TASK_OFFSET(task_struct_thread_eip), TASK_OFFSET(task_struct_tss_eip));
 	
@@ -3743,7 +3743,7 @@ x86_get_sp(struct bt_info *bt)
                 readmem(bt->task + TASK_OFFSET(task_struct_thread_esp), KVADDR,
                         &ksp, sizeof(void *),
                         "thread_struct esp", FAULT_ON_ERROR);
-		if (DIRECT_OFFSET_UNCHECKED(inactive_task_frame_ret_addr) >= 0)
+		if (LAZY_OFFSET(inactive_task_frame_ret_addr) >= 0)
 			ksp += LAZY_OFFSET(inactive_task_frame_ret_addr);
                 return ksp;
 	} 
@@ -4438,15 +4438,15 @@ x86_display_memmap(void)
         readmem(e820, KVADDR, &buf[0], SIZE(e820map),
                 "e820map", FAULT_ON_ERROR);
 
-        nr_map = INT(buf + LAZY_OFFSET(e820map_nr_map));
+        nr_map = INT(buf + OFFSET(e820map_nr_map));
 
         fprintf(fp, "      PHYSICAL ADDRESS RANGE         TYPE\n");
 
         for (i = 0; i < nr_map; i++) {
                 e820entry_ptr = buf + sizeof(int) + (SIZE(e820entry) * i);
-                addr = ULONGLONG(e820entry_ptr + LAZY_OFFSET(e820entry_addr));
-                size = ULONGLONG(e820entry_ptr + LAZY_OFFSET(e820entry_size));
-                type = UINT(e820entry_ptr + LAZY_OFFSET(e820entry_type));
+                addr = ULONGLONG(e820entry_ptr + OFFSET(e820entry_addr));
+                size = ULONGLONG(e820entry_ptr + OFFSET(e820entry_size));
+                type = UINT(e820entry_ptr + OFFSET(e820entry_type));
 		fprintf(fp, "%016llx - %016llx  ", addr, addr+size);
 		if (type >= (sizeof(e820type)/sizeof(char *))) {
 			if (type == 12)
@@ -5468,8 +5468,8 @@ x86_xendump_panic_task(struct xendump_data *xd)
 	ulong task;
 
 
-	if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
-	    DIRECT_OFFSET_UNCHECKED(cpu_user_regs_esp) == INVALID_OFFSET)
+	if (LAZY_OFFSET(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
+	    LAZY_OFFSET(cpu_user_regs_esp) == INVALID_OFFSET)
 		return NO_TASK;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
@@ -5517,9 +5517,9 @@ x86_get_xendump_regs(struct xendump_data *xd, struct bt_info *bt, ulong *eip, ul
 	ulong task, xeip, xesp;
 	off_t offset;
 
-        if (DIRECT_OFFSET_UNCHECKED(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
-            DIRECT_OFFSET_UNCHECKED(cpu_user_regs_eip) == INVALID_OFFSET ||
-            DIRECT_OFFSET_UNCHECKED(cpu_user_regs_esp) == INVALID_OFFSET)
+        if (LAZY_OFFSET(vcpu_guest_context_user_regs) == INVALID_OFFSET ||
+            LAZY_OFFSET(cpu_user_regs_eip) == INVALID_OFFSET ||
+            LAZY_OFFSET(cpu_user_regs_esp) == INVALID_OFFSET)
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +

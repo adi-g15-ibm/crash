@@ -306,7 +306,7 @@ char_device_struct:
 			LAZY_OFFSET(char_device_struct_baseminor));
 
 		cdev = fops = 0;
-		if (DIRECT_OFFSET_UNCHECKED(char_device_struct_cdev) >= 0 &&
+		if (LAZY_OFFSET(char_device_struct_cdev) >= 0 &&
 				VALID_STRUCT(cdev)) {
 			cdev = ULONG(char_device_struct_buf + 
 				LAZY_OFFSET(char_device_struct_cdev));
@@ -378,7 +378,7 @@ char_device_struct:
 	                        LAZY_OFFSET(char_device_struct_baseminor));
 
 			fops = cdev = 0;
-			if (DIRECT_OFFSET_UNCHECKED(char_device_struct_cdev) >= 0 &&
+			if (LAZY_OFFSET(char_device_struct_cdev) >= 0 &&
 					VALID_STRUCT(cdev)) {
 				cdev = ULONG(char_device_struct_buf + 
 					LAZY_OFFSET(char_device_struct_cdev));
@@ -2440,7 +2440,7 @@ fill_pcie_type(ulong pcidev, char *t)
 	readmem(pcidev + LAZY_OFFSET(pci_dev_hdr_type), KVADDR, &hdr_type,
 		sizeof(char), "pci dev hdr_type", FAULT_ON_ERROR);
 
-	if (DIRECT_OFFSET_UNCHECKED(pci_dev_pcie_flags_reg) < 0)
+	if (LAZY_OFFSET(pci_dev_pcie_flags_reg) < 0)
 		goto bridge_chk;
 
 	readmem(pcidev + LAZY_OFFSET(pci_dev_pcie_flags_reg), KVADDR, &pciecap,
@@ -2494,7 +2494,7 @@ walk_devices(ulong pci_bus)
 		&ld->start, sizeof(void *), "pci bus devices",
 		FAULT_ON_ERROR);
 
-	if (DIRECT_OFFSET_UNCHECKED(pci_dev_pcie_flags_reg) >= 0)
+	if (LAZY_OFFSET(pci_dev_pcie_flags_reg) >= 0)
 		snprintf(pcidev_hdr, sizeof(pcidev_hdr), "%s %s %s %s %s\n",
 			mkstring(buf1, VADDR_PRLEN, CENTER, "PCI DEV"),
 			mkstring(buf2, strlen("0000:00:00.0"), CENTER, "DO:BU:SL.FN"),
@@ -2664,7 +2664,7 @@ do_pci(void)
 
 	BZERO(&pcilist_data, sizeof(struct list_data));
 
-	if (DIRECT_OFFSET_UNCHECKED(pci_dev_global_list) >= 0) {
+	if (LAZY_OFFSET(pci_dev_global_list) >= 0) {
                 get_symbol_data("pci_devices", sizeof(void *), &pcilist_data.start);
                 pcilist_data.end = symbol_value("pci_devices");
                 pcilist_data.list_head_offset = LAZY_OFFSET(pci_dev_global_list);
@@ -2678,7 +2678,7 @@ do_pci(void)
  		   (prev == pcilist_data.end))
 			error(FATAL, "no PCI devices found on this system.\n");
 
-	} else if (DIRECT_OFFSET_UNCHECKED(pci_dev_next) >= 0) {
+	} else if (LAZY_OFFSET(pci_dev_next) >= 0) {
 		get_symbol_data("pci_devices", sizeof(void *),
 				&pcilist_data.start);
 		pcilist_data.member_offset = LAZY_OFFSET(pci_dev_next);
@@ -4141,7 +4141,7 @@ get_gendisk_5(unsigned long entry)
 		KVADDR, &device_address, sizeof(device_address),
 		"device_private.device", FAULT_ON_ERROR);
 
-	if (DIRECT_OFFSET_UNCHECKED(hd_struct_dev) >= 0)
+	if (LAZY_OFFSET(hd_struct_dev) >= 0)
 		return device_address - LAZY_OFFSET(hd_struct_dev) - LAZY_OFFSET(gendisk_part0);
 
 	/* kernel version >= 5.11 */
@@ -4176,7 +4176,7 @@ match_klist(struct iter *i, unsigned long entry)
 	unsigned long device_type;
 	unsigned long device_private_address;
 
-	if (DIRECT_OFFSET_UNCHECKED(device_knode_class) >= 0)
+	if (LAZY_OFFSET(device_knode_class) >= 0)
 		device_address = entry - LAZY_OFFSET(device_knode_class);
 	else {
 		/* kernel version >= 5.1 */
@@ -4275,7 +4275,7 @@ use_mq_interface(unsigned long q)
 {
 	unsigned long mq_ops;
 
-	if (DIRECT_OFFSET_UNCHECKED(request_queue_mq_ops) < 0)
+	if (LAZY_OFFSET(request_queue_mq_ops) < 0)
 		return 0;
 
 	readmem(q + LAZY_OFFSET(request_queue_mq_ops), KVADDR, &mq_ops,
@@ -4450,7 +4450,7 @@ static void get_mq_diskio_from_hw_queues(ulong q, struct diskio *dio)
 	ulong *hctx_array = NULL;
 	struct list_pair *lp = NULL;
 
-	if (DIRECT_OFFSET_UNCHECKED(request_queue_hctx_table) >= 0) {
+	if (LAZY_OFFSET(request_queue_hctx_table) >= 0) {
 		addr = q + LAZY_OFFSET(request_queue_hctx_table);
 		cnt = do_xarray(addr, XARRAY_COUNT, NULL);
 		lp = (struct list_pair *)GETBUF(sizeof(struct list_pair) * (cnt + 1));
@@ -4507,7 +4507,7 @@ get_mq_diskio(unsigned long q, unsigned long *mq_count)
 	 * before 12f5b9314545 ("blk-mq: Remove generation seqeunce"), so
 	 * filter them out.
 	 */
-	if (DIRECT_OFFSET_UNCHECKED(request_state) >= 0) {
+	if (LAZY_OFFSET(request_state) >= 0) {
 		if (CRASHDEBUG(1))
 			fprintf(fp, "mq: using sbitmap\n");
 		get_mq_diskio_from_hw_queues(q, &tmp);
@@ -4563,7 +4563,7 @@ get_diskio_1(unsigned long rq, unsigned long gendisk, struct diskio *io)
 	unsigned long dkstats;
 
 	if (!use_mq_interface(rq)) {
-		if (DIRECT_OFFSET_UNCHECKED(request_queue_rq) >= 0) {
+		if (LAZY_OFFSET(request_queue_rq) >= 0) {
 			readmem(rq + LAZY_OFFSET(request_queue_rq) +
 				LAZY_OFFSET(request_list_count), KVADDR, count,
 				sizeof(int) * 2, "request_list.count", FAULT_ON_ERROR);
@@ -4571,7 +4571,7 @@ get_diskio_1(unsigned long rq, unsigned long gendisk, struct diskio *io)
 			io->read = count[0];
 			io->write = count[1];
 		} else {
-			if (DIRECT_OFFSET_UNCHECKED(hd_struct_dkstats) >= 0)
+			if (LAZY_OFFSET(hd_struct_dkstats) >= 0)
 				readmem(gendisk + LAZY_OFFSET(gendisk_part0) +
 					LAZY_OFFSET(hd_struct_dkstats), KVADDR, &dkstats,
 					sizeof(ulong), "gendisk.part0.dkstats", FAULT_ON_ERROR);
@@ -4663,13 +4663,13 @@ init_iter(struct iter *i)
 
 		i->type_address = symbol_value("disk_type");
 		if (DIRECT_OFFSET_UNCHECKED(class_devices) >= 0 ||
-		   (DIRECT_OFFSET_UNCHECKED(class_private_devices) >= 0 &&
+		   (LAZY_OFFSET(class_private_devices) >= 0 &&
 		      SIZE(class_private_devices) == SIZE(list_head))) {
 			/* 2.6.24 < kernel version <= 2.6.27, list */
 			if (!VALID_STRUCT(class_private)) {
 				/* 2.6.24 < kernel version <= 2.6.26 */
 				i->head_address = block_class_addr +
-					LAZY_OFFSET(class_devices);
+					OFFSET(class_devices);
 			} else {
 				/* kernel version is 2.6.27 */
 				unsigned long class_private_addr;
@@ -4705,7 +4705,7 @@ init_iter(struct iter *i)
 			i->match = match_klist;
 			if (DIRECT_OFFSET_UNCHECKED(gendisk_dev) >= 0)
 				i->get_gendisk = get_gendisk_3;
-			else if (DIRECT_OFFSET_UNCHECKED(device_knode_class) >= 0)
+			else if (LAZY_OFFSET(device_knode_class) >= 0)
 				i->get_gendisk = get_gendisk_4;
 			else
 				i->get_gendisk = get_gendisk_5;
@@ -4766,7 +4766,7 @@ display_one_diskio(struct iter *i, unsigned long gendisk, ulong flags)
 			(char *)(unsigned long)io.write),
 		space(MINSPACE));
 
-	if (DIRECT_OFFSET_UNCHECKED(request_queue_in_flight) >= 0) {
+	if (LAZY_OFFSET(request_queue_in_flight) >= 0) {
 		if (!use_mq_interface(queue_addr)) {
 			in_flight = i->get_in_flight(queue_addr);
 			fprintf(fp, "%5u\n", in_flight);
@@ -4808,7 +4808,7 @@ display_all_diskio(ulong flags)
 		i.sync_count ? mkstring(buf4, 5, RJUST, "SYNC") :
 			mkstring(buf4, 5, RJUST, "WRITE"),
 		space(MINSPACE),
-		DIRECT_OFFSET_UNCHECKED(request_queue_in_flight) >= 0 ? mkstring(buf5, 5, RJUST, "DRV") : "");
+		LAZY_OFFSET(request_queue_in_flight) >= 0 ? mkstring(buf5, 5, RJUST, "DRV") : "");
 
 	while ((gendisk = i.next_disk(&i)) != 0)
 		display_one_diskio(&i, gendisk, flags);
@@ -4821,7 +4821,7 @@ void diskio_init(void)
 		return;
 
 	MEMBER_OFFSET_INIT(class_devices, "class", "class_devices");
-	if (DIRECT_OFFSET_UNCHECKED(class_devices) == INVALID_OFFSET)
+	if (OFFSET(class_devices) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(class_devices, "class", "devices");
 	MEMBER_OFFSET_INIT(class_p, "class", "p");
 	MEMBER_OFFSET_INIT(class_private_devices, "class_private",
@@ -4833,7 +4833,7 @@ void diskio_init(void)
 	MEMBER_OFFSET_INIT(device_private_knode_class, "device_private",
 		"knode_class");
 	MEMBER_OFFSET_INIT(gendisk_dev, "gendisk", "dev");
-	if (DIRECT_OFFSET_UNCHECKED(gendisk_dev) == INVALID_OFFSET)
+	if (OFFSET(gendisk_dev) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(gendisk_dev, "gendisk", "__dev");
 	MEMBER_OFFSET_INIT(gendisk_kobj, "gendisk", "kobj");
 	MEMBER_OFFSET_INIT(gendisk_part0, "gendisk", "part0");

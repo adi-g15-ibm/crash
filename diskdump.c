@@ -2399,16 +2399,16 @@ diskdump_display_regs(int cpu, FILE *ofp)
 		    "    R10: %016llx  R11: %016llx  R12: %016llx\n"
 		    "    R13: %016llx  R14: %016llx  R15: %016llx\n"
 		    "    CS: %04x  SS: %04x\n",
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rip)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rsp)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_eflags)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rax)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rbx)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rcx)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rdx)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rsi)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rdi)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rbp)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rip)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsp)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_eflags)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rax)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbx)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rcx)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdx)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsi)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdi)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbp)),
 		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r8)),
 		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r9)),
 		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r10)),
@@ -2568,7 +2568,7 @@ diskdump_display_regs(int cpu, FILE *ofp)
 		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_gs)),
 		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ss)),
 		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_ebp)),
-		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_eflags))
+		    UINT(user_regs + OFFSET(user_regs_struct_eflags))
 		);
 	}
 
@@ -2708,7 +2708,7 @@ zram_init(void)
 	MEMBER_OFFSET_INIT(zram_mempoll, "zram", "mem_pool");
 	MEMBER_OFFSET_INIT(zram_compressor, "zram", "compressor");
 	MEMBER_OFFSET_INIT(zram_table_flag, "zram_table_entry", "flags");
-	if (DIRECT_OFFSET_UNCHECKED(zram_table_flag) == INVALID_OFFSET)
+	if (OFFSET(zram_table_flag) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(zram_table_flag, "zram_table_entry", "value");
 	STRUCT_SIZE_INIT(zram_table_entry, "zram_table_entry");
 }
@@ -2887,9 +2887,9 @@ try_zram_decompress(ulonglong pte_val, unsigned char *buf, ulong len, ulonglong 
 	ulong zram, zram_table_entry, sector, index, entry, flags, size,
 		outsize, off;
 
-	if (DIRECT_OFFSET_UNCHECKED(zram_compressor) == INVALID_OFFSET) {
+	if (LAZY_OFFSET(zram_compressor) == INVALID_OFFSET) {
 		zram_init();
-		if (DIRECT_OFFSET_UNCHECKED(zram_compressor) == INVALID_OFFSET) {
+		if (LAZY_OFFSET(zram_compressor) == INVALID_OFFSET) {
 			error(WARNING,
 			      "Some pages are swapped out to zram. "
 			      "Please run mod -s zram.\n");
@@ -2947,7 +2947,7 @@ try_zram_decompress(ulonglong pte_val, unsigned char *buf, ulong len, ulonglong 
 	zram_table_entry += (index * SIZE(zram_table_entry));
 	readmem(zram_table_entry, KVADDR, &entry,
 		sizeof(void *), "entry of table", FAULT_ON_ERROR);
-	readmem(zram_table_entry + LAZY_OFFSET(zram_table_flag), KVADDR, &flags,
+	readmem(zram_table_entry + OFFSET(zram_table_flag), KVADDR, &flags,
 		sizeof(void *), "zram_table_flag", FAULT_ON_ERROR);
 	if (!entry || (flags & ZRAM_FLAG_SAME_BIT)) {
 		memset(buf, entry, len);

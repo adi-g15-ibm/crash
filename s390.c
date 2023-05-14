@@ -542,7 +542,7 @@ s390_cpu_of_task(unsigned long task)
 {
 	int cpu;
 
-       if(DIRECT_OFFSET_UNCHECKED(task_struct_processor) >= 0){
+       if(LAZY_OFFSET(task_struct_processor) >= 0){
                 /* linux 2.4 */
                 readmem(task + LAZY_OFFSET(task_struct_processor),KVADDR,
                         &cpu, sizeof(cpu), "task_struct_processor",
@@ -550,7 +550,7 @@ s390_cpu_of_task(unsigned long task)
         } else {
 		char thread_info[8192];
 		unsigned long thread_info_addr;
-		readmem(task + LAZY_OFFSET(task_struct_thread_info),KVADDR,
+		readmem(task + OFFSET(task_struct_thread_info),KVADDR,
 			&thread_info_addr, sizeof(thread_info_addr),
 			"thread info addr", FAULT_ON_ERROR);
 		readmem(thread_info_addr,KVADDR,thread_info,sizeof(thread_info),
@@ -663,7 +663,7 @@ s390_back_trace_cmd(struct bt_info *bt)
 
 	/* get task stack start and end */
 	if(THIS_KERNEL_VERSION >= LINUX(2,6,0)){
-		readmem(bt->task + LAZY_OFFSET(task_struct_thread_info),KVADDR,
+		readmem(bt->task + OFFSET(task_struct_thread_info),KVADDR,
 			&stack_start, sizeof(long), "thread info", 
 			FAULT_ON_ERROR);
 	} else {

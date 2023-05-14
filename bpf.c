@@ -232,17 +232,17 @@ bpf_init(struct bpf_info *bpf)
 		    !VALID_STRUCT(bpf_prog_aux) ||
 		    !VALID_STRUCT(bpf_map) ||
 		    !VALID_STRUCT(bpf_insn) ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_aux) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_type) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_tag) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_jited_len) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_bpf_func) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_len) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_insnsi) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_map_map_flags) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_map_map_type) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_aux_used_maps) == INVALID_OFFSET ||
-		    DIRECT_OFFSET_UNCHECKED(bpf_prog_aux_used_map_cnt) == INVALID_OFFSET) {
+		    LAZY_OFFSET(bpf_prog_aux) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_prog_type) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_prog_tag) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_prog_jited_len) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_prog_bpf_func) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_prog_len) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_prog_insnsi) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_map_map_flags) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_map_map_type) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_prog_aux_used_maps) == INVALID_OFFSET ||
+		    LAZY_OFFSET(bpf_prog_aux_used_map_cnt) == INVALID_OFFSET) {
 			bpf->status = FALSE;
 			command_not_supported();
 		}	
@@ -263,7 +263,7 @@ bpf_init(struct bpf_info *bpf)
 
 		/* Linux 5.3 */
 		MEMBER_OFFSET_INIT(bpf_map_memory, "bpf_map", "memory");
-		if (DIRECT_OFFSET_UNCHECKED(bpf_map_memory) >= 0) {
+		if (LAZY_OFFSET(bpf_map_memory) >= 0) {
 			MEMBER_OFFSET_INIT(bpf_map_memory_pages, "bpf_map_memory", "pages");
 			MEMBER_OFFSET_INIT(bpf_map_memory_user, "bpf_map_memory", "user");
 		}
@@ -283,7 +283,7 @@ bpf_init(struct bpf_info *bpf)
 			mkstring(buf2, VADDR_PRLEN, CENTER|LJUST, "BPF_MAP"),
 			mkstring(buf3, bpf->bpf_map_map_type_size, CENTER|LJUST, "BPF_MAP_TYPE"));
 
-		if (DIRECT_OFFSET_UNCHECKED(idr_idr_rt) == INVALID_OFFSET) {
+		if (LAZY_OFFSET(idr_idr_rt) == INVALID_OFFSET) {
 			bpf->idr_type = IDR_ORIG;
 			do_old_idr(IDR_ORIG_INIT, 0, NULL);
 		} else if (STREQ(MEMBER_TYPE_NAME("idr", "idr_rt"), "radix_tree_root"))
@@ -488,20 +488,20 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 			jited_len = UINT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_jited_len));
 			len = UINT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_len));
 			len *= SIZE(bpf_insn);
-			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_pages) >= 0) {
+			if (LAZY_OFFSET(bpf_prog_pages) >= 0) {
 				prog_pages = USHORT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_pages));
 				prog_pages *= PAGESIZE();
 			} else
 				prog_pages = 0;
 
 			fprintf(fp, "     XLATED: %d  JITED: %d  MEMLOCK: ", len, jited_len);
-			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_pages) >= 0) {
+			if (LAZY_OFFSET(bpf_prog_pages) >= 0) {
 				fprintf(fp, "%d\n", prog_pages);
 			} else
 				fprintf(fp, "(unknown)\n");
 
 			fprintf(fp, "     LOAD_TIME: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_aux_load_time) >= 0) {
+			if (LAZY_OFFSET(bpf_prog_aux_load_time) >= 0) {
 				load_time = ULONGLONG(bpf->bpf_prog_aux_buf + LAZY_OFFSET(bpf_prog_aux_load_time));
 				print_boot_time(load_time, buf5, BUFSIZE/2);
 				fprintf(fp, "%s\n", buf5);
@@ -512,7 +512,7 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 			fprintf(fp, "     GPL_COMPATIBLE: %s", buf1);
 
 			fprintf(fp, "  NAME: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_aux_name) >= 0) {
+			if (LAZY_OFFSET(bpf_prog_aux_name) >= 0) {
 				BCOPY(&bpf->bpf_prog_aux_buf[LAZY_OFFSET(bpf_prog_aux_name)], buf1, 16);
 				buf1[16] = NULLCHAR;
 				if (strlen(buf1))
@@ -523,7 +523,7 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 				fprintf(fp, "(unknown)");
 
 			fprintf(fp, "  UID: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_prog_aux_user) >= 0 && DIRECT_OFFSET_UNCHECKED(user_struct_uid) >= 0) {
+			if (LAZY_OFFSET(bpf_prog_aux_user) >= 0 && LAZY_OFFSET(user_struct_uid) >= 0) {
 				user = ULONG(bpf->bpf_prog_aux_buf + LAZY_OFFSET(bpf_prog_aux_user));
 				if (readmem(user + LAZY_OFFSET(user_struct_uid), KVADDR, &uid, sizeof(uint), 
 				    "user_struct.uid", QUIET|RETURN_ON_ERROR))
@@ -633,21 +633,21 @@ do_map_only:
 			ulong msize = 0;
 
 			fprintf(fp, "     KEY_SIZE: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_map_key_size) >= 0) {
+			if (LAZY_OFFSET(bpf_map_key_size) >= 0) {
 				key_size = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_key_size));
 				fprintf(fp, "%d", key_size);
 			} else
 				fprintf(fp, "(unknown)");
 
 			fprintf(fp, "  VALUE_SIZE: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_map_value_size) >= 0) {
+			if (LAZY_OFFSET(bpf_map_value_size) >= 0) {
 				value_size = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_value_size));
 				fprintf(fp, "%d", value_size);
 			} else
 				fprintf(fp, "(unknown)");
 
 			fprintf(fp, "  MAX_ENTRIES: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_map_max_entries) >= 0) {
+			if (LAZY_OFFSET(bpf_map_max_entries) >= 0) {
 				max_entries = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_max_entries));
 				fprintf(fp, "%d", max_entries);
 
@@ -655,11 +655,11 @@ do_map_only:
 				fprintf(fp, "(unknown)");
 
 			fprintf(fp, "  MEMLOCK: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_map_memory) >= 0 && DIRECT_OFFSET_UNCHECKED(bpf_map_memory_pages) >= 0) {
+			if (LAZY_OFFSET(bpf_map_memory) >= 0 && LAZY_OFFSET(bpf_map_memory_pages) >= 0) {
 				map_pages = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_memory)
 						+ LAZY_OFFSET(bpf_map_memory_pages));
 				fprintf(fp, "%d\n", map_pages * PAGESIZE());
-			} else if (DIRECT_OFFSET_UNCHECKED(bpf_map_pages) >= 0) {
+			} else if (LAZY_OFFSET(bpf_map_pages) >= 0) {
 				map_pages = UINT(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_pages));
 				fprintf(fp, "%d\n", map_pages * PAGESIZE());
 			} else if ((msize = bpf_map_memory_size(type, value_size, key_size, max_entries)))
@@ -668,7 +668,7 @@ do_map_only:
 				fprintf(fp, "(unknown)");
 
 			fprintf(fp, "     NAME: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_map_name) >= 0) {
+			if (LAZY_OFFSET(bpf_map_name) >= 0) {
 				BCOPY(&bpf->bpf_map_buf[LAZY_OFFSET(bpf_map_name)], buf1, 16);
 				buf1[17] = NULLCHAR;
 				if (strlen(buf1))
@@ -679,15 +679,15 @@ do_map_only:
 				fprintf(fp, "(unknown)\n");
 
 			fprintf(fp, "  UID: ");
-			if (DIRECT_OFFSET_UNCHECKED(bpf_map_memory) >= 0 && DIRECT_OFFSET_UNCHECKED(bpf_map_memory_user) >= 0)
+			if (LAZY_OFFSET(bpf_map_memory) >= 0 && LAZY_OFFSET(bpf_map_memory_user) >= 0)
 				user = ULONG(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_memory)
 						+ LAZY_OFFSET(bpf_map_memory_user));
-			else if (DIRECT_OFFSET_UNCHECKED(bpf_map_user) >= 0)
+			else if (LAZY_OFFSET(bpf_map_user) >= 0)
 				user = ULONG(bpf->bpf_map_buf + LAZY_OFFSET(bpf_map_user));
 			else
 				user = 0;
 
-			if (user && DIRECT_OFFSET_UNCHECKED(user_struct_uid) >= 0) {
+			if (user && LAZY_OFFSET(user_struct_uid) >= 0) {
 				if (readmem(user + LAZY_OFFSET(user_struct_uid), KVADDR, &uid, sizeof(uint), 
 				    "user_struct.uid", QUIET|RETURN_ON_ERROR))
 					fprintf(fp, "%d\n", uid);

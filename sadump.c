@@ -1459,12 +1459,12 @@ void get_sadump_regs(struct bt_info *bt, ulong *ipp, ulong *spp)
 		ip = ULONG(prstatus +
 			   LAZY_OFFSET(elf_prstatus_pr_reg) +
 			   (BITS64()
-			    ? LAZY_OFFSET(user_regs_struct_rip)
+			    ? OFFSET(user_regs_struct_rip)
 			    : LAZY_OFFSET(user_regs_struct_eip)));
 		sp = ULONG(prstatus +
 			   LAZY_OFFSET(elf_prstatus_pr_reg) +
 			   (BITS64()
-			    ? LAZY_OFFSET(user_regs_struct_rsp)
+			    ? OFFSET(user_regs_struct_rsp)
 			    : LAZY_OFFSET(user_regs_struct_eip)));
 		if (ip || sp) {
 			*ipp = ip;

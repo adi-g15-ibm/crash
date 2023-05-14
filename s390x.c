@@ -1187,7 +1187,7 @@ s390x_cpu_of_task(unsigned long task)
 {
 	unsigned int cpu;
 
-	if(DIRECT_OFFSET_UNCHECKED(task_struct_processor) >= 0){
+	if(LAZY_OFFSET(task_struct_processor) >= 0){
 		/* linux 2.4 */
 		readmem(task + LAZY_OFFSET(task_struct_processor),KVADDR,
                         &cpu, sizeof(cpu), "task_struct_processor", 
@@ -1196,7 +1196,7 @@ s390x_cpu_of_task(unsigned long task)
 		/* linux 2.6 */
 		char thread_info[8192];
 		unsigned long thread_info_addr;
-		readmem(task + LAZY_OFFSET(task_struct_thread_info),KVADDR,
+		readmem(task + OFFSET(task_struct_thread_info),KVADDR,
                         &thread_info_addr, sizeof(thread_info_addr),
                         "thread info addr", FAULT_ON_ERROR);
 		readmem(thread_info_addr,KVADDR,thread_info,sizeof(thread_info),

@@ -2704,8 +2704,8 @@ get_regs_from_note(char *note, ulong *ip, ulong *sp)
 		len = sizeof(Elf64_Nhdr);
 		len = roundup(len + note64->n_namesz, 4);
 		len = roundup(len + note64->n_descsz, 4);
-		offset_sp = LAZY_OFFSET(user_regs_struct_rsp);
-		offset_ip = LAZY_OFFSET(user_regs_struct_rip);
+		offset_sp = OFFSET(user_regs_struct_rsp);
+		offset_ip = OFFSET(user_regs_struct_rip);
 	} else if (machine_type("X86")) {
 		note32 = (Elf32_Nhdr *)note;
 		len = sizeof(Elf32_Nhdr);
@@ -2770,16 +2770,16 @@ display_regs_from_elf_notes(int cpu, FILE *ofp)
 		    "    R10: %016llx  R11: %016llx  R12: %016llx\n"
 		    "    R13: %016llx  R14: %016llx  R15: %016llx\n"
 		    "    CS: %04x  SS: %04x\n",
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rip)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rsp)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_eflags)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rax)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rbx)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rcx)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rdx)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rsi)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rdi)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_rbp)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rip)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsp)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_eflags)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rax)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbx)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rcx)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdx)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsi)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdi)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbp)),
 		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r8)),
 		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r9)),
 		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r10)),
@@ -2823,7 +2823,7 @@ display_regs_from_elf_notes(int cpu, FILE *ofp)
 		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_gs)),
 		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ss)),
 		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_ebp)),
-		    UINT(user_regs + LAZY_OFFSET(user_regs_struct_eflags))
+		    UINT(user_regs + OFFSET(user_regs_struct_eflags))
 		);
 	} else if (machine_type("PPC64")) {
 		struct ppc64_elf_prstatus *prs;
@@ -3485,10 +3485,10 @@ get_netdump_regs_x86_64(struct bt_info *bt, ulong *ripp, ulong *rspp)
 			SIZE(user_regs_struct) : 
 			sizeof(struct x86_64_user_regs_struct);
 		rsp_offset = DIRECT_OFFSET_UNCHECKED(user_regs_struct_rsp) >= 0 ?
-			LAZY_OFFSET(user_regs_struct_rsp) : 
+			OFFSET(user_regs_struct_rsp) : 
 			offsetof(struct x86_64_user_regs_struct, rsp);
 		rip_offset = DIRECT_OFFSET_UNCHECKED(user_regs_struct_rip) >= 0 ?
-			LAZY_OFFSET(user_regs_struct_rip) :
+			OFFSET(user_regs_struct_rip) :
                         offsetof(struct x86_64_user_regs_struct, rip);
 
                 user_regs = ((char *)note + len) - regs_size - sizeof(long);

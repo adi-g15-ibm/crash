@@ -1251,7 +1251,7 @@ cmd_mount(void)
 		switch(c)
 		{
 		case 'i':
-			if (DIRECT_OFFSET_UNCHECKED(super_block_s_dirty) == INVALID_OFFSET) {
+			if (LAZY_OFFSET(super_block_s_dirty) == INVALID_OFFSET) {
 				error(INFO, 
 				    "the super_block.s_dirty linked list does "
 				    "not exist in this kernel\n");
@@ -1297,7 +1297,7 @@ cmd_mount(void)
 	 */
 	open_tmpfile();
 	show_mounts(0, MOUNT_PRINT_FILES | 
-		(DIRECT_OFFSET_UNCHECKED(super_block_s_dirty) >= 0 ? MOUNT_PRINT_INODES : 0), 
+		(LAZY_OFFSET(super_block_s_dirty) >= 0 ? MOUNT_PRINT_INODES : 0), 
 		namespace_context);
 
 	pc->curcmd_flags &= ~HEADER_PRINTED;
@@ -1333,7 +1333,7 @@ cmd_mount(void)
 				 *  embedded in a struct mount.
 				 */
 				if ((i == 0) && (c == 5) &&
-				    DIRECT_OFFSET_UNCHECKED(mount_mnt) >= 0 &&
+				    LAZY_OFFSET(mount_mnt) >= 0 &&
 				    hexadecimal(spec_string, 0) &&
 				    hexadecimal(arglist[i], 0)) {
 					value1 = htol(spec_string, 
@@ -1403,7 +1403,7 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 		
 	dirp = dentry = mnt_parent = sb_s_files = s_dirty = 0;
 
-	if (DIRECT_OFFSET_UNCHECKED(super_block_s_dirty) >= 0)
+	if (LAZY_OFFSET(super_block_s_dirty) >= 0)
 		s_dirty = LAZY_OFFSET(super_block_s_dirty);
 
 	per_cpu_s_files = MEMBER_EXISTS("file", "f_sb_list_cpu");
@@ -1433,7 +1433,7 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 	if (flags == 0)
 		fprintf(fp, "%s", mount_hdr);
 
-	sb_s_files = DIRECT_OFFSET_UNCHECKED(super_block_s_files) >= 0 ?
+	sb_s_files = LAZY_OFFSET(super_block_s_files) >= 0 ?
 		LAZY_OFFSET(super_block_s_files) : INVALID_LAZY_OFFSET;
 
 	if ((flags & MOUNT_PRINT_FILES) && (sb_s_files == INVALID_OFFSET)) {
@@ -1473,7 +1473,7 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 			devp = ULONG(vfsmount_buf +  LAZY_OFFSET(vfsmount_mnt_devname));
 		}
 
-		if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_dirname) >= 0) {
+		if (LAZY_OFFSET(vfsmount_mnt_dirname) >= 0) {
 			dirp = ULONG(vfsmount_buf +  
 				LAZY_OFFSET(vfsmount_mnt_dirname)); 
 		} else {
@@ -1528,7 +1528,7 @@ show_mounts(ulong one_vfsmount, int flags, struct task_context *namespace_contex
 			strip_ending_char(buf1, ' ');
 		fprintf(fp, "%s", buf1);
 
-		if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_dirname) >= 0) {
+		if (LAZY_OFFSET(vfsmount_mnt_dirname) >= 0) {
                 	if (read_string(dirp, buf1, BUFSIZE-1))
                         	fprintf(fp, "%-10s\n", buf1);
                 	else
@@ -1624,7 +1624,7 @@ get_mount_list(int *cntptr, struct task_context *namespace_context)
 	if (symbol_exists("vfsmntlist")) {
         	get_symbol_data("vfsmntlist", sizeof(void *), &ld->start);
                	ld->end = symbol_value("vfsmntlist");
-	} else if (DIRECT_OFFSET_UNCHECKED(task_struct_nsproxy) >= 0) {
+	} else if (LAZY_OFFSET(task_struct_nsproxy) >= 0) {
  		tc = namespace_context;
 
         	readmem(tc->task + LAZY_OFFSET(task_struct_nsproxy), KVADDR, 
@@ -1642,7 +1642,7 @@ get_mount_list(int *cntptr, struct task_context *namespace_context)
 		ld->start = root + OFFSET_OPTION(vfsmount_mnt_list, mount_mnt_list);
         	ld->end = mnt_ns + LAZY_OFFSET(mnt_namespace_list);
 
-	} else if (DIRECT_OFFSET_UNCHECKED(namespace_root) >= 0) {
+	} else if (LAZY_OFFSET(namespace_root) >= 0) {
  		tc = namespace_context;
 
         	readmem(tc->task + LAZY_OFFSET(task_struct_namespace), KVADDR, 
@@ -1662,7 +1662,7 @@ get_mount_list(int *cntptr, struct task_context *namespace_context)
 	} else
 		error(FATAL, "cannot determine mount list location!\n");
 	
-        if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_list) >= 0) 
+        if (LAZY_OFFSET(vfsmount_mnt_list) >= 0) 
                 ld->list_head_offset = LAZY_OFFSET(vfsmount_mnt_list);
 	else if (VALID_STRUCT(mount))
 		ld->list_head_offset = LAZY_OFFSET(mount_mnt_list);
@@ -1714,7 +1714,7 @@ display_dentry_info(ulong dentry)
 	if (!superblock)
 		goto nopath;
 
-        if (DIRECT_OFFSET_UNCHECKED(file_f_vfsmnt) >= 0) {
+        if (LAZY_OFFSET(file_f_vfsmnt) >= 0) {
 		mntlist = get_mount_list(&mount_cnt, pid_to_context(1));
 		if (VALID_STRUCT(mount)) {
 			mount_buf = GETBUF(SIZE(mount));
@@ -1999,7 +1999,7 @@ vfs_init(void)
 	MEMBER_OFFSET_INIT(files_struct_open_fds_init,  
 		"files_struct", "open_fds_init");
 	MEMBER_OFFSET_INIT(files_struct_fdt, "files_struct", "fdt");
-	if (DIRECT_OFFSET_UNCHECKED(files_struct_fdt) >= 0) {
+	if (LAZY_OFFSET(files_struct_fdt) >= 0) {
 		MEMBER_OFFSET_INIT(fdtable_max_fds, "fdtable", "max_fds");
 		MEMBER_OFFSET_INIT(fdtable_max_fdset, "fdtable", "max_fdset");
 		MEMBER_OFFSET_INIT(fdtable_open_fds, "fdtable", "open_fds");
@@ -2015,7 +2015,7 @@ vfs_init(void)
 	MEMBER_OFFSET_INIT(file_f_count, "file", "f_count");
 	MEMBER_OFFSET_INIT(path_mnt, "path", "mnt");
 	MEMBER_OFFSET_INIT(path_dentry, "path", "dentry");
-	if (DIRECT_OFFSET_UNCHECKED(file_f_dentry) == INVALID_OFFSET) {
+	if (LAZY_OFFSET(file_f_dentry) == INVALID_OFFSET) {
 		MEMBER_OFFSET_INIT(file_f_path, "file", "f_path");
 		ASSIGN_LAZY_OFFSET(file_f_dentry) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_dentry);
 		ASSIGN_LAZY_OFFSET(file_f_vfsmnt) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_mnt);
@@ -2037,29 +2037,29 @@ vfs_init(void)
 
 	MEMBER_OFFSET_INIT(vfsmount_mnt_next, "vfsmount", "mnt_next");
         MEMBER_OFFSET_INIT(vfsmount_mnt_devname, "vfsmount", "mnt_devname");
-	if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_devname) == INVALID_OFFSET)
+	if (LAZY_OFFSET(vfsmount_mnt_devname) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(mount_mnt_devname, "mount", "mnt_devname");
         MEMBER_OFFSET_INIT(vfsmount_mnt_dirname, "vfsmount", "mnt_dirname");
         MEMBER_OFFSET_INIT(vfsmount_mnt_sb, "vfsmount", "mnt_sb");
         MEMBER_OFFSET_INIT(vfsmount_mnt_list, "vfsmount", "mnt_list");
-	if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_devname) == INVALID_OFFSET)
+	if (LAZY_OFFSET(vfsmount_mnt_devname) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(mount_mnt_list, "mount", "mnt_list");
         MEMBER_OFFSET_INIT(vfsmount_mnt_parent, "vfsmount", "mnt_parent");
-	if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_devname) == INVALID_OFFSET)
+	if (LAZY_OFFSET(vfsmount_mnt_devname) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(mount_mnt_parent, "mount", "mnt_parent");
         MEMBER_OFFSET_INIT(vfsmount_mnt_mountpoint, 
 		"vfsmount", "mnt_mountpoint");
-	if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_devname) == INVALID_OFFSET)
+	if (LAZY_OFFSET(vfsmount_mnt_devname) == INVALID_OFFSET)
 		MEMBER_OFFSET_INIT(mount_mnt_mountpoint,
 			"mount", "mnt_mountpoint");
 	MEMBER_OFFSET_INIT(mount_mnt, "mount", "mnt");
 	MEMBER_OFFSET_INIT(namespace_root, "namespace", "root");
 	MEMBER_OFFSET_INIT(task_struct_nsproxy, "task_struct", "nsproxy");
-	if (DIRECT_OFFSET_UNCHECKED(namespace_root) >= 0) {
+	if (LAZY_OFFSET(namespace_root) >= 0) {
 		MEMBER_OFFSET_INIT(namespace_list, "namespace", "list");
 		MEMBER_OFFSET_INIT(task_struct_namespace, 
 			"task_struct", "namespace");
-	} else if (DIRECT_OFFSET_UNCHECKED(task_struct_nsproxy) >= 0) {
+	} else if (LAZY_OFFSET(task_struct_nsproxy) >= 0) {
 		MEMBER_OFFSET_INIT(nsproxy_mnt_ns, "nsproxy", "mnt_ns");
         	MEMBER_OFFSET_INIT(mnt_namespace_root, "mnt_namespace", "root");
         	MEMBER_OFFSET_INIT(mnt_namespace_list, "mnt_namespace", "list");
@@ -2085,7 +2085,7 @@ vfs_init(void)
 	STRUCT_SIZE_INIT(umode_t, "umode_t");
 	STRUCT_SIZE_INIT(dentry, "dentry");
 	STRUCT_SIZE_INIT(files_struct, "files_struct");
-	if (DIRECT_OFFSET_UNCHECKED(files_struct_fdt) >= 0)
+	if (LAZY_OFFSET(files_struct_fdt) >= 0)
 		STRUCT_SIZE_INIT(fdtable, "fdtable");
 	STRUCT_SIZE_INIT(file, "file");
 	STRUCT_SIZE_INIT(inode, "inode");
@@ -2185,7 +2185,7 @@ get_inode_nrpages(ulong i_mapping)
 	readmem(i_mapping, KVADDR, address_space_buf,
 	    SIZE(address_space), "address_space buffer",
 	    FAULT_ON_ERROR);
-	nrpages = ULONG(address_space_buf + LAZY_OFFSET(address_space_nrpages));
+	nrpages = ULONG(address_space_buf + OFFSET(address_space_nrpages));
 
 	FREEBUF(address_space_buf);
 
@@ -2231,9 +2231,9 @@ dump_inode_page_cache_info(ulong inode)
 	    (STREQ(MEMBER_TYPE_NAME("address_space", "i_pages"), "xarray") ||
 	    (STREQ(MEMBER_TYPE_NAME("address_space", "i_pages"), "radix_tree_root") &&
 	     MEMBER_EXISTS("radix_tree_root", "xa_head"))))
-		xarray = i_mapping + LAZY_OFFSET(address_space_page_tree);
+		xarray = i_mapping + OFFSET(address_space_page_tree);
 	else 
-		root_rnode = i_mapping + LAZY_OFFSET(address_space_page_tree);
+		root_rnode = i_mapping + OFFSET(address_space_page_tree);
 
 	lp.index = 0;
 	lp.value = (void *)&dump_inode_page;
@@ -2297,7 +2297,7 @@ cmd_files(void)
 
 		case 'p':
 			if (DIRECT_OFFSET_UNCHECKED(address_space_page_tree) >= 0 &&
-			    DIRECT_OFFSET_UNCHECKED(inode_i_mapping) >= 0) {
+			    LAZY_OFFSET(inode_i_mapping) >= 0) {
 				value = htol(optarg, FAULT_ON_ERROR, NULL);
 				dump_inode_page_cache_info(value);
 			} else
@@ -2306,7 +2306,7 @@ cmd_files(void)
 
 		case 'c':
 			if (DIRECT_OFFSET_UNCHECKED(address_space_nrpages) >= 0 &&
-			    DIRECT_OFFSET_UNCHECKED(inode_i_mapping) >= 0)
+			    LAZY_OFFSET(inode_i_mapping) >= 0)
 				open_flags |= PRINT_NRPAGES;
 			else
 				option_not_supported('c');
@@ -2477,7 +2477,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 			root_dentry = ULONG(fs_struct_buf + LAZY_OFFSET(fs_struct_root));
 
 		if (root_dentry) {
-			if (DIRECT_OFFSET_UNCHECKED(fs_struct_rootmnt) >= 0) {
+			if (LAZY_OFFSET(fs_struct_rootmnt) >= 0) {
                 		vfsmnt = ULONG(fs_struct_buf +
                         		LAZY_OFFSET(fs_struct_rootmnt));
 				get_pathname(root_dentry, root_pathname, 
@@ -2501,7 +2501,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 			pwd_dentry = ULONG(fs_struct_buf + LAZY_OFFSET(fs_struct_pwd));
 
 		if (pwd_dentry) {
-			if (DIRECT_OFFSET_UNCHECKED(fs_struct_pwdmnt) >= 0) {
+			if (LAZY_OFFSET(fs_struct_pwdmnt) >= 0) {
                 		vfsmnt = ULONG(fs_struct_buf +
                         		LAZY_OFFSET(fs_struct_pwdmnt));
 				get_pathname(pwd_dentry, pwd_pathname, 
@@ -2552,7 +2552,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 			SIZE(files_struct), "files_struct buffer",
 			FAULT_ON_ERROR);
 	
-		if (DIRECT_OFFSET_UNCHECKED(files_struct_max_fdset) >= 0) {
+		if (LAZY_OFFSET(files_struct_max_fdset) >= 0) {
 			max_fdset = INT(files_struct_buf +
 			LAZY_OFFSET(files_struct_max_fdset));
 
@@ -2561,13 +2561,13 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 		}
 	}
 
-	if (DIRECT_OFFSET_UNCHECKED(files_struct_fdt) >= 0) {
+	if (LAZY_OFFSET(files_struct_fdt) >= 0) {
 		fdtable_addr = ULONG(files_struct_buf + LAZY_OFFSET(files_struct_fdt));
 
 		if (fdtable_addr) {
 			readmem(fdtable_addr, KVADDR, fdtable_buf,
 	 			SIZE(fdtable), "fdtable buffer", FAULT_ON_ERROR); 
-			if (DIRECT_OFFSET_UNCHECKED(fdtable_max_fdset) >= 0)
+			if (LAZY_OFFSET(fdtable_max_fdset) >= 0)
 				max_fdset = INT(fdtable_buf +
 					LAZY_OFFSET(fdtable_max_fdset));
 			else
@@ -2577,7 +2577,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 		}
 	}
 
-	if ((DIRECT_OFFSET_UNCHECKED(files_struct_fdt) >= 0 && !fdtable_addr) || 
+	if ((LAZY_OFFSET(files_struct_fdt) >= 0 && !fdtable_addr) || 
 	    !files_struct_addr || max_fdset == 0 || max_fds == 0) {
 		if (ref) {
 			if (ref->cmdflags & FILES_REF_FOUND)
@@ -2607,7 +2607,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 		}
         }
 
-	if (DIRECT_OFFSET_UNCHECKED(fdtable_open_fds) >= 0)
+	if (LAZY_OFFSET(fdtable_open_fds) >= 0)
 		open_fds_addr = ULONG(fdtable_buf +
 			LAZY_OFFSET(fdtable_open_fds));
 	else
@@ -2624,7 +2624,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 	}
 
 	if (open_fds_addr) {
-		if (DIRECT_OFFSET_UNCHECKED(files_struct_open_fds_init) >= 0 && 
+		if (LAZY_OFFSET(files_struct_open_fds_init) >= 0 && 
 		    (open_fds_addr == (files_struct_addr + 
 		    LAZY_OFFSET(files_struct_open_fds_init)))) 
 			BCOPY(files_struct_buf + 
@@ -2636,7 +2636,7 @@ open_files_dump(ulong task, int flags, struct reference *ref)
 				FAULT_ON_ERROR);
 	} 
 
-	if (DIRECT_OFFSET_UNCHECKED(fdtable_fd) >= 0)
+	if (LAZY_OFFSET(fdtable_fd) >= 0)
 		fd = ULONG(fdtable_buf + LAZY_OFFSET(fdtable_fd));
 	else
 		fd = ULONG(files_struct_buf + LAZY_OFFSET(files_struct_fd));
@@ -2953,7 +2953,7 @@ file_dump(ulong file, ulong dentry, ulong inode, int fd, int flags)
 	inode_buf = fill_inode_cache(inode);
 
 	if (flags & DUMP_FULL_NAME) {
-		if (DIRECT_OFFSET_UNCHECKED(file_f_vfsmnt) >= 0) {
+		if (LAZY_OFFSET(file_f_vfsmnt) >= 0) {
 			vfsmnt = get_root_vfsmount(file_buf);
 			get_pathname(dentry, pathname, BUFSIZE, 1, vfsmnt);
 			if (STRNEQ(pathname, "/pts/") &&
@@ -3090,7 +3090,7 @@ get_pathname(ulong dentry, char *pathname, int length, int full, ulong vfsmnt)
 	BZERO(tmpname, BUFSIZE);
 	BZERO(pathname, length);
 	if (VALID_STRUCT(mount)) {
-		if (DIRECT_OFFSET_UNCHECKED(mount_mnt_mountpoint) >= 0) {
+		if (LAZY_OFFSET(mount_mnt_mountpoint) >= 0) {
 			mnt_buf = GETBUF(SIZE(mount));
 			vfsmnt_buf = mnt_buf + LAZY_OFFSET(mount_mnt);
 		} else {
@@ -3099,7 +3099,7 @@ get_pathname(ulong dentry, char *pathname, int length, int full, ulong vfsmnt)
 		}
 	} else {
 		mnt_buf = NULL;
-		vfsmnt_buf = DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_mountpoint) >= 0 ? 
+		vfsmnt_buf = LAZY_OFFSET(vfsmount_mnt_mountpoint) >= 0 ? 
 			GETBUF(SIZE(vfsmount)) : NULL;
 	}
 
@@ -3146,7 +3146,7 @@ get_pathname(ulong dentry, char *pathname, int length, int full, ulong vfsmnt)
 		parent = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_parent)); 
 			
 		if (tmp_dentry == parent && full) {
-			if (DIRECT_OFFSET_UNCHECKED(vfsmount_mnt_mountpoint) >= 0) {
+			if (LAZY_OFFSET(vfsmount_mnt_mountpoint) >= 0) {
 				if (tmp_vfsmnt) {
 					if (strncmp(pathname, "//", 2) == 0)
 						shift_string_left(pathname, 1);
