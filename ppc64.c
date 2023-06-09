@@ -2537,9 +2537,6 @@ ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
 		return FALSE;
 	}
 
-	/* FIXME: Always setting the context to CURRENT_CONTEXT irrespective of whicher
-	 * thread we switched to, in gdb
-	 */
 	tc = CURRENT_CONTEXT();
 	BZERO(&bt_setup, sizeof(struct bt_info));
 	clone_bt_info(&bt_setup, &bt_info, tc);
