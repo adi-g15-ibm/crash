@@ -55,6 +55,8 @@ static void ppc64_set_bt_emergency_stack(enum emergency_stack_type type,
 static char * ppc64_check_eframe(struct ppc64_pt_regs *);
 static void ppc64_print_eframe(char *, struct ppc64_pt_regs *, 
 		struct bt_info *);
+int ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
+		  void *value);
 static void parse_cmdline_args(void);
 static int ppc64_paca_percpu_offset_init(int);
 static void ppc64_init_cpu_info(void);
@@ -63,6 +65,7 @@ static void ppc64_clear_machdep_cache(void);
 static void ppc64_init_paca_info(void);
 static void ppc64_vmemmap_init(void);
 static int ppc64_get_kvaddr_ranges(struct vaddr_range *);
+static void ppc64_gdb_mode_hook(int gdb_mode_enabled);
 static uint get_ptetype(ulong pte);
 static int is_hugepage(ulong pte);
 static int is_hugepd(ulong pte);
@@ -137,6 +140,15 @@ static inline int is_hugepd(ulong pte)
 		 */
 		return (((pte & HUGE_PTE_MASK) == 0x0) &&
 			((pte & HUGEPD_SHIFT_MASK) != 0));
+	}
+}
+
+static void ppc64_gdb_mode_hook(int gdb_mode_enabled)
+{
+	if (gdb_mode_enabled) {
+		machdep->get_cpu_reg = ppc64_get_cpu_reg;
+	} else {
+		machdep->get_cpu_reg = NULL;
 	}
 }
 
@@ -693,6 +705,8 @@ ppc64_init(int when)
 			if ((ms->hwstackbuf = (char *)malloc(ms->hwstacksize)) == NULL)
 				error(FATAL, "cannot malloc hwirqstack buffer space.");
 		}
+
+		machdep->gdb_mode_hook = ppc64_gdb_mode_hook;
 
 		ppc64_init_paca_info();
 
@@ -2470,6 +2484,92 @@ ppc64_print_eframe(char *efrm_str, struct ppc64_pt_regs *regs,
 	fprintf(fp, " %s [%lx] exception frame:\n", efrm_str, regs->trap);
 	ppc64_print_regs(regs);
 	ppc64_print_nip_lr(regs, 1);
+}
+
+int
+ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
+		  void *value)
+{
+	struct bt_info bt_info, bt_setup;
+	struct task_context *tc;
+	struct ppc64_pt_regs *pt_regs;
+	ulong ip, sp;
+
+	/* Currently only handling registers available in pt_regs:
+	 *
+	 * 0-31:   r0-r31
+	 * 64:     pc/nip
+	 * 65:     msr
+	 *
+	 * 67:     lr
+	 * 68:     ctr
+	 */
+	switch (regno) {
+	case PPC64_R0_REGNUM ... PPC64_R31_REGNUM:
+
+	case PPC64_PC_REGNUM:
+	case PPC64_MSR_REGNUM:
+	case PPC64_LR_REGNUM:
+	case PPC64_CTR_REGNUM:
+		break;
+
+	default:
+		// return false if we can't get that register
+		return FALSE;
+	}
+
+	/* FIXME: Always setting the context to CURRENT_CONTEXT irrespective of whicher
+	 * thread we switched to, in gdb
+	 */
+	tc = CURRENT_CONTEXT();
+	BZERO(&bt_setup, sizeof(struct bt_info));
+	clone_bt_info(&bt_setup, &bt_info, tc);
+	fill_stackbuf(&bt_info);
+
+	// reusing the get_dumpfile_regs function to get pt regs structure
+	get_dumpfile_regs(&bt_info, &sp, &ip);
+	pt_regs = (struct ppc64_pt_regs *)bt_info.machdep;
+
+	switch (regno) {
+	case PPC64_R0_REGNUM ... PPC64_R31_REGNUM:
+		if (size != sizeof(pt_regs->gpr[regno]))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->gpr[regno], size);
+		return TRUE;
+
+	case PPC64_PC_REGNUM:
+		if (size != sizeof(pt_regs->nip))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->nip, size);
+		return TRUE;
+
+	case PPC64_MSR_REGNUM:
+		if (size != sizeof(pt_regs->msr))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->msr, size);
+		return TRUE;
+
+	case PPC64_LR_REGNUM:
+		if (size != sizeof(pt_regs->link))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->link, size);
+		return TRUE;
+
+	case PPC64_CTR_REGNUM:
+		if (size != sizeof(pt_regs->ctr))
+			return FALSE;  // size mismatch
+
+		memcpy(value, &pt_regs->ctr, size);
+		return TRUE;
+	}
+
+	printf("error: %s: statement after switch case should be unreachable"
+			, __func__);
+	return FALSE;
 }
 
 /*

@@ -2075,12 +2075,18 @@ cmd_set(void)
 				if (!runtime)
 					defer();
                                 else if (STREQ(args[optind], "on")) {
-					if (pc->flags & MINIMAL_MODE)
+					if (pc->flags & MINIMAL_MODE) {
 						goto invalid_set_command;
-					else
+					} else {
                                         	pc->flags2 |= GDB_CMD_MODE;
-                                } else if (STREQ(args[optind], "off"))
+						if (machdep->gdb_mode_hook)
+							machdep->gdb_mode_hook(1);
+					}
+				} else if (STREQ(args[optind], "off")) {
                                         pc->flags2 &= ~GDB_CMD_MODE;
+					if (machdep->gdb_mode_hook)
+						machdep->gdb_mode_hook(0);
+				}
                                 else if (IS_A_NUMBER(args[optind])) {
                                         value = stol(args[optind],
                                                 FAULT_ON_ERROR, NULL);
