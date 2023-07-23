@@ -241,8 +241,8 @@ kernel_init()
 			RETURN_ON_ERROR);
 	else if (symbol_exists("init_uts_ns")) {
 		long offset = sizeof(int);
-		if (VALID_MEMBER(uts_namespace_name))
-			offset = OFFSET(uts_namespace_name);
+		if (VALID_MEMBER_LAZY(uts_namespace_name))
+			offset = LAZY_OFFSET(uts_namespace_name);
 
 		readmem(symbol_value("init_uts_ns") + offset,
 			KVADDR,  &kt->utsname, sizeof(struct new_utsname),
@@ -446,10 +446,10 @@ kernel_init()
 	STRUCT_SIZE_INIT(list_head, "list_head"); 
 	MEMBER_OFFSET_INIT(list_head_next, "list_head", "next"); 
 	MEMBER_OFFSET_INIT(list_head_prev, "list_head", "prev"); 
-	if (OFFSET(list_head_next) != 0)
+	if (LAZY_OFFSET(list_head_next) != 0)
 	    	error(WARNING, 
 		    "list_head.next offset: %ld: list command may fail\n",
-			OFFSET(list_head_next));
+			LAZY_OFFSET(list_head_next));
 
         MEMBER_OFFSET_INIT(hlist_node_next, "hlist_node", "next");
         MEMBER_OFFSET_INIT(hlist_node_pprev, "hlist_node", "pprev");
@@ -694,7 +694,7 @@ kernel_init()
 
 	STRUCT_SIZE_INIT(kallsyms_header, "kallsyms_header");
 
-	if (VALID_MEMBER(module_kallsyms_start) &&
+	if (VALID_MEMBER_LAZY(module_kallsyms_start) &&
 	    VALID_SIZE(kallsyms_header)) {
         	MEMBER_OFFSET_INIT(kallsyms_header_sections,
 			"kallsyms_header", "sections");
@@ -727,7 +727,7 @@ kernel_init()
 
 	MEMBER_OFFSET_INIT(module_num_symtab, "module", "num_symtab");
 
-	if (VALID_MEMBER(module_num_symtab)) {
+	if (VALID_MEMBER_LAZY(module_num_symtab)) {
 		MEMBER_OFFSET_INIT(module_symtab, "module", "symtab");
 		MEMBER_OFFSET_INIT(module_strtab, "module", "strtab");
 			
@@ -735,7 +735,7 @@ kernel_init()
 			kt->flags |= KALLSYMS_V2;
 	}
 
-	if (INVALID_MEMBER(module_num_symtab) && 
+	if (INVALID_MEMBER_LAZY(module_num_symtab) && 
 	    MEMBER_EXISTS("module", "core_kallsyms")) {
 		ASSIGN_OFFSET(module_num_symtab) =
 			MEMBER_OFFSET("module", "core_kallsyms") +
@@ -811,7 +811,7 @@ kernel_init()
 			"timerqueue_node", "expires");
 		MEMBER_OFFSET_INIT(timerqueue_node_node, 
 			"timerqueue_node", "node");
-		if (INVALID_MEMBER(timerqueue_head_next)) {
+		if (INVALID_MEMBER_LAZY(timerqueue_head_next)) {
 			MEMBER_OFFSET_INIT(timerqueue_head_rb_root,
 				"timerqueue_head", "rb_root");
 			MEMBER_OFFSET_INIT(rb_root_cached_rb_leftmost,
@@ -3175,7 +3175,7 @@ back_trace(struct bt_info *bt)
 					btloc.hp->eip = symbol_value("do_IRQ");
 					if (symbol_exists("__do_IRQ"))
 						btloc.hp->esp = ULONG(bt->stackbuf +
-					    		OFFSET(thread_info_previous_esp));
+					    		LAZY_OFFSET(thread_info_previous_esp));
 					else
 						btloc.hp->esp = ULONG(bt->stackbuf +
 					    		SIZE(irq_ctx) - (sizeof(char *)*2));
@@ -3197,7 +3197,7 @@ back_trace(struct bt_info *bt)
 					btloc.hp->esp = ULONG(bt->stackbuf);
 				} else
 					btloc.hp->esp = ULONG(bt->stackbuf +
-						OFFSET(thread_info_previous_esp));
+						LAZY_OFFSET(thread_info_previous_esp));
 				fprintf(fp, "--- <soft IRQ> ---\n");
                 		break;
         		}
@@ -3272,7 +3272,7 @@ restore_stack(struct bt_info *bt)
 				bt->instptr = symbol_value("do_IRQ");
 			if (symbol_exists("__do_IRQ"))
 				bt->stkptr = ULONG(bt->stackbuf +
-					OFFSET(thread_info_previous_esp));
+					LAZY_OFFSET(thread_info_previous_esp));
 			else
 				bt->stkptr = ULONG(bt->stackbuf + 
 					SIZE(irq_ctx) - (sizeof(char *)*2));
@@ -3297,7 +3297,7 @@ restore_stack(struct bt_info *bt)
 			else
 				bt->instptr = symbol_value("do_softirq");
 	               	bt->stkptr = ULONG(bt->stackbuf +
-	                       	OFFSET(thread_info_previous_esp));
+	                       	LAZY_OFFSET(thread_info_previous_esp));
 		}
 		type = BT_SOFTIRQ;
 		break;
@@ -3734,7 +3734,7 @@ module_init(void)
 			}
         		kt->kernel_module = symbol_value("modules");
 		}
-		kt->module_list -= OFFSET(module_list);
+		kt->module_list -= LAZY_OFFSET(module_list);
 		break;
 	}
 
@@ -3764,11 +3764,11 @@ module_init(void)
 		switch (kt->flags & (KMOD_V1|KMOD_V2))
 		{
 		case KMOD_V1:
-                	nsyms = UINT(modbuf + OFFSET(module_nsyms));
+                	nsyms = UINT(modbuf + LAZY_OFFSET(module_nsyms));
 			break;
 		case KMOD_V2: 
-                	nsyms = UINT(modbuf + OFFSET(module_num_syms)) +
-				UINT(modbuf + OFFSET(module_num_gpl_syms));
+                	nsyms = UINT(modbuf + LAZY_OFFSET(module_num_syms)) +
+				UINT(modbuf + LAZY_OFFSET(module_num_gpl_syms));
 			break;
 		}
 
@@ -3785,7 +3785,7 @@ module_init(void)
 		{
 		case KALLSYMS_V1: 
 			kallsyms_header = ULONG(modbuf +
-				OFFSET(module_kallsyms_start));	
+				LAZY_OFFSET(module_kallsyms_start));	
 			if (kallsyms_header) {
 	                	if (!readmem(kallsyms_header, KVADDR, 
 				    kallsymsbuf, SIZE(kallsyms_header), 
@@ -3795,7 +3795,7 @@ module_init(void)
 					    DUMPFILE() ? "\n" : "");
 				} else {
 					nsyms = UINT(kallsymsbuf +
-				 	    OFFSET(kallsyms_header_symbols));
+				 	    LAZY_OFFSET(kallsyms_header_symbols));
 					total += nsyms; 
 				}
 			}
@@ -3803,14 +3803,14 @@ module_init(void)
 
 		case KALLSYMS_V2:
 			if (THIS_KERNEL_VERSION >= LINUX(2,6,27)) {
-				numksyms = UINT(modbuf + OFFSET(module_num_symtab));
+				numksyms = UINT(modbuf + LAZY_OFFSET(module_num_symtab));
 				if (MODULE_MEMORY())
 					/* check mem[MOD_TEXT].size only */
 					size = UINT(modbuf + OFFSET(module_mem) + OFFSET(module_memory_size));
 				else
 					size = UINT(modbuf + MODULE_OFFSET2(module_core_size, rx));
 			} else {
-				numksyms = ULONG(modbuf + OFFSET(module_num_symtab));
+				numksyms = ULONG(modbuf + LAZY_OFFSET(module_num_symtab));
 				size = ULONG(modbuf + MODULE_OFFSET2(module_core_size, rx));
 			}
 
@@ -3888,7 +3888,7 @@ verify_modules(void)
 				return TRUE;
                 }
                 get_symbol_data("modules", sizeof(ulong), &module_list);
-                module_list -= OFFSET(module_list);
+                module_list -= LAZY_OFFSET(module_list);
 		break;
 	}
 
@@ -3935,9 +3935,9 @@ verify_modules(void)
 				{
 				case KMOD_V1:
         				mod_name = ULONG(modbuf + 
-						OFFSET(module_name));
+						LAZY_OFFSET(module_name));
 					mod_size = LONG(modbuf + 
-						OFFSET(module_size));
+						LAZY_OFFSET(module_size));
                 			if (!read_string(mod_name, buf, 
 					    BUFSIZE-1) || !STREQ(lm->mod_name, 
 					    buf) || (mod_size != lm->mod_size)){
@@ -3947,7 +3947,7 @@ verify_modules(void)
 					break;
 				case KMOD_V2:
         				module_name = modbuf + 
-						OFFSET(module_name);
+						LAZY_OFFSET(module_name);
 					if (MODULE_MEMORY()) {
 						mod_size = 0;
 						for_each_mod_mem_type(t) {
@@ -4302,7 +4302,7 @@ show_module_taint_4_10(void)
 	ulong tnts_addr;
 	char *modbuf;
 
-	if (INVALID_MEMBER(module_taints)) {
+	if (INVALID_MEMBER_LAZY(module_taints)) {
 		MEMBER_OFFSET_INIT(module_taints, "module", "taints");
 		STRUCT_SIZE_INIT(taint_flag, "taint_flag");
 		MEMBER_OFFSET_INIT(tnt_true, "taint_flag", "true");
@@ -4320,9 +4320,9 @@ show_module_taint_4_10(void)
 			"module struct", FAULT_ON_ERROR);
 
 		if (MEMBER_SIZE("module", "taints") == sizeof(ulong))
-			taints = ULONG(modbuf + OFFSET(module_taints));
+			taints = ULONG(modbuf + LAZY_OFFSET(module_taints));
 		else
-			taints = UINT(modbuf + OFFSET(module_taints));
+			taints = UINT(modbuf + LAZY_OFFSET(module_taints));
 
 		if (taints) {
 			found++;
@@ -4354,9 +4354,9 @@ show_module_taint_4_10(void)
 				"module struct", FAULT_ON_ERROR);
 
 		if (MEMBER_SIZE("module", "taints") == sizeof(ulong))
-			taints = ULONG(modbuf + OFFSET(module_taints));
+			taints = ULONG(modbuf + LAZY_OFFSET(module_taints));
 		else
-			taints = UINT(modbuf + OFFSET(module_taints));
+			taints = UINT(modbuf + LAZY_OFFSET(module_taints));
 
 		if (!taints)
 			continue;
@@ -4364,7 +4364,7 @@ show_module_taint_4_10(void)
 
 		for (j = 0; j < tnts_len; j++) {
 			readmem((tnts_addr + j * SIZE(taint_flag)) +
-					OFFSET(tnt_mod),
+					LAZY_OFFSET(tnt_mod),
 					KVADDR, &tnt_mod, sizeof(bool),
 					"tnt mod", FAULT_ON_ERROR);
 			if (!tnt_mod)
@@ -4411,8 +4411,8 @@ show_module_taint(void)
 		return;
 	}
 
-	if (INVALID_MEMBER(module_taints) &&
-	    INVALID_MEMBER(module_license_gplok)) {
+	if (INVALID_MEMBER_LAZY(module_taints) &&
+	    INVALID_MEMBER_LAZY(module_license_gplok)) {
 		MEMBER_OFFSET_INIT(module_taints, "module", "taints");
 		MEMBER_OFFSET_INIT(module_license_gplok, 
 			"module", "license_gplok");
@@ -4423,8 +4423,8 @@ show_module_taint(void)
 		MEMBER_OFFSET_INIT(tnt_false, "tnt", "false");
 	}
 
-	if (INVALID_MEMBER(module_taints) &&
-	    INVALID_MEMBER(module_license_gplok))
+	if (INVALID_MEMBER_LAZY(module_taints) &&
+	    INVALID_MEMBER_LAZY(module_license_gplok))
 		option_not_supported('t');
 
 	modbuf = GETBUF(SIZE(module));
@@ -4435,14 +4435,14 @@ show_module_taint(void)
 		readmem(lm->module_struct, KVADDR, modbuf, SIZE(module),
 			"module struct", FAULT_ON_ERROR);
 
-		taints = VALID_MEMBER(module_taints) ?
-			UINT(modbuf + OFFSET(module_taints)) : 0;
-		license_gplok = VALID_MEMBER(module_license_gplok) ? 
-			INT(modbuf + OFFSET(module_license_gplok)) : 0;
-		gpgsig_ok = VALID_MEMBER(module_gpgsig_ok) ?
-			INT(modbuf + OFFSET(module_gpgsig_ok)) : 1;
+		taints = VALID_MEMBER_LAZY(module_taints) ?
+			UINT(modbuf + LAZY_OFFSET(module_taints)) : 0;
+		license_gplok = VALID_MEMBER_LAZY(module_license_gplok) ? 
+			INT(modbuf + LAZY_OFFSET(module_license_gplok)) : 0;
+		gpgsig_ok = VALID_MEMBER_LAZY(module_gpgsig_ok) ?
+			INT(modbuf + LAZY_OFFSET(module_gpgsig_ok)) : 1;
 
-		if (VALID_MEMBER(module_license_gplok) || taints || !gpgsig_ok) {
+		if (VALID_MEMBER_LAZY(module_license_gplok) || taints || !gpgsig_ok) {
 			found++;
 			maxnamelen = strlen(lm->mod_name) > maxnamelen ?
 				strlen(lm->mod_name) : maxnamelen;
@@ -4468,7 +4468,7 @@ show_module_taint(void)
 
 	fprintf(fp, "%s  %s\n",
 		mkstring(buf2, maxnamelen, LJUST, "NAME"),
-		VALID_MEMBER(module_taints) ? "TAINTS" : "LICENSE_GPLOK");
+		VALID_MEMBER_LAZY(module_taints) ? "TAINTS" : "LICENSE_GPLOK");
 
 	for (i = 0; i < st->mods_installed; i++) {
 
@@ -4479,14 +4479,14 @@ show_module_taint(void)
 		readmem(lm->module_struct, KVADDR, modbuf, SIZE(module),
 			"module struct", FAULT_ON_ERROR);
 
-		taints = VALID_MEMBER(module_taints) ?
-			UINT(modbuf + OFFSET(module_taints)) : 0;
-		license_gplok = VALID_MEMBER(module_license_gplok) ? 
-			INT(modbuf + OFFSET(module_license_gplok)) : 0;
-		gpgsig_ok = VALID_MEMBER(module_gpgsig_ok) ?
-			INT(modbuf + OFFSET(module_gpgsig_ok)) : 1;
+		taints = VALID_MEMBER_LAZY(module_taints) ?
+			UINT(modbuf + LAZY_OFFSET(module_taints)) : 0;
+		license_gplok = VALID_MEMBER_LAZY(module_license_gplok) ? 
+			INT(modbuf + LAZY_OFFSET(module_license_gplok)) : 0;
+		gpgsig_ok = VALID_MEMBER_LAZY(module_gpgsig_ok) ?
+			INT(modbuf + LAZY_OFFSET(module_gpgsig_ok)) : 1;
 
-		if (INVALID_MEMBER(module_license_gplok)) {
+		if (INVALID_MEMBER_LAZY(module_license_gplok)) {
 			if (!taints && gpgsig_ok)
 				continue;
 		}
@@ -4494,7 +4494,7 @@ show_module_taint(void)
 		if (tnts_exists && taints) {
 			taintsp = &taints;
 			for (j = 0; j < (tnts_len * SIZE(tnt)); j += SIZE(tnt)) {
-				readmem((tnts_addr + j) + OFFSET(tnt_bit),
+				readmem((tnts_addr + j) + LAZY_OFFSET(tnt_bit),
 					KVADDR, &tnt_bit, sizeof(uint8_t), 
 					"tnt bit", FAULT_ON_ERROR);
 
@@ -4515,7 +4515,7 @@ show_module_taint(void)
 			}
 		}
 
-		if (VALID_MEMBER(module_gpgsig_ok) && !gpgsig_ok) {
+		if (VALID_MEMBER_LAZY(module_gpgsig_ok) && !gpgsig_ok) {
 			buf1[bx++] = '(';
 			buf1[bx++] = 'U';
 			buf1[bx++] = ')';
@@ -4529,7 +4529,7 @@ show_module_taint(void)
 		else
 			fprintf(fp, "%s  %x%s\n", mkstring(buf2, maxnamelen,
 				LJUST, lm->mod_name), 
-				VALID_MEMBER(module_taints) ? 
+				VALID_MEMBER_LAZY(module_taints) ? 
 				taints : license_gplok, buf1);
 	}
 
@@ -6502,8 +6502,8 @@ cmd_irq(void)
 			        else if (symbol_exists("bh_base") &&
 			            symbol_exists("irq_stat") &&
 			            symbol_exists("softirq_vec") &&
-				    VALID_MEMBER(irq_cpustat_t___softirq_active)
-                        	    && VALID_MEMBER(irq_cpustat_t___softirq_mask))
+				    VALID_MEMBER_LAZY(irq_cpustat_t___softirq_active)
+                        	    && VALID_MEMBER_LAZY(irq_cpustat_t___softirq_mask))
 			                kt->display_bh = display_bh_3;
 				else if (get_symbol_type("softirq_vec", NULL, NULL) == 
 				    TYPE_CODE_ARRAY)
@@ -6530,8 +6530,8 @@ cmd_irq(void)
 			if (!machdep->get_irq_affinity)
 				option_not_supported(c);
 
-			if (INVALID_MEMBER(irq_data_affinity) &&
-			    INVALID_MEMBER(irq_common_data_affinity) &&
+			if (INVALID_MEMBER_LAZY(irq_data_affinity) &&
+			    INVALID_MEMBER_LAZY(irq_common_data_affinity) &&
 			    INVALID_MEMBER(irq_desc_t_affinity))
 				option_not_supported(c);
 
@@ -6678,14 +6678,14 @@ get_irq_desc_addr(int irq)
 		 */
 		if (kt->highest_irq == 0) {
 			readmem((ulong)lp[cnt-1].value +
-					OFFSET(irq_desc_irq_data) + OFFSET(irq_data_irq),
+					LAZY_OFFSET(irq_desc_irq_data) + OFFSET(irq_data_irq),
 				KVADDR, &kt->highest_irq, sizeof(int), "irq_data.irq",
 				FAULT_ON_ERROR);
 		}
 
 		for (c = 0; c < cnt; c++) {
 			readmem((ulong)lp[c].value +
-					OFFSET(irq_desc_irq_data) + OFFSET(irq_data_irq),
+					LAZY_OFFSET(irq_desc_irq_data) + OFFSET(irq_data_irq),
 				KVADDR, &i, sizeof(int), "irq_data.irq", FAULT_ON_ERROR);
 			if (i == irq) {
 				if (CRASHDEBUG(1))
@@ -6878,12 +6878,12 @@ generic_dump_irq(int irq)
 		fprintf(fp, "%lx\n", handler);
 
 	if (handler) {
-		if (VALID_MEMBER(hw_interrupt_type_typename))
-	        	readmem(handler+OFFSET(hw_interrupt_type_typename),
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_typename))
+	        	readmem(handler+LAZY_OFFSET(hw_interrupt_type_typename),
 				KVADDR,	&tmp1, sizeof(void *),
         	        	"hw_interrupt_type typename", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_typename))
-	        	readmem(handler+OFFSET(irq_chip_typename),
+		else if (VALID_MEMBER_LAZY(irq_chip_typename))
+	        	readmem(handler+LAZY_OFFSET(irq_chip_typename),
 				KVADDR,	&tmp1, sizeof(void *),
                 		"hw_interrupt_type typename", FAULT_ON_ERROR);
 
@@ -6893,12 +6893,12 @@ generic_dump_irq(int irq)
 			fprintf(fp, "\"%s\"", buf);
 		fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_startup))
-			readmem(handler+OFFSET(hw_interrupt_type_startup),
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_startup))
+			readmem(handler+LAZY_OFFSET(hw_interrupt_type_startup),
 				KVADDR,	&tmp1, sizeof(void *),
 				"hw_interrupt_type startup", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_startup))
-			readmem(handler+OFFSET(irq_chip_startup),
+		else if (VALID_MEMBER_LAZY(irq_chip_startup))
+			readmem(handler+LAZY_OFFSET(irq_chip_startup),
 				KVADDR,	&tmp1, sizeof(void *),
 				"hw_interrupt_type startup", FAULT_ON_ERROR);
 		fprintf(fp, "          startup: %lx  ", tmp1); 
@@ -6911,12 +6911,12 @@ generic_dump_irq(int irq)
                                 	value_to_symstr(tmp2, buf, 0));
 		fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_shutdown))
-	                readmem(handler+OFFSET(hw_interrupt_type_shutdown),
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_shutdown))
+	                readmem(handler+LAZY_OFFSET(hw_interrupt_type_shutdown),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type shutdown", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_shutdown))
-	                readmem(handler+OFFSET(irq_chip_shutdown),
+		else if (VALID_MEMBER_LAZY(irq_chip_shutdown))
+	                readmem(handler+LAZY_OFFSET(irq_chip_shutdown),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type shutdown", FAULT_ON_ERROR);
 
@@ -6930,8 +6930,8 @@ generic_dump_irq(int irq)
                                         value_to_symstr(tmp2, buf, 0));
                 fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_handle)) {
-	                readmem(handler+OFFSET(hw_interrupt_type_handle), 
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_handle)) {
+	                readmem(handler+LAZY_OFFSET(hw_interrupt_type_handle), 
 				KVADDR,
 	                        &tmp1, sizeof(void *),
 	                        "hw_interrupt_type handle", FAULT_ON_ERROR);
@@ -6947,12 +6947,12 @@ generic_dump_irq(int irq)
 	                fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(hw_interrupt_type_enable))
-	                readmem(handler+OFFSET(hw_interrupt_type_enable),
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_enable))
+	                readmem(handler+LAZY_OFFSET(hw_interrupt_type_enable),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type enable", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_enable))
-	                readmem(handler+OFFSET(irq_chip_enable),
+		else if (VALID_MEMBER_LAZY(irq_chip_enable))
+	                readmem(handler+LAZY_OFFSET(irq_chip_enable),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type enable", FAULT_ON_ERROR);
                 fprintf(fp, "           enable: %lx  ", tmp1);
@@ -6965,12 +6965,12 @@ generic_dump_irq(int irq)
                                         value_to_symstr(tmp2, buf, 0));
                 fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_disable))
-	                readmem(handler+OFFSET(hw_interrupt_type_disable),
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_disable))
+	                readmem(handler+LAZY_OFFSET(hw_interrupt_type_disable),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type disable", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(irq_chip_disable))
-	                readmem(handler+OFFSET(irq_chip_disable),
+		else if (VALID_MEMBER_LAZY(irq_chip_disable))
+	                readmem(handler+LAZY_OFFSET(irq_chip_disable),
 				KVADDR, &tmp1, sizeof(void *),
 	                        "hw_interrupt_type disable", FAULT_ON_ERROR);
                 fprintf(fp, "          disable: %lx  ", tmp1);
@@ -6983,8 +6983,8 @@ generic_dump_irq(int irq)
                                         value_to_symstr(tmp2, buf, 0));
                 fprintf(fp, "\n");
 
-		if (VALID_MEMBER(hw_interrupt_type_ack)) {
-                	readmem(handler+OFFSET(hw_interrupt_type_ack), KVADDR,
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_ack)) {
+                	readmem(handler+LAZY_OFFSET(hw_interrupt_type_ack), KVADDR,
                         	&tmp1, sizeof(void *),
                         	"hw_interrupt_type ack", FAULT_ON_ERROR);
                 	fprintf(fp, "              ack: %lx  ", tmp1);
@@ -6997,8 +6997,8 @@ generic_dump_irq(int irq)
                                 	fprintf(fp, "<%s>",
                                         	value_to_symstr(tmp2, buf, 0));
                 	fprintf(fp, "\n");
-		} else if (VALID_MEMBER(irq_chip_ack)) {
-                	readmem(handler+OFFSET(irq_chip_ack), KVADDR,
+		} else if (VALID_MEMBER_LAZY(irq_chip_ack)) {
+                	readmem(handler+LAZY_OFFSET(irq_chip_ack), KVADDR,
                         	&tmp1, sizeof(void *),
                         	"irq_chip ack", FAULT_ON_ERROR);
                 	fprintf(fp, "              ack: %lx  ", tmp1);
@@ -7013,8 +7013,8 @@ generic_dump_irq(int irq)
                 	fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(irq_chip_mask)) {
-			readmem(handler+OFFSET(irq_chip_mask), KVADDR,
+		if (VALID_MEMBER_LAZY(irq_chip_mask)) {
+			readmem(handler+LAZY_OFFSET(irq_chip_mask), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip mask", FAULT_ON_ERROR);
                         fprintf(fp, "             mask: %lx  ", tmp1);
@@ -7029,8 +7029,8 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 		
-		if (VALID_MEMBER(irq_chip_mask_ack)) {
-			readmem(handler+OFFSET(irq_chip_mask_ack), KVADDR,
+		if (VALID_MEMBER_LAZY(irq_chip_mask_ack)) {
+			readmem(handler+LAZY_OFFSET(irq_chip_mask_ack), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip mask_ack", FAULT_ON_ERROR);
                         fprintf(fp, "         mask_ack: %lx  ", tmp1);
@@ -7045,8 +7045,8 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(irq_chip_unmask)) {
-			readmem(handler+OFFSET(irq_chip_unmask), KVADDR,
+		if (VALID_MEMBER_LAZY(irq_chip_unmask)) {
+			readmem(handler+LAZY_OFFSET(irq_chip_unmask), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip unmask", FAULT_ON_ERROR);
                         fprintf(fp, "           unmask: %lx  ", tmp1);
@@ -7061,8 +7061,8 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(irq_chip_eoi)) {
-			readmem(handler+OFFSET(irq_chip_eoi), KVADDR,
+		if (VALID_MEMBER_LAZY(irq_chip_eoi)) {
+			readmem(handler+LAZY_OFFSET(irq_chip_eoi), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip eoi", FAULT_ON_ERROR);
                         fprintf(fp, "              eoi: %lx  ", tmp1);
@@ -7077,8 +7077,8 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(hw_interrupt_type_end)) {
-                	readmem(handler+OFFSET(hw_interrupt_type_end), KVADDR,
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_end)) {
+                	readmem(handler+LAZY_OFFSET(hw_interrupt_type_end), KVADDR,
                         	&tmp1, sizeof(void *),
                         	"hw_interrupt_type end", FAULT_ON_ERROR);
                         fprintf(fp, "              end: %lx  ", tmp1);
@@ -7091,8 +7091,8 @@ generic_dump_irq(int irq)
                                         fprintf(fp, "<%s>",
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
-		} else if (VALID_MEMBER(irq_chip_end)) {
-                	readmem(handler+OFFSET(irq_chip_end), KVADDR,
+		} else if (VALID_MEMBER_LAZY(irq_chip_end)) {
+                	readmem(handler+LAZY_OFFSET(irq_chip_end), KVADDR,
                         	&tmp1, sizeof(void *),
                         	"irq_chip end", FAULT_ON_ERROR);
                         fprintf(fp, "              end: %lx  ", tmp1);
@@ -7107,8 +7107,8 @@ generic_dump_irq(int irq)
                         fprintf(fp, "\n");
 		}
 
-		if (VALID_MEMBER(hw_interrupt_type_set_affinity)) {
-                	readmem(handler+OFFSET(hw_interrupt_type_set_affinity),
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_set_affinity)) {
+                	readmem(handler+LAZY_OFFSET(hw_interrupt_type_set_affinity),
 				KVADDR, &tmp1, sizeof(void *),
                         	"hw_interrupt_type set_affinity", 
 				FAULT_ON_ERROR);
@@ -7122,8 +7122,8 @@ generic_dump_irq(int irq)
                                         fprintf(fp, "<%s>",
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
-		} else if (VALID_MEMBER(irq_chip_set_affinity)) {
-                	readmem(handler+OFFSET(irq_chip_set_affinity),
+		} else if (VALID_MEMBER_LAZY(irq_chip_set_affinity)) {
+                	readmem(handler+LAZY_OFFSET(irq_chip_set_affinity),
 				KVADDR, &tmp1, sizeof(void *),
                         	"irq_chip set_affinity",
 				FAULT_ON_ERROR);
@@ -7138,8 +7138,8 @@ generic_dump_irq(int irq)
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
 		}
-		if (VALID_MEMBER(irq_chip_retrigger)) {
-			readmem(handler+OFFSET(irq_chip_retrigger), KVADDR,
+		if (VALID_MEMBER_LAZY(irq_chip_retrigger)) {
+			readmem(handler+LAZY_OFFSET(irq_chip_retrigger), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip retrigger", FAULT_ON_ERROR);
                         fprintf(fp, "        retrigger: %lx  ", tmp1);
@@ -7153,8 +7153,8 @@ generic_dump_irq(int irq)
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
 		}
-		if (VALID_MEMBER(irq_chip_set_type)) {
-			readmem(handler+OFFSET(irq_chip_set_type), KVADDR,
+		if (VALID_MEMBER_LAZY(irq_chip_set_type)) {
+			readmem(handler+LAZY_OFFSET(irq_chip_set_type), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip set_type", FAULT_ON_ERROR);
                         fprintf(fp, "         set_type: %lx  ", tmp1);
@@ -7168,8 +7168,8 @@ generic_dump_irq(int irq)
                                                 value_to_symstr(tmp2, buf, 0));
                         fprintf(fp, "\n");
 		}
-		if (VALID_MEMBER(irq_chip_set_wake)) {
-			readmem(handler+OFFSET(irq_chip_set_wake), KVADDR,
+		if (VALID_MEMBER_LAZY(irq_chip_set_wake)) {
+			readmem(handler+LAZY_OFFSET(irq_chip_set_wake), KVADDR,
 				&tmp1, sizeof(void *),
 				"irq_chip set wake", FAULT_ON_ERROR);
                         fprintf(fp, "         set_wake: %lx  ", tmp1);
@@ -7200,7 +7200,7 @@ do_linked_action:
 
 
 	if (action) {
-                readmem(action+OFFSET(irqaction_handler), KVADDR,
+                readmem(action+LAZY_OFFSET(irqaction_handler), KVADDR,
                         &tmp1, sizeof(void *),
                         "irqaction handler", FAULT_ON_ERROR);
 		fprintf(fp, "          handler: %lx  ", tmp1);
@@ -7213,19 +7213,19 @@ do_linked_action:
                                         value_to_symstr(tmp2, buf, 0));
                 fprintf(fp, "\n");
 
-                readmem(action+OFFSET(irqaction_flags), KVADDR,
+                readmem(action+LAZY_OFFSET(irqaction_flags), KVADDR,
                         &value, sizeof(void *),
                         "irqaction flags", FAULT_ON_ERROR);
                 fprintf(fp, "            flags: %lx\n", value);
 
-		if (VALID_MEMBER(irqaction_mask)) {
-			readmem(action+OFFSET(irqaction_mask), KVADDR,
+		if (VALID_MEMBER_LAZY(irqaction_mask)) {
+			readmem(action+LAZY_OFFSET(irqaction_mask), KVADDR,
 				&tmp1, sizeof(void *),
 				"irqaction mask", FAULT_ON_ERROR);
 			fprintf(fp, "             mask: %lx\n", tmp1);
 		}
 
-                readmem(action+OFFSET(irqaction_name), KVADDR,
+                readmem(action+LAZY_OFFSET(irqaction_name), KVADDR,
                         &tmp1, sizeof(void *),
                         "irqaction name", FAULT_ON_ERROR);
                 fprintf(fp, "             name: %lx  ", tmp1);
@@ -7234,12 +7234,12 @@ do_linked_action:
                         fprintf(fp, "\"%s\"", buf);
                 fprintf(fp, "\n");
 
-                readmem(action+OFFSET(irqaction_dev_id), KVADDR,
+                readmem(action+LAZY_OFFSET(irqaction_dev_id), KVADDR,
                         &tmp1, sizeof(void *),
                         "irqaction dev_id", FAULT_ON_ERROR);
                 fprintf(fp, "           dev_id: %lx\n", tmp1);
 
-                readmem(action+OFFSET(irqaction_next), KVADDR,
+                readmem(action+LAZY_OFFSET(irqaction_next), KVADDR,
                         &action, sizeof(void *),
                         "irqaction dev_id", FAULT_ON_ERROR);
                 fprintf(fp, "             next: %lx\n", action);
@@ -7284,13 +7284,13 @@ do_linked_action_v2:
 		CENTER, "(unused)"));
 
 	if (action) {
-		readmem(action+OFFSET(irqaction_name), KVADDR,
+		readmem(action+LAZY_OFFSET(irqaction_name), KVADDR,
 			&tmp1, sizeof(void *),
 			"irqaction name", FAULT_ON_ERROR);
 		if (read_string(tmp1, buf, BUFSIZE-1))
 			fprintf(fp, "\"%s\"", buf);
 
-                readmem(action+OFFSET(irqaction_next), KVADDR,
+                readmem(action+LAZY_OFFSET(irqaction_next), KVADDR,
                         &action, sizeof(void *),
                         "irqaction next", FAULT_ON_ERROR);
 		if (action) {
@@ -7333,12 +7333,12 @@ generic_get_irq_affinity(int irq)
 		len = DIV_ROUND_UP(kt->cpus, BITS_PER_LONG) * sizeof(ulong);
 
 	affinity = (ulong *)GETBUF(len);
-	if (VALID_MEMBER(irq_common_data_affinity))
-		tmp_addr = irq_desc_addr + OFFSET(irq_desc_irq_common_data)
-				+ OFFSET(irq_common_data_affinity);
-	else if (VALID_MEMBER(irq_data_affinity))
+	if (VALID_MEMBER_LAZY(irq_common_data_affinity))
+		tmp_addr = irq_desc_addr + LAZY_OFFSET(irq_desc_irq_common_data)
+				+ LAZY_OFFSET(irq_common_data_affinity);
+	else if (VALID_MEMBER_LAZY(irq_data_affinity))
 		tmp_addr = irq_desc_addr + \
-			   OFFSET(irq_data_affinity);
+			   LAZY_OFFSET(irq_data_affinity);
 	else
 		tmp_addr = irq_desc_addr + \
 			   OFFSET(irq_desc_t_affinity);
@@ -7358,7 +7358,7 @@ generic_get_irq_affinity(int irq)
 	BZERO(name_buf, BUFSIZE);
 
 	while (action) {
-		readmem(action+OFFSET(irqaction_name), KVADDR,
+		readmem(action+LAZY_OFFSET(irqaction_name), KVADDR,
 		        &name, sizeof(void *),
 		        "irqaction name", FAULT_ON_ERROR);
 		BZERO(buf, BUFSIZE);
@@ -7368,7 +7368,7 @@ generic_get_irq_affinity(int irq)
 			strcat(name_buf, buf);
 		}
 
-		readmem(action+OFFSET(irqaction_next), KVADDR,
+		readmem(action+LAZY_OFFSET(irqaction_next), KVADDR,
 		        &action, sizeof(void *),
 		        "irqaction dev_id", FAULT_ON_ERROR);
 	}
@@ -7417,7 +7417,7 @@ generic_show_interrupts(int irq, ulong *cpus)
 				continue;
 
 			tmp = percpu_sp->value + kt->__per_cpu_offset[i];
-			readmem(tmp + OFFSET(kernel_stat_irqs) + sizeof(uint) * irq,
+			readmem(tmp + LAZY_OFFSET(kernel_stat_irqs) + sizeof(uint) * irq,
 			        KVADDR, &kstat_irq, sizeof(uint),
 			        "kernel_stat irqs", FAULT_ON_ERROR);
 			kstat_irqs[i] = kstat_irq;
@@ -7449,10 +7449,10 @@ generic_show_interrupts(int irq, ulong *cpus)
 		readmem(irq_desc_addr + OFFSET(irq_desc_t_chip), KVADDR,
 		        &handler, sizeof(long), "irq_desc chip",
 		        FAULT_ON_ERROR);
-	else if (VALID_MEMBER(irq_data_chip)) {
-		tmp = irq_desc_addr + OFFSET(irq_data_chip);
-		if (VALID_MEMBER(irq_desc_irq_data))
-			tmp += OFFSET(irq_desc_irq_data);
+	else if (VALID_MEMBER_LAZY(irq_data_chip)) {
+		tmp = irq_desc_addr + LAZY_OFFSET(irq_data_chip);
+		if (VALID_MEMBER_LAZY(irq_desc_irq_data))
+			tmp += LAZY_OFFSET(irq_desc_irq_data);
 		readmem(tmp, KVADDR, &handler, sizeof(long), "irq_data chip",
 			FAULT_ON_ERROR);
 	}
@@ -7468,8 +7468,8 @@ generic_show_interrupts(int irq, ulong *cpus)
 	}
 
 	if (handler != UNINITIALIZED) {
-		if (VALID_MEMBER(hw_interrupt_type_typename)) {
-			readmem(handler+OFFSET(hw_interrupt_type_typename),
+		if (VALID_MEMBER_LAZY(hw_interrupt_type_typename)) {
+			readmem(handler+LAZY_OFFSET(hw_interrupt_type_typename),
 			        KVADDR,	&tmp, sizeof(void *),
 			        "hw_interrupt_type typename", FAULT_ON_ERROR);
 
@@ -7477,8 +7477,8 @@ generic_show_interrupts(int irq, ulong *cpus)
 			if (read_string(tmp, buf, BUFSIZE-1))
 				fprintf(fp, "%14s", buf);
 		}
-		else if (VALID_MEMBER(irq_chip_typename)) {
-			readmem(handler+OFFSET(irq_chip_typename),
+		else if (VALID_MEMBER_LAZY(irq_chip_typename)) {
+			readmem(handler+LAZY_OFFSET(irq_chip_typename),
 			        KVADDR,	&tmp, sizeof(void *),
 			        "hw_interrupt_type typename", FAULT_ON_ERROR);
 
@@ -7498,7 +7498,7 @@ generic_show_interrupts(int irq, ulong *cpus)
 	BZERO(name_buf, BUFSIZE);
 
 	while (action) {
-		readmem(action+OFFSET(irqaction_name), KVADDR,
+		readmem(action+LAZY_OFFSET(irqaction_name), KVADDR,
 		        &name, sizeof(void *),
 		        "irqaction name", FAULT_ON_ERROR);
 		BZERO(buf2, BUFSIZE);
@@ -7508,7 +7508,7 @@ generic_show_interrupts(int irq, ulong *cpus)
 			strcat(name_buf, buf2);
 		}
 
-		readmem(action+OFFSET(irqaction_next), KVADDR,
+		readmem(action+LAZY_OFFSET(irqaction_next), KVADDR,
 		        &action, sizeof(void *),
 		        "irqaction dev_id", FAULT_ON_ERROR);
 	}
@@ -7633,13 +7633,13 @@ display_bh_3(void)
 	for (i = 0; i < kt->cpus; i++) {
 		readmem(symbol_value("irq_stat") + 
 			(i * SIZE(irq_cpustat_t)) +
-			OFFSET(irq_cpustat_t___softirq_active), KVADDR,
+			LAZY_OFFSET(irq_cpustat_t___softirq_active), KVADDR,
 			&active, sizeof(uint),
 			"__softirq_active", FAULT_ON_ERROR);
 
                 readmem(symbol_value("irq_stat") +
                         (i * SIZE(irq_cpustat_t)) +
-                        OFFSET(irq_cpustat_t___softirq_mask), KVADDR,
+                        LAZY_OFFSET(irq_cpustat_t___softirq_mask), KVADDR,
                         &mask, sizeof(uint),
                         "__softirq_mask", FAULT_ON_ERROR);
 
@@ -7850,9 +7850,9 @@ dump_hrtimer_clock_base(const void *hrtimer_bases, const int num)
 	ulong get_time;
 	char buf[BUFSIZE];
 
-	base = (void *)hrtimer_bases + OFFSET(hrtimer_cpu_base_clock_base) +
+	base = (void *)hrtimer_bases + LAZY_OFFSET(hrtimer_cpu_base_clock_base) +
 		SIZE(hrtimer_clock_base) * num;
-	readmem((ulong)(base + OFFSET(hrtimer_clock_base_get_time)), KVADDR,
+	readmem((ulong)(base + LAZY_OFFSET(hrtimer_clock_base_get_time)), KVADDR,
 		&get_time, sizeof(get_time), "hrtimer_clock_base get_time",
 		FAULT_ON_ERROR);
 	fprintf(fp, "  CLOCK: %d  HRTIMER_CLOCK_BASE: %lx  [%s]\n", num, 
@@ -7862,8 +7862,8 @@ dump_hrtimer_clock_base(const void *hrtimer_bases, const int num)
 	get_uptime(NULL, &current_time);
 
 	offset = 0;
-	if (VALID_MEMBER(hrtimer_clock_base_offset))
-		offset = ktime_to_ns(base + OFFSET(hrtimer_clock_base_offset));
+	if (VALID_MEMBER_LAZY(hrtimer_clock_base_offset))
+		offset = ktime_to_ns(base + LAZY_OFFSET(hrtimer_clock_base_offset));
 	now = current_time * (1000000000LL / machdep->hz) + offset;
 
 	dump_active_timers(base, now);
@@ -7878,7 +7878,7 @@ dump_hrtimer_base(const void *hrtimer_bases, const int num)
 	char buf[BUFSIZE];
 	
 	base = (void *)hrtimer_bases + SIZE(hrtimer_base) * num;
-	readmem((ulong)(base + OFFSET(hrtimer_base_get_time)), KVADDR,
+	readmem((ulong)(base + LAZY_OFFSET(hrtimer_base_get_time)), KVADDR,
 		&get_time, sizeof(get_time), "hrtimer_base get_time",
 		FAULT_ON_ERROR);
 	fprintf(fp, "  CLOCK: %d  HRTIMER_BASE: %lx  [%s]\n", num, 
@@ -7915,28 +7915,28 @@ next_one:
 	i = 0;
 
 	/* get the first node */
-	if (VALID_MEMBER(hrtimer_base_pending))
-		readmem((ulong)(base + OFFSET(hrtimer_base_pending) -
-			OFFSET(hrtimer_list) + OFFSET(hrtimer_node)),
+	if (VALID_MEMBER_LAZY(hrtimer_base_pending))
+		readmem((ulong)(base + LAZY_OFFSET(hrtimer_base_pending) -
+			LAZY_OFFSET(hrtimer_list) + LAZY_OFFSET(hrtimer_node)),
 			KVADDR, &curr, sizeof(curr), "hrtimer_base pending",
 			FAULT_ON_ERROR);
-	else if (VALID_MEMBER(hrtimer_base_first))
-		readmem((ulong)(base + OFFSET(hrtimer_base_first)),
+	else if (VALID_MEMBER_LAZY(hrtimer_base_first))
+		readmem((ulong)(base + LAZY_OFFSET(hrtimer_base_first)),
 			KVADDR, &curr, sizeof(curr), "hrtimer_base first",
 			FAULT_ON_ERROR);
-	else if (VALID_MEMBER(hrtimer_clock_base_first))
-		readmem((ulong)(base + OFFSET(hrtimer_clock_base_first)),
+	else if (VALID_MEMBER_LAZY(hrtimer_clock_base_first))
+		readmem((ulong)(base + LAZY_OFFSET(hrtimer_clock_base_first)),
 			KVADDR,	&curr, sizeof(curr), "hrtimer_clock_base first",
 			FAULT_ON_ERROR);
-	else if (VALID_MEMBER(timerqueue_head_next))
-		readmem((ulong)(base + OFFSET(hrtimer_clock_base_active) +
-				OFFSET(timerqueue_head_next)),
+	else if (VALID_MEMBER_LAZY(timerqueue_head_next))
+		readmem((ulong)(base + LAZY_OFFSET(hrtimer_clock_base_active) +
+				LAZY_OFFSET(timerqueue_head_next)),
 			KVADDR, &curr, sizeof(curr), "hrtimer_clock base",
 			FAULT_ON_ERROR);
 	else
-		readmem((ulong)(base + OFFSET(hrtimer_clock_base_active) +
-				OFFSET(timerqueue_head_rb_root) +
-				OFFSET(rb_root_cached_rb_leftmost)),
+		readmem((ulong)(base + LAZY_OFFSET(hrtimer_clock_base_active) +
+				LAZY_OFFSET(timerqueue_head_rb_root) +
+				LAZY_OFFSET(rb_root_cached_rb_leftmost)),
 			KVADDR, &curr, sizeof(curr),
 			"hrtimer_clock_base active", FAULT_ON_ERROR);
 
@@ -8003,12 +8003,12 @@ next_one:
 
 	/* print timers */
 	for (t = 0; t < timer_cnt; t++) {
-		if (VALID_MEMBER(timerqueue_node_node))
+		if (VALID_MEMBER_LAZY(timerqueue_node_node))
 			timer = (void *)(timer_list[t] -
-				OFFSET(timerqueue_node_node) -
-				OFFSET(hrtimer_node));
+				LAZY_OFFSET(timerqueue_node_node) -
+				LAZY_OFFSET(hrtimer_node));
 		else
-			timer = (void *)(timer_list[t] - OFFSET(hrtimer_node));
+			timer = (void *)(timer_list[t] - LAZY_OFFSET(hrtimer_node));
 
 		print_timer(timer, now);
 	}
@@ -8027,19 +8027,19 @@ get_expires_len(const int timer_cnt, const ulong *timer_list, ulonglong now, con
 	if (!timer_cnt)
 		return len;
 
-	if (VALID_MEMBER(timerqueue_node_node))
+	if (VALID_MEMBER_LAZY(timerqueue_node_node))
 		last_timer = (void *)(timer_list[timer_cnt - 1] -
-			OFFSET(timerqueue_node_node) -
-			OFFSET(hrtimer_node));
+			LAZY_OFFSET(timerqueue_node_node) -
+			LAZY_OFFSET(hrtimer_node));
 	else
 		last_timer = (void *)(timer_list[timer_cnt -1] -
-			OFFSET(hrtimer_node));
+			LAZY_OFFSET(hrtimer_node));
 
 	if (getsoft == 1) {
 		/* soft expires exist*/
-		if (VALID_MEMBER(hrtimer_softexpires)) {
+		if (VALID_MEMBER_LAZY(hrtimer_softexpires)) {
 			softexpires = ktime_to_ns(last_timer + 
-				OFFSET(hrtimer_softexpires));
+				LAZY_OFFSET(hrtimer_softexpires));
 			sprintf(buf, "%lld", softexpires);
 			len = strlen(buf);
 		}
@@ -8047,8 +8047,8 @@ get_expires_len(const int timer_cnt, const ulong *timer_list, ulonglong now, con
 		if (VALID_MEMBER(hrtimer_expires))
 			expires = ktime_to_ns(last_timer + OFFSET(hrtimer_expires));
 		else
-			expires = ktime_to_ns(last_timer + OFFSET(hrtimer_node) +
-				OFFSET(timerqueue_node_expires));
+			expires = ktime_to_ns(last_timer + LAZY_OFFSET(hrtimer_node) +
+				LAZY_OFFSET(timerqueue_node_expires));
 
 		sprintf(buf, "%lld", getsoft ? expires - now : expires);
 		len = strlen(buf);
@@ -8082,16 +8082,16 @@ print_timer(const void *timer, ulonglong now)
 	if (VALID_MEMBER(hrtimer_expires))
 		expires = ktime_to_ns(timer + OFFSET(hrtimer_expires));
 	else
-		expires = ktime_to_ns(timer + OFFSET(hrtimer_node) +
-			OFFSET(timerqueue_node_expires));
+		expires = ktime_to_ns(timer + LAZY_OFFSET(hrtimer_node) +
+			LAZY_OFFSET(timerqueue_node_expires));
 
-	if (VALID_MEMBER(hrtimer_softexpires)) {
-		softexpires = ktime_to_ns(timer + OFFSET(hrtimer_softexpires));
+	if (VALID_MEMBER_LAZY(hrtimer_softexpires)) {
+		softexpires = ktime_to_ns(timer + LAZY_OFFSET(hrtimer_softexpires));
 		sprintf(buf1, "%lld-%lld", softexpires, expires);
 	}
 
-	if (VALID_MEMBER(hrtimer_softexpires)) {
-		softexpires = ktime_to_ns(timer + OFFSET(hrtimer_softexpires));
+	if (VALID_MEMBER_LAZY(hrtimer_softexpires)) {
+		softexpires = ktime_to_ns(timer + LAZY_OFFSET(hrtimer_softexpires));
 		sprintf(buf1, "%lld", softexpires);
 		fprintf(fp, "%s  ",
 			mkstring(buf2, softexpires_len, CENTER|RJUST, buf1));
@@ -8105,7 +8105,7 @@ print_timer(const void *timer, ulonglong now)
 
 	fprintf(fp, "%lx  ", (ulong)timer);
 
-	if (readmem((ulong)(timer + OFFSET(hrtimer_function)), KVADDR, &function,
+	if (readmem((ulong)(timer + LAZY_OFFSET(hrtimer_function)), KVADDR, &function,
 		sizeof(function), "hrtimer function", QUIET|RETURN_ON_ERROR)) {
 		fprintf(fp, "%lx  ", function);
 		fprintf(fp ,"<%s>", value_to_symstr(function, buf3, 0));
@@ -8240,15 +8240,15 @@ dump_timer_data(const ulong *cpus)
 
 	init_tv_ranges(tv, vec_root_size, vec_size, 0);
 
-        count += do_timer_list(symbol_value("tv1") + OFFSET(timer_vec_root_vec),
+        count += do_timer_list(symbol_value("tv1") + LAZY_OFFSET(timer_vec_root_vec),
 		vec_root_size, vec, NULL, NULL, NULL, tv, 0);
-        count += do_timer_list(symbol_value("tv2") + OFFSET(timer_vec_vec),
+        count += do_timer_list(symbol_value("tv2") + LAZY_OFFSET(timer_vec_vec),
 		vec_size, vec, NULL, NULL, NULL, tv, 0);
-        count += do_timer_list(symbol_value("tv3") + OFFSET(timer_vec_vec),
+        count += do_timer_list(symbol_value("tv3") + LAZY_OFFSET(timer_vec_vec),
 		vec_size, vec, NULL, NULL, NULL, tv, 0);
-        count += do_timer_list(symbol_value("tv4") + OFFSET(timer_vec_vec),
+        count += do_timer_list(symbol_value("tv4") + LAZY_OFFSET(timer_vec_vec),
 		vec_size, vec, NULL, NULL, NULL, tv, 0);
-        count += do_timer_list(symbol_value("tv4") + OFFSET(timer_vec_vec),
+        count += do_timer_list(symbol_value("tv4") + LAZY_OFFSET(timer_vec_vec),
 		vec_size, vec, NULL, NULL, NULL, tv, 0);
 
 	td = (struct timer_data *)
@@ -8281,15 +8281,15 @@ dump_timer_data(const ulong *cpus)
 		tdx++;
         }
 
-	do_timer_list(symbol_value("tv1") + OFFSET(timer_vec_root_vec),
+	do_timer_list(symbol_value("tv1") + LAZY_OFFSET(timer_vec_root_vec),
 		vec_root_size, vec, (void *)td, &highest, &highest_tte, tv, jiffies);
-	do_timer_list(symbol_value("tv2") + OFFSET(timer_vec_vec),
+	do_timer_list(symbol_value("tv2") + LAZY_OFFSET(timer_vec_vec),
 		vec_size, vec, (void *)td, &highest, &highest_tte, tv, jiffies);
-	do_timer_list(symbol_value("tv3") + OFFSET(timer_vec_vec),
+	do_timer_list(symbol_value("tv3") + LAZY_OFFSET(timer_vec_vec),
 		vec_size, vec, (void *)td, &highest, &highest_tte, tv, jiffies);
-	do_timer_list(symbol_value("tv4") + OFFSET(timer_vec_vec),
+	do_timer_list(symbol_value("tv4") + LAZY_OFFSET(timer_vec_vec),
 		vec_size, vec, (void *)td, &highest, &highest_tte, tv, jiffies);
-	tdx = do_timer_list(symbol_value("tv5") + OFFSET(timer_vec_vec),
+	tdx = do_timer_list(symbol_value("tv5") + LAZY_OFFSET(timer_vec_vec),
 		vec_size, vec, (void *)td, &highest, &highest_tte, tv, jiffies);
 
         qsort(td, tdx, sizeof(struct timer_data), compare_timer_data);
@@ -8930,9 +8930,9 @@ do_timer_list(ulong vec_kvaddr,
 			tdx++;
 	}
 
-        if (VALID_MEMBER(timer_list_list))
+        if (VALID_MEMBER_LAZY(timer_list_list))
 		sz = SIZE(list_head) * size;
-	else if (VALID_MEMBER(timer_list_entry))
+	else if (VALID_MEMBER_LAZY(timer_list_entry))
 		sz = SIZE(list_head) * size;
 	else 
 		sz = sizeof(ulong) * size;
@@ -8940,18 +8940,18 @@ do_timer_list(ulong vec_kvaddr,
         readmem(vec_kvaddr, KVADDR, vec, sz, "timer_list vec array",
                 FAULT_ON_ERROR);
 
-	if (VALID_MEMBER(timer_list_list)) {
-		offset = OFFSET(timer_list_list);
+	if (VALID_MEMBER_LAZY(timer_list_list)) {
+		offset = LAZY_OFFSET(timer_list_list);
 		goto new_timer_list_format;
 	}
 
-	if (VALID_MEMBER(timer_list_entry)) {
-		offset = OFFSET(timer_list_entry);
+	if (VALID_MEMBER_LAZY(timer_list_entry)) {
+		offset = LAZY_OFFSET(timer_list_entry);
 		goto new_timer_list_format;
 	}
 
-	if (VALID_MEMBER(timer_list_next))
-		offset = OFFSET(timer_list_next);
+	if (VALID_MEMBER_LAZY(timer_list_next))
+		offset = LAZY_OFFSET(timer_list_next);
 	else
 		error(FATAL, "no timer_list next, list, or entry members?\n");
 
@@ -8980,9 +8980,9 @@ do_timer_list(ulong vec_kvaddr,
                                         FAULT_ON_ERROR);
 
                                 expires = ULONG(timer_list_buf +
-                                        OFFSET(timer_list_expires));
+                                        LAZY_OFFSET(timer_list_expires));
                                 function = ULONG(timer_list_buf +
-                                        OFFSET(timer_list_function));
+                                        LAZY_OFFSET(timer_list_function));
 
                                 if (td) {
                                         td[tdx].address = timer_list[t];
@@ -9047,9 +9047,9 @@ new_timer_list_format:
                                 FAULT_ON_ERROR);
 
                         expires = ULONG(timer_list_buf + 
-				OFFSET(timer_list_expires));
+				LAZY_OFFSET(timer_list_expires));
                         function = ULONG(timer_list_buf +
-                        	OFFSET(timer_list_function));
+                        	LAZY_OFFSET(timer_list_function));
 
                         if (td) {
                                 td[tdx].address = timer_list[t];
@@ -9115,7 +9115,7 @@ do_timer_list_v3(ulong vec_kvaddr,
 
 		BZERO(ld, sizeof(struct list_data));
 		ld->start = (head_size == SIZE(list_head)) ? vec[i*2] : vec[i];
-		ld->list_head_offset = OFFSET(timer_list_entry);
+		ld->list_head_offset = LAZY_OFFSET(timer_list_entry);
 		ld->end = vec_kvaddr;
 		ld->flags = RETURN_ON_LIST_ERROR;
 
@@ -9142,9 +9142,9 @@ do_timer_list_v3(ulong vec_kvaddr,
 				FAULT_ON_ERROR);
 
 			expires = ULONG(timer_list_buf + 
-				OFFSET(timer_list_expires));
+				LAZY_OFFSET(timer_list_expires));
 			function = ULONG(timer_list_buf +
-				OFFSET(timer_list_function));
+				LAZY_OFFSET(timer_list_function));
 
 			if (td) {
 				td[tdx].address = timer_list[t];
@@ -9194,12 +9194,12 @@ do_timer_list_v4(struct timer_bases_data *data, ulong jiffies)
 
 		if (CRASHDEBUG(1))
 			fprintf(fp, "%lx vectors[%d]: %lx\n", 
-			    data->timer_base + OFFSET(timer_base_vectors) + (i * sizeof(void *)), 
+			    data->timer_base + LAZY_OFFSET(timer_base_vectors) + (i * sizeof(void *)), 
 				i, data->vectors[i]);
 
 		BZERO(ld, sizeof(struct list_data));
 		ld->start = data->vectors[i];
-		ld->list_head_offset = OFFSET(timer_list_entry);
+		ld->list_head_offset = LAZY_OFFSET(timer_list_entry);
 		ld->end = 0;
 		ld->flags = RETURN_ON_LIST_ERROR;
 
@@ -9230,8 +9230,8 @@ do_timer_list_v4(struct timer_bases_data *data, ulong jiffies)
 			    SIZE(timer_list), "timer_list buffer", QUIET|RETURN_ON_ERROR))
 				continue;
 
-			expires = ULONG(timer_list_buf + OFFSET(timer_list_expires));
-			function = ULONG(timer_list_buf + OFFSET(timer_list_function));
+			expires = ULONG(timer_list_buf + LAZY_OFFSET(timer_list_expires));
+			function = ULONG(timer_list_buf + LAZY_OFFSET(timer_list_function));
 
 			data->timers[data->cnt].address = timer_list[t];
 			data->timers[data->cnt].expires = expires;
@@ -9319,7 +9319,7 @@ next_base:
 	fprintf(fp, "TIMER_BASES[%d][%s]: %lx\n", cpu,  
 		base == 0 ? "BASE_STD" : "BASE_DEF", timer_base);
 
-	readmem(timer_base + OFFSET(timer_base_vectors), KVADDR, data.vectors, 
+	readmem(timer_base + LAZY_OFFSET(timer_base_vectors), KVADDR, data.vectors, 
 		data.num_vectors * sizeof(void *), "timer_base.vectors[]", FAULT_ON_ERROR); 
 	data.cnt = 0;
 	data.timer_base = timer_base;
@@ -9436,7 +9436,7 @@ panic_this_kernel(void)
 	if (!(pc->flags & MFD_RDWR) || (pc->flags & MEMMOD))
 		error(FATAL, "cannot write to %s\n", pc->live_memsrc);
 
-	writemem(pid_to_task(pc->program_pid) + OFFSET(task_struct_pid), KVADDR,
+	writemem(pid_to_task(pc->program_pid) + LAZY_OFFSET(task_struct_pid), KVADDR,
 		&zero_pid, sizeof(pid_t), "zero pid", FAULT_ON_ERROR);
 
 	clean_exit(0);
@@ -9534,8 +9534,8 @@ dump_waitq(ulong wq, char *wq_name)
 	 * setup list depending on how the wait queues are organized.
 	 */
 	if (VALID_STRUCT(wait_queue)) {
-		task_offset = OFFSET(wait_queue_task);
-		next_offset = OFFSET(wait_queue_next);
+		task_offset = LAZY_OFFSET(wait_queue_task);
+		next_offset = LAZY_OFFSET(wait_queue_next);
 		ld->end = wq;
 		ld->start = wq;
 		ld->member_offset = next_offset;
@@ -9545,22 +9545,22 @@ dump_waitq(ulong wq, char *wq_name)
 	} else if (VALID_STRUCT(__wait_queue)) {
 		ulong task_list_offset;
 
-                next_offset = OFFSET(list_head_next);
+                next_offset = LAZY_OFFSET(list_head_next);
                 task_offset = OFFSET(__wait_queue_task);
-                task_list_offset = OFFSET(__wait_queue_head_task_list);
+                task_list_offset = LAZY_OFFSET(__wait_queue_head_task_list);
                 ld->end = ld->start = wq + task_list_offset + next_offset;
-                ld->list_head_offset = OFFSET(__wait_queue_task_list);
+                ld->list_head_offset = LAZY_OFFSET(__wait_queue_task_list);
                 ld->member_offset = next_offset;
 
 		start_index = 1;
 	} else if (VALID_STRUCT(wait_queue_entry)) {
 		ulong head_offset;
 
-		next_offset = OFFSET(list_head_next);
-		task_offset = OFFSET(wait_queue_entry_private);
-		head_offset = OFFSET(wait_queue_head_head);
+		next_offset = LAZY_OFFSET(list_head_next);
+		task_offset = LAZY_OFFSET(wait_queue_entry_private);
+		head_offset = LAZY_OFFSET(wait_queue_head_head);
 		ld->end = ld->start = wq + head_offset + next_offset;
-		ld->list_head_offset = OFFSET(wait_queue_entry_entry);
+		ld->list_head_offset = LAZY_OFFSET(wait_queue_entry_entry);
 		ld->member_offset = next_offset;
 
 		start_index = 1;
@@ -10901,20 +10901,20 @@ get_xtime(struct timespec *date)
 	struct syment *sp;
 	uint64_t xtime_sec;
 
-	if (VALID_MEMBER(timekeeper_xtime) &&
+	if (VALID_MEMBER_LAZY(timekeeper_xtime) &&
 	    (sp = kernel_symbol_search("timekeeper"))) {
-                readmem(sp->value + OFFSET(timekeeper_xtime), KVADDR, 
+                readmem(sp->value + LAZY_OFFSET(timekeeper_xtime), KVADDR, 
 			date, sizeof(struct timespec),
                         "timekeeper xtime", RETURN_ON_ERROR);
-	} else if (VALID_MEMBER(timekeeper_xtime_sec) &&
+	} else if (VALID_MEMBER_LAZY(timekeeper_xtime_sec) &&
 	    (sp = kernel_symbol_search("timekeeper"))) {
-                readmem(sp->value + OFFSET(timekeeper_xtime_sec), KVADDR, 
+                readmem(sp->value + LAZY_OFFSET(timekeeper_xtime_sec), KVADDR, 
 			&xtime_sec, sizeof(uint64_t),
                         "timekeeper xtime_sec", RETURN_ON_ERROR);
 		date->tv_sec = (__time_t)xtime_sec;
-	} else if (VALID_MEMBER(timekeeper_xtime_sec) &&
+	} else if (VALID_MEMBER_LAZY(timekeeper_xtime_sec) &&
 	    (sp = kernel_symbol_search("shadow_timekeeper"))) {
-                readmem(sp->value + OFFSET(timekeeper_xtime_sec), KVADDR, 
+                readmem(sp->value + LAZY_OFFSET(timekeeper_xtime_sec), KVADDR, 
 			&xtime_sec, sizeof(uint64_t),
                         "shadow_timekeeper xtime_sec", RETURN_ON_ERROR);
 		date->tv_sec = (__time_t)xtime_sec;
@@ -11420,7 +11420,7 @@ show_kernel_taints(char *buf, int verbose)
 
 	if (VALID_STRUCT(tnt)) {
 		for (i = 0; i < (tnts_len * SIZE(tnt)); i += SIZE(tnt)) {
-			readmem((tnts_addr + i) + OFFSET(tnt_bit),
+			readmem((tnts_addr + i) + LAZY_OFFSET(tnt_bit),
 				KVADDR, &tnt_bit, sizeof(uint8_t),
 				"tnt bit", FAULT_ON_ERROR);
 
@@ -11551,7 +11551,7 @@ dump_audit_skb_queue(ulong audit_skb_queue)
 		MEMBER_SIZE_INIT(sk_buff_len, "sk_buff", "len");
 	}
 
-	readmem(audit_skb_queue + OFFSET(sk_buff_head_qlen),
+	readmem(audit_skb_queue + LAZY_OFFSET(sk_buff_head_qlen),
 		KVADDR,
 		&qlen,
 		SIZE(sk_buff_head_qlen),
@@ -11561,7 +11561,7 @@ dump_audit_skb_queue(ulong audit_skb_queue)
 	if (!qlen)
 		return 0;
 
-	readmem(audit_skb_queue + OFFSET(sk_buff_head_next),
+	readmem(audit_skb_queue + LAZY_OFFSET(sk_buff_head_next),
 		KVADDR,
 		&skb_buff_head_next,
 		sizeof(void *),
@@ -11581,7 +11581,7 @@ dump_audit_skb_queue(ulong audit_skb_queue)
 		if (CRASHDEBUG(2))
 			fprintf(fp, "%#016lx\n", p);
 
-		readmem(p + OFFSET(sk_buff_len),
+		readmem(p + LAZY_OFFSET(sk_buff_len),
 			KVADDR,
 			&len,
 			SIZE(sk_buff_len),
@@ -11590,7 +11590,7 @@ dump_audit_skb_queue(ulong audit_skb_queue)
 
 		data_len = len - roundup(SIZE(nlmsghdr), NLMSG_ALIGNTO);
 
-		readmem(p + OFFSET(sk_buff_data),
+		readmem(p + LAZY_OFFSET(sk_buff_data),
 			KVADDR,
 			&data,
 			sizeof(void *),
@@ -11600,7 +11600,7 @@ dump_audit_skb_queue(ulong audit_skb_queue)
 		if (!data)
 			error(FATAL, "sk_buff.data: NULL\n");
 
-		readmem(data + OFFSET(nlmsghdr_nlmsg_type),
+		readmem(data + LAZY_OFFSET(nlmsghdr_nlmsg_type),
 			KVADDR,
 			&nlmsg_type,
 			SIZE(nlmsghdr_nlmsg_type),
@@ -11619,7 +11619,7 @@ dump_audit_skb_queue(ulong audit_skb_queue)
 		fprintf(fp, "type=%u %s\n", nlmsg_type, buf);
 		FREEBUF(buf);
 
-		readmem(p + OFFSET(sk_buff_next),
+		readmem(p + LAZY_OFFSET(sk_buff_next),
 			KVADDR,
 			&p,
 			sizeof(void *),
@@ -11677,12 +11677,12 @@ __dump_printk_safe_seq_buf(char *buf_name, int msg_flags)
 	}
 
 	base_addr = symbol_value(buf_name);
-	len_addr = base_addr + OFFSET(printk_safe_seq_buf_len)
-			+ OFFSET(atomic_t_counter);
+	len_addr = base_addr + LAZY_OFFSET(printk_safe_seq_buf_len)
+			+ LAZY_OFFSET(atomic_t_counter);
 	message_lost_addr = base_addr
-			+ OFFSET(printk_safe_seq_buf_message_lost)
-			+ OFFSET(atomic_t_counter);
-	buffer_addr = base_addr + OFFSET(printk_safe_seq_buf_buffer);
+			+ LAZY_OFFSET(printk_safe_seq_buf_message_lost)
+			+ LAZY_OFFSET(atomic_t_counter);
+	buffer_addr = base_addr + LAZY_OFFSET(printk_safe_seq_buf_buffer);
 	buffer_size = SIZE(printk_safe_seq_buf_buffer);
 	buffer = GETBUF(buffer_size);
 
@@ -11788,15 +11788,15 @@ dump_printk_safe_seq_buf(int msg_flags)
 		MEMBER_OFFSET_INIT(printk_safe_seq_buf_buffer,
 			"printk_safe_seq_buf", "buffer");
 
-		if (!INVALID_MEMBER(printk_safe_seq_buf_buffer)) {
+		if (!INVALID_MEMBER_LAZY(printk_safe_seq_buf_buffer)) {
 			MEMBER_SIZE_INIT(printk_safe_seq_buf_buffer,
 				"printk_safe_seq_buf", "buffer");
 		}
 	}
 
-	if (INVALID_MEMBER(printk_safe_seq_buf_len) ||
-	    INVALID_MEMBER(printk_safe_seq_buf_message_lost) ||
-	    INVALID_MEMBER(printk_safe_seq_buf_buffer) ||
+	if (INVALID_MEMBER_LAZY(printk_safe_seq_buf_len) ||
+	    INVALID_MEMBER_LAZY(printk_safe_seq_buf_message_lost) ||
+	    INVALID_MEMBER_LAZY(printk_safe_seq_buf_buffer) ||
 	    INVALID_SIZE(printk_safe_seq_buf_buffer)) {
 		if (msg_flags & SHOW_LOG_SAFE)
 			error(INFO, "-s not supported with this kernel version\n");

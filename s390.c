@@ -247,7 +247,7 @@ static int
 s390_uvtop(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbose)
 {
 	unsigned long pgd_base;
-	readmem(tc->mm_struct + OFFSET(mm_struct_pgd), KVADDR, 
+	readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), KVADDR, 
 		&pgd_base,sizeof(long), "pgd_base",FAULT_ON_ERROR);
 	return s390_vtop(pgd_base, vaddr, paddr, verbose);
 }
@@ -542,9 +542,9 @@ s390_cpu_of_task(unsigned long task)
 {
 	int cpu;
 
-       if(VALID_MEMBER(task_struct_processor)){
+       if(VALID_MEMBER_LAZY(task_struct_processor)){
                 /* linux 2.4 */
-                readmem(task + OFFSET(task_struct_processor),KVADDR,
+                readmem(task + LAZY_OFFSET(task_struct_processor),KVADDR,
                         &cpu, sizeof(cpu), "task_struct_processor",
                         FAULT_ON_ERROR);
         } else {
@@ -555,7 +555,7 @@ s390_cpu_of_task(unsigned long task)
 			"thread info addr", FAULT_ON_ERROR);
 		readmem(thread_info_addr,KVADDR,thread_info,sizeof(thread_info),
 			"thread info", FAULT_ON_ERROR);
-		cpu = *((int*) &thread_info[OFFSET(thread_info_cpu)]);
+		cpu = *((int*) &thread_info[LAZY_OFFSET(thread_info_cpu)]);
 	}
 	return cpu;
 }

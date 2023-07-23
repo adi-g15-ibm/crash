@@ -1645,9 +1645,9 @@ alpha_uvtop(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbose
 		else {
                 	if ((mm = task_mm(tc->task, TRUE)))
                         	pgd = ULONG_PTR(tt->mm_struct +
-                                	OFFSET(mm_struct_pgd));
+                                	LAZY_OFFSET(mm_struct_pgd));
 			else
-				readmem(tc->mm_struct + OFFSET(mm_struct_pgd), 
+				readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), 
 					KVADDR, &pgd, sizeof(long), 
 					"mm_struct pgd", FAULT_ON_ERROR);
 		}
@@ -1814,7 +1814,7 @@ alpha_get_task_pgd(ulong task)
 
 	offset = OFFSET_OPTION(task_struct_thread, task_struct_tss);
 
-	offset += OFFSET(thread_struct_ptbr);
+	offset += LAZY_OFFSET(thread_struct_ptbr);
 
         readmem(task + offset, KVADDR, &ptbr,
                 sizeof(ulong), "task thread ptbr", FAULT_ON_ERROR);
@@ -1839,7 +1839,7 @@ alpha_processor_speed(void)
 	mhz = 0;
 
 	get_symbol_data("hwrpb", sizeof(void *), &hwrpb);
-	offset = OFFSET(hwrpb_struct_cycle_freq);
+	offset = LAZY_OFFSET(hwrpb_struct_cycle_freq);
 
 	if (!hwrpb || (offset == -1) || 
 	    !readmem(hwrpb+offset, KVADDR, &cycle_freq,
@@ -2373,8 +2373,8 @@ percpu_retry:
 	 *  Check for a forked task that has not yet run in user space.
 	 */
 	if (!ip) {
-                if (INSTACK(ksp + OFFSET(switch_stack_r26), bt)) {
-                        readmem(ksp + OFFSET(switch_stack_r26), KVADDR, 
+                if (INSTACK(ksp + LAZY_OFFSET(switch_stack_r26), bt)) {
+                        readmem(ksp + LAZY_OFFSET(switch_stack_r26), KVADDR, 
 				&r26, sizeof(ulong),
                                 "ret_from_smp_fork check", FAULT_ON_ERROR);
                         if (STREQ(closest_symbol(r26), "ret_from_smp_fork") ||
@@ -2406,26 +2406,26 @@ get_percpu_data(int cpu, ulong flag, struct percpu_data *pd)
 
         get_symbol_data("hwrpb", sizeof(void *), &hwrpb);
 
-        readmem(hwrpb+OFFSET(hwrpb_struct_processor_offset), KVADDR,
+        readmem(hwrpb+LAZY_OFFSET(hwrpb_struct_processor_offset), KVADDR,
                 &processor_offset, sizeof(ulong),
                 "hwrpb processor_offset", FAULT_ON_ERROR);
 
-        readmem(hwrpb+OFFSET(hwrpb_struct_processor_size), KVADDR,
+        readmem(hwrpb+LAZY_OFFSET(hwrpb_struct_processor_size), KVADDR,
                 &processor_size, sizeof(ulong),
                 "hwrpb processor_size", FAULT_ON_ERROR);
 
         readmem(hwrpb + processor_offset + (cpu * processor_size) +
-                OFFSET(percpu_struct_halt_PC),
+                LAZY_OFFSET(percpu_struct_halt_PC),
                 KVADDR, &halt_PC, sizeof(ulong),
                 "percpu halt_PC", FAULT_ON_ERROR);
 
         readmem(hwrpb + processor_offset + (cpu * processor_size) +
-                OFFSET(percpu_struct_halt_ra),
+                LAZY_OFFSET(percpu_struct_halt_ra),
                 KVADDR, &halt_ra, sizeof(ulong),
                 "percpu halt_ra", FAULT_ON_ERROR);
 
         readmem(hwrpb + processor_offset + (cpu * processor_size) +
-                OFFSET(percpu_struct_halt_pv),
+                LAZY_OFFSET(percpu_struct_halt_pv),
                 KVADDR, &halt_pv, sizeof(ulong),
                 "percpu halt_pv", FAULT_ON_ERROR);
 
@@ -2688,10 +2688,10 @@ display_hwrpb(unsigned int radix)
 	
         get_symbol_data("hwrpb", sizeof(void *), &hwrpb);
 
-        readmem(hwrpb+OFFSET(hwrpb_struct_processor_offset), KVADDR,
+        readmem(hwrpb+LAZY_OFFSET(hwrpb_struct_processor_offset), KVADDR,
                 &processor_offset, sizeof(ulong),
                 "hwrpb processor_offset", FAULT_ON_ERROR);
-        readmem(hwrpb+OFFSET(hwrpb_struct_processor_size), KVADDR,
+        readmem(hwrpb+LAZY_OFFSET(hwrpb_struct_processor_size), KVADDR,
                 &processor_size, sizeof(ulong),
                 "hwrpb processor_size", FAULT_ON_ERROR);
 

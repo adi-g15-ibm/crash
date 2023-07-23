@@ -861,12 +861,12 @@ gather_in_memory_unwind_tables(void)
 	MEMBER_OFFSET_INIT(unwind_table_name, "unwind_table", "name");
 
 	if (INVALID_SIZE(unwind_table) ||
-	    INVALID_MEMBER(unwind_table_core) ||
-	    INVALID_MEMBER(unwind_table_init) ||
-	    INVALID_MEMBER(unwind_table_address) ||
-	    INVALID_MEMBER(unwind_table_size) ||
-	    INVALID_MEMBER(unwind_table_link) ||
-	    INVALID_MEMBER(unwind_table_name)) {
+	    INVALID_MEMBER_LAZY(unwind_table_core) ||
+	    INVALID_MEMBER_LAZY(unwind_table_init) ||
+	    INVALID_MEMBER_LAZY(unwind_table_address) ||
+	    INVALID_MEMBER_LAZY(unwind_table_size) ||
+	    INVALID_MEMBER_LAZY(unwind_table_link) ||
+	    INVALID_MEMBER_LAZY(unwind_table_name)) {
 		if (CRASHDEBUG(1)) 
 			error(NOTE, 
 	    "unwind_table structure has changed, or does not exist in this kernel\n");
@@ -887,7 +887,7 @@ gather_in_memory_unwind_tables(void)
 		    RETURN_ON_ERROR|QUIET))
 			goto gather_failed;
 
-		name = ULONG(root_table_buf + OFFSET(unwind_table_name));
+		name = ULONG(root_table_buf + LAZY_OFFSET(unwind_table_name));
 		if (read_string(name, buf, strlen("kernel")+1) && 
 		    STREQ("kernel", buf)) {
 			found++;
@@ -928,7 +928,7 @@ populate_local_tables(ulong root, char *buf)
         ld = &list_data;
         BZERO(ld, sizeof(struct list_data));
         ld->start = root;
-        ld->member_offset = OFFSET(unwind_table_link);
+        ld->member_offset = LAZY_OFFSET(unwind_table_link);
 	ld->flags = RETURN_ON_LIST_ERROR;
 	if (CRASHDEBUG(1))
         	ld->flags |= VERBOSE;
@@ -965,17 +965,17 @@ populate_local_tables(ulong root, char *buf)
 		/*
 		 *  Copy the required table info for find_table().
 		 */
-        	BCOPY(buf + OFFSET(unwind_table_core),
+        	BCOPY(buf + LAZY_OFFSET(unwind_table_core),
                 	(char *)&tp->core.pc, sizeof(ulong)*2);
-        	BCOPY(buf + OFFSET(unwind_table_init),
+        	BCOPY(buf + LAZY_OFFSET(unwind_table_init),
                 	(char *)&tp->init.pc, sizeof(ulong)*2);
-        	BCOPY(buf + OFFSET(unwind_table_size),
+        	BCOPY(buf + LAZY_OFFSET(unwind_table_size),
                 	(char *)&tp->size, sizeof(ulong));
 
 		/*
 		 *  Then read the DWARF CFI data.
 		 */
-		vaddr = ULONG(buf + OFFSET(unwind_table_address));
+		vaddr = ULONG(buf + LAZY_OFFSET(unwind_table_address));
 
 		if (!(tp->address = malloc(tp->size))) {
 			error(WARNING, "cannot malloc unwind_table space\n");

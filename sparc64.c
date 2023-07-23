@@ -460,7 +460,7 @@ sparc64_init_kernel_pgd(void)
 	ulong v;
 
 	v = symbol_value("init_mm");
-	rc = readmem(v + OFFSET(mm_struct_pgd), KVADDR, &v, sizeof(v),
+	rc = readmem(v + LAZY_OFFSET(mm_struct_pgd), KVADDR, &v, sizeof(v),
 		"init_mm.pgd", RETURN_ON_ERROR);
 	if (!rc) {
 		error(WARNING, "Can not determine pgd location.\n");
@@ -723,7 +723,7 @@ sparc64_get_task_pgd(ulong task)
 
 	if (!tc)
 		goto out;
-	readmem(tc->mm_struct + OFFSET(mm_struct_pgd), KVADDR,
+	readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), KVADDR,
 		&pgd, sizeof(unsigned long), "User pgd.", RETURN_ON_ERROR);
 out:
 	return pgd;

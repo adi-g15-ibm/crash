@@ -1179,7 +1179,7 @@ riscv64_get_crash_notes(void)
 		offset = roundup(offset + note->n_namesz, 4);
 		p = buf + offset; /* start of elf_prstatus */
 
-		BCOPY(p + OFFSET(elf_prstatus_pr_reg), &panic_task_regs[i],
+		BCOPY(p + LAZY_OFFSET(elf_prstatus_pr_reg), &panic_task_regs[i],
 		      sizeof(panic_task_regs[i]));
 	}
 
@@ -1231,7 +1231,7 @@ riscv64_get_elf_notes(void)
 		len = sizeof(Elf64_Nhdr);
 		len = roundup(len + note->n_namesz, 4);
 
-		BCOPY((char *)note + len + OFFSET(elf_prstatus_pr_reg),
+		BCOPY((char *)note + len + LAZY_OFFSET(elf_prstatus_pr_reg),
 		      &panic_task_regs[i], sizeof(panic_task_regs[i]));
 	}
 
@@ -1255,7 +1255,7 @@ riscv64_uvtop(struct task_context *tc, ulong uvaddr, physaddr_t *paddr, int verb
 	*paddr = 0;
 
 	if (is_kernel_thread(tc->task) && IS_KVADDR(uvaddr)) {
-		readmem(tc->task + OFFSET(task_struct_active_mm),
+		readmem(tc->task + LAZY_OFFSET(task_struct_active_mm),
 			KVADDR, &active_mm, sizeof(void *),
 			"task active_mm contents", FAULT_ON_ERROR);
 
@@ -1263,14 +1263,14 @@ riscv64_uvtop(struct task_context *tc, ulong uvaddr, physaddr_t *paddr, int verb
 			error(FATAL,
 			      "no active_mm for this kernel thread\n");
 
-		readmem(active_mm + OFFSET(mm_struct_pgd),
+		readmem(active_mm + LAZY_OFFSET(mm_struct_pgd),
 			KVADDR, &pgd, sizeof(long),
 			"mm_struct pgd", FAULT_ON_ERROR);
 	} else {
 		if ((mm = task_mm(tc->task, TRUE)))
-			pgd = ULONG_PTR(tt->mm_struct + OFFSET(mm_struct_pgd));
+			pgd = ULONG_PTR(tt->mm_struct + LAZY_OFFSET(mm_struct_pgd));
 		else
-			readmem(tc->mm_struct + OFFSET(mm_struct_pgd),
+			readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd),
 				KVADDR, &pgd, sizeof(long), "mm_struct pgd",
 				FAULT_ON_ERROR);
 	}
