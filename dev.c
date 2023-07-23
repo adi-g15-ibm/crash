@@ -284,15 +284,15 @@ char_device_struct:
                 	"char_device_struct", FAULT_ON_ERROR);
 
 		next = ULONG(char_device_struct_buf + 
-			OFFSET(char_device_struct_next));
+			LAZY_OFFSET(char_device_struct_next));
 		name = ULONG(char_device_struct_buf + 
-			OFFSET(char_device_struct_name));
+			LAZY_OFFSET(char_device_struct_name));
 		switch (name_typecode)
 		{
 		case TYPE_CODE_ARRAY:
 			snprintf(buf, name_size, "%s",
 				 char_device_struct_buf +
-				 OFFSET(char_device_struct_name));
+				 LAZY_OFFSET(char_device_struct_name));
 			break;
 		case TYPE_CODE_PTR:
 		default:
@@ -301,24 +301,24 @@ char_device_struct:
 		}
 
 		major = INT(char_device_struct_buf + 
-			OFFSET(char_device_struct_major));
+			LAZY_OFFSET(char_device_struct_major));
 		minor = INT(char_device_struct_buf + 
-			OFFSET(char_device_struct_baseminor));
+			LAZY_OFFSET(char_device_struct_baseminor));
 
 		cdev = fops = 0;
-		if (VALID_MEMBER(char_device_struct_cdev) &&
+		if (VALID_MEMBER_LAZY(char_device_struct_cdev) &&
 				VALID_STRUCT(cdev)) {
 			cdev = ULONG(char_device_struct_buf + 
-				OFFSET(char_device_struct_cdev));
+				LAZY_OFFSET(char_device_struct_cdev));
 			if (cdev) {
-				addr = cdev + OFFSET(cdev_ops);
+				addr = cdev + LAZY_OFFSET(cdev_ops);
 				readmem(addr, KVADDR, &fops, 
 					sizeof(void *),
 					"cdev ops", FAULT_ON_ERROR);
 			}
 		} else {
 			fops = ULONG(char_device_struct_buf + 
-				OFFSET(char_device_struct_fops));
+				LAZY_OFFSET(char_device_struct_fops));
 		}
 
 		if (!fops)
@@ -355,15 +355,15 @@ char_device_struct:
                 		"char_device_struct", FAULT_ON_ERROR);
 
 	                next = ULONG(char_device_struct_buf +
-	                        OFFSET(char_device_struct_next));
+	                        LAZY_OFFSET(char_device_struct_next));
 	                name = ULONG(char_device_struct_buf +
-	                        OFFSET(char_device_struct_name));
+	                        LAZY_OFFSET(char_device_struct_name));
 			switch (name_typecode)
 			{
 			case TYPE_CODE_ARRAY:
 				snprintf(buf, name_size, "%s",
 					 char_device_struct_buf +
-					 OFFSET(char_device_struct_name));
+					 LAZY_OFFSET(char_device_struct_name));
 				break;
 			case TYPE_CODE_PTR:
 			default:
@@ -373,24 +373,24 @@ char_device_struct:
 			}
 
 	                major = INT(char_device_struct_buf +
-	                        OFFSET(char_device_struct_major));
+	                        LAZY_OFFSET(char_device_struct_major));
 	                minor = INT(char_device_struct_buf +
-	                        OFFSET(char_device_struct_baseminor));
+	                        LAZY_OFFSET(char_device_struct_baseminor));
 
 			fops = cdev = 0;
-			if (VALID_MEMBER(char_device_struct_cdev) &&
+			if (VALID_MEMBER_LAZY(char_device_struct_cdev) &&
 					VALID_STRUCT(cdev)) {
 				cdev = ULONG(char_device_struct_buf + 
-					OFFSET(char_device_struct_cdev));
+					LAZY_OFFSET(char_device_struct_cdev));
 				if (cdev) {
-					addr = cdev + OFFSET(cdev_ops);
+					addr = cdev + LAZY_OFFSET(cdev_ops);
 					readmem(addr, KVADDR, &fops,
 						sizeof(void *),
 						"cdev ops", FAULT_ON_ERROR);
 				}
 			} else {
 				fops = ULONG(char_device_struct_buf + 
-					OFFSET(char_device_struct_fops));
+					LAZY_OFFSET(char_device_struct_fops));
 			}
  
 			if (!fops)
@@ -445,7 +445,7 @@ search_cdev_map_probes(char *name, int major, int minor, ulong *cdev)
 	else
 		return 0;
 
-	addr = cdev_map + OFFSET(kobj_map_probes);
+	addr = cdev_map + LAZY_OFFSET(kobj_map_probes);
 	if (!readmem(addr, KVADDR, &probes[0], sizeof(void *) * MAX_DEV,
 	    "cdev_map.probes[]", QUIET|RETURN_ON_ERROR))
 		return 0;
@@ -459,12 +459,12 @@ search_cdev_map_probes(char *name, int major, int minor, ulong *cdev)
 		    "struct probe", QUIET|RETURN_ON_ERROR))
 			break;
 
-		probe_dev = UINT(probe_buf + OFFSET(probe_dev));
+		probe_dev = UINT(probe_buf + LAZY_OFFSET(probe_dev));
 
 		if ((MAJOR(probe_dev) == major) && 
 		    (MINOR(probe_dev) == minor)) {
-			probe_data = ULONG(probe_buf + OFFSET(probe_data));
-			addr = probe_data + OFFSET(cdev_ops);
+			probe_data = ULONG(probe_buf + LAZY_OFFSET(probe_data));
+			addr = probe_data + LAZY_OFFSET(cdev_ops);
 			if (!readmem(addr, KVADDR, &ops, sizeof(void *),
 	    		    "cdev ops", QUIET|RETURN_ON_ERROR))
 				ops = 0;
@@ -473,7 +473,7 @@ search_cdev_map_probes(char *name, int major, int minor, ulong *cdev)
 			break;
 		}
 
-		next = ULONG(probe_buf + OFFSET(probe_next));
+		next = ULONG(probe_buf + LAZY_OFFSET(probe_next));
 	}
 
 	FREEBUF(probe_buf);
@@ -571,7 +571,7 @@ dump_blkdevs_v2(ulong flags)
 
 	get_symbol_data("all_bdevs", sizeof(void *), &ld->start);
 	ld->end = symbol_value("all_bdevs");
-        ld->list_head_offset = OFFSET(block_device_bd_list);
+        ld->list_head_offset = LAZY_OFFSET(block_device_bd_list);
 
         hq_open();
         bdevcnt = do_list(ld);
@@ -593,7 +593,7 @@ dump_blkdevs_v2(ulong flags)
 			SIZE(block_device), "block_device buffer", 
 			FAULT_ON_ERROR);
 		gendisklist[i] = ULONG(block_device_buf + 
-			OFFSET(block_device_bd_disk));
+			LAZY_OFFSET(block_device_bd_disk));
 		if (CRASHDEBUG(1))
 			fprintf(fp, "[%d] %lx -> %lx\n", 
 				i, bdevlist[i], gendisklist[i]);
@@ -612,9 +612,9 @@ dump_blkdevs_v2(ulong flags)
                 readmem(gendisklist[i], KVADDR, gendisk_buf, 
 			SIZE(gendisk), "gendisk buffer", 
 			FAULT_ON_ERROR);
-		fops = ULONG(gendisk_buf + OFFSET(gendisk_fops));
-		major = UINT(gendisk_buf + OFFSET(gendisk_major));
-		strncpy(buf, gendisk_buf + OFFSET(gendisk_disk_name), 32);
+		fops = ULONG(gendisk_buf + LAZY_OFFSET(gendisk_fops));
+		major = UINT(gendisk_buf + LAZY_OFFSET(gendisk_major));
+		strncpy(buf, gendisk_buf + LAZY_OFFSET(gendisk_disk_name), 32);
 		if (CRASHDEBUG(1))
 			fprintf(fp, "%lx: name: [%s] major: %d fops: %lx\n", 
 				gendisklist[i], buf, major, fops);	
@@ -647,12 +647,12 @@ dump_blkdevs_v2(ulong flags)
 			FAULT_ON_ERROR);
 		
 		major = UINT(blk_major_name_buf + 
-			OFFSET(blk_major_name_major));
+			LAZY_OFFSET(blk_major_name_major));
 		buf[0] = NULLCHAR;
 		strncpy(buf, blk_major_name_buf + 
-			OFFSET(blk_major_name_name), 16);
+			LAZY_OFFSET(blk_major_name_name), 16);
 		next = ULONG(blk_major_name_buf +
-                        OFFSET(blk_major_name_next));
+                        LAZY_OFFSET(blk_major_name_next));
 		if (CRASHDEBUG(1))
 			fprintf(fp, 
 		    	    "[%d] %lx major: %d name: %s next: %lx fops: %lx\n",
@@ -678,11 +678,11 @@ dump_blkdevs_v2(ulong flags)
 				SIZE(blk_major_name), "blk_major_name buffer", 
 				FAULT_ON_ERROR);
                 	major = UINT(blk_major_name_buf +
-                        	OFFSET(blk_major_name_major));
+                        	LAZY_OFFSET(blk_major_name_major));
                 	strncpy(buf, blk_major_name_buf +
-                        	OFFSET(blk_major_name_name), 16);
+                        	LAZY_OFFSET(blk_major_name_name), 16);
                 	next = ULONG(blk_major_name_buf +
-                        	OFFSET(blk_major_name_next));
+                        	LAZY_OFFSET(blk_major_name_next));
 			if (CRASHDEBUG(1))
                 		fprintf(fp, 
 			    "[%d] %lx major: %d name: %s next: %lx fops: %lx\n",
@@ -743,10 +743,10 @@ dump_blkdevs_v3(ulong flags)
 			SIZE(blk_major_name), "blk_major_name", FAULT_ON_ERROR);
 
 		major = UINT(blk_major_name_buf + 
-			OFFSET(blk_major_name_major));
+			LAZY_OFFSET(blk_major_name_major));
 		buf[0] = NULLCHAR;
 		strncpy(buf, blk_major_name_buf +  
-			OFFSET(blk_major_name_name), 16);
+			LAZY_OFFSET(blk_major_name_name), 16);
 
 		if (use_bdev_map)
 			fops = search_bdev_map_probes(buf, major == i ? major : i,
@@ -792,7 +792,7 @@ search_bdev_map_probes(char *name, int major, int minor, ulong *gendisk)
 
 	get_symbol_data("bdev_map", sizeof(ulong), &bdev_map);
 
-	addr = bdev_map + OFFSET(kobj_map_probes);
+	addr = bdev_map + LAZY_OFFSET(kobj_map_probes);
 	if (!readmem(addr, KVADDR, &probes[0], sizeof(void *) * MAX_DEV,
 	    "bdev_map.probes[]", QUIET|RETURN_ON_ERROR))
 		return 0;
@@ -803,17 +803,17 @@ search_bdev_map_probes(char *name, int major, int minor, ulong *gendisk)
 	fops = 0;
 
 	for (next = probes[major]; next; 
-	     next = ULONG(probe_buf + OFFSET(probe_next))) {
+	     next = ULONG(probe_buf + LAZY_OFFSET(probe_next))) {
 
 		if (!readmem(next, KVADDR, probe_buf, SIZE(probe),
 		    "struct probe", QUIET|RETURN_ON_ERROR))
 			break;
 
-		probe_data = ULONG(probe_buf + OFFSET(probe_data));
+		probe_data = ULONG(probe_buf + LAZY_OFFSET(probe_data));
 		if (!probe_data)
 			continue;
 
-		probe_dev = UINT(probe_buf + OFFSET(probe_dev));
+		probe_dev = UINT(probe_buf + LAZY_OFFSET(probe_dev));
 		if (MAJOR(probe_dev) != major)
 			continue;
 
@@ -822,7 +822,7 @@ search_bdev_map_probes(char *name, int major, int minor, ulong *gendisk)
 		    QUIET|RETURN_ON_ERROR))
 			break;
 
-		fops = ULONG(gendisk_buf + OFFSET(gendisk_fops));
+		fops = ULONG(gendisk_buf + LAZY_OFFSET(gendisk_fops));
 
 		if (fops) {
 			*gendisk = probe_data;
@@ -851,7 +851,7 @@ search_blockdev_inodes(int major, ulong *gendisk)
 
 	get_symbol_data("blockdev_superblock", sizeof(void *), &bd_sb);
 
-	addr = bd_sb + OFFSET(super_block_s_inodes);
+	addr = bd_sb + LAZY_OFFSET(super_block_s_inodes);
 	if (!readmem(addr, KVADDR, &ld->start, sizeof(ulong),
 	    "blockdev_superblock.s_inodes", QUIET|RETURN_ON_ERROR))
 		return 0;
@@ -860,15 +860,15 @@ search_blockdev_inodes(int major, ulong *gendisk)
 		return 0;
 
 	ld->flags |= LIST_ALLOCATE;
-	ld->end = bd_sb + OFFSET(super_block_s_inodes);
-	ld->list_head_offset = OFFSET(inode_i_sb_list);
+	ld->end = bd_sb + LAZY_OFFSET(super_block_s_inodes);
+	ld->list_head_offset = LAZY_OFFSET(inode_i_sb_list);
 
 	inode_count = do_list(ld);
 
 	gendisk_buf = GETBUF(SIZE(gendisk));
 
 	for (i = 0; i < inode_count; i++) {
-		addr = I_BDEV(ld->list_ptr[i]) + OFFSET(block_device_bd_disk);
+		addr = I_BDEV(ld->list_ptr[i]) + LAZY_OFFSET(block_device_bd_disk);
 		if (!readmem(addr, KVADDR, &disk, sizeof(ulong),
 		    "block_device.bd_disk", QUIET|RETURN_ON_ERROR))
 			continue;
@@ -880,11 +880,11 @@ search_blockdev_inodes(int major, ulong *gendisk)
 		    "gendisk buffer", QUIET|RETURN_ON_ERROR))
 			continue;
 
-		gendisk_major = INT(gendisk_buf + OFFSET(gendisk_major));
+		gendisk_major = INT(gendisk_buf + LAZY_OFFSET(gendisk_major));
 		if (gendisk_major != major)
 			continue;
 
-		fops = ULONG(gendisk_buf + OFFSET(gendisk_fops));
+		fops = ULONG(gendisk_buf + LAZY_OFFSET(gendisk_fops));
 		if (fops) {
 			*gendisk = disk;
 			break;
@@ -949,10 +949,10 @@ ioport_list:
 	ld = &list_data;
         BZERO(ld, sizeof(struct list_data));
         ld->start = 0xc026cf20;
-	readmem(symbol_value("iolist") + OFFSET(resource_entry_t_next),
+	readmem(symbol_value("iolist") + LAZY_OFFSET(resource_entry_t_next),
 		KVADDR, &ld->start, sizeof(void *), "iolist.next",
 		FAULT_ON_ERROR);
-        ld->member_offset = OFFSET(resource_entry_t_next);
+        ld->member_offset = LAZY_OFFSET(resource_entry_t_next);
 
         hq_open();
         cnt = do_list(ld);
@@ -967,11 +967,11 @@ ioport_list:
 		readmem(resource_list[i], KVADDR, resource_buf,
 			SIZE(resource_entry_t), "resource_entry_t",
 			FAULT_ON_ERROR); 
-		start = ULONG(resource_buf + OFFSET(resource_entry_t_from));
-		end = ULONG(resource_buf + OFFSET(resource_entry_t_num));
+		start = ULONG(resource_buf + LAZY_OFFSET(resource_entry_t_from));
+		end = ULONG(resource_buf + LAZY_OFFSET(resource_entry_t_num));
 		end += start;
 		fprintf(fp, "%04lx-%04lx  ", start, end);
-		name = ULONG(resource_buf + OFFSET(resource_entry_t_name));
+		name = ULONG(resource_buf + LAZY_OFFSET(resource_entry_t_name));
                 if (!read_string(name, buf1, BUFSIZE-1))
                         sprintf(buf1, "(unknown)");
 
@@ -1003,7 +1003,7 @@ resource_list:
 	/* 
 	 * ioport 
 	 */
-        readmem(symbol_value("ioport_resource") + OFFSET(resource_end),
+        readmem(symbol_value("ioport_resource") + LAZY_OFFSET(resource_end),
                 KVADDR, &end, sizeof(long), "ioport_resource.end",
                 FAULT_ON_ERROR);
 
@@ -1018,7 +1018,7 @@ resource_list:
 	/* 
 	 * iomem 
 	 */
-        readmem(symbol_value("iomem_resource") + OFFSET(resource_end),
+        readmem(symbol_value("iomem_resource") + LAZY_OFFSET(resource_end),
                 KVADDR, &end, sizeof(long), "iomem_resource.end",
                 FAULT_ON_ERROR);
 	size = (end > 0xffff) ? 8 : 4;
@@ -1058,11 +1058,11 @@ do_resource_list(ulong first_entry, char *resource_buf, int size)
                 readmem(entry, KVADDR, resource_buf,
                         SIZE(resource), "resource", FAULT_ON_ERROR);
 
-                start = ULONG(resource_buf + OFFSET(resource_start));
-                end = ULONG(resource_buf + OFFSET(resource_end));
-                name = ULONG(resource_buf + OFFSET(resource_name));
-                child = ULONG(resource_buf + OFFSET(resource_child));
-                sibling = ULONG(resource_buf + OFFSET(resource_sibling));
+                start = ULONG(resource_buf + LAZY_OFFSET(resource_start));
+                end = ULONG(resource_buf + LAZY_OFFSET(resource_end));
+                name = ULONG(resource_buf + LAZY_OFFSET(resource_name));
+                child = ULONG(resource_buf + LAZY_OFFSET(resource_child));
+                sibling = ULONG(resource_buf + LAZY_OFFSET(resource_sibling));
 
                 if (!read_string(name, buf1, BUFSIZE-1))
 			sprintf(buf1, "(unknown)");
@@ -2360,9 +2360,9 @@ fill_dev_name(ulong pci_dev, char *name)
 
 	memset(name, 0, sizeof(*name) * BUFSIZE);
 
-	kobj = pci_dev + OFFSET(pci_dev_dev) + OFFSET(device_kobj);
+	kobj = pci_dev + LAZY_OFFSET(pci_dev_dev) + LAZY_OFFSET(device_kobj);
 
-	readmem(kobj + OFFSET(kobject_name),
+	readmem(kobj + LAZY_OFFSET(kobject_name),
 		KVADDR, &value, sizeof(void *), "kobject name",
 		FAULT_ON_ERROR);
 
@@ -2376,9 +2376,9 @@ fill_bus_name(ulong pci_bus, char *name)
 
 	memset(name, 0, sizeof(*name) * BUFSIZE);
 
-	kobj = pci_bus + OFFSET(pci_bus_dev) + OFFSET(device_kobj);
+	kobj = pci_bus + LAZY_OFFSET(pci_bus_dev) + LAZY_OFFSET(device_kobj);
 
-	readmem(kobj + OFFSET(kobject_name),
+	readmem(kobj + LAZY_OFFSET(kobject_name),
 		KVADDR, &value, sizeof(void *), "kobject name",
 		FAULT_ON_ERROR);
 
@@ -2392,10 +2392,10 @@ fill_dev_id(ulong pci_dev, char *id)
 
 	memset(id, 0, sizeof(*id) * BUFSIZE);
 
-	readmem(pci_dev + OFFSET(pci_dev_device),
+	readmem(pci_dev + LAZY_OFFSET(pci_dev_device),
 		KVADDR, &device, sizeof(short), "pci dev device",
 		FAULT_ON_ERROR);
-	readmem(pci_dev + OFFSET(pci_dev_vendor), KVADDR,
+	readmem(pci_dev + LAZY_OFFSET(pci_dev_vendor), KVADDR,
 		&vendor, sizeof(short), "pci dev vendor", FAULT_ON_ERROR);
 
 	sprintf(id, "%x:%x", vendor, device);
@@ -2407,7 +2407,7 @@ fill_dev_class(ulong pci_dev, char *c)
 	unsigned int class;
 
 	memset(c, 0, sizeof(*c) * BUFSIZE);
-	readmem(pci_dev + OFFSET(pci_dev_class), KVADDR,
+	readmem(pci_dev + LAZY_OFFSET(pci_dev_class), KVADDR,
 		&class, sizeof(int), "pci class", FAULT_ON_ERROR);
 
 	class >>= 8;
@@ -2437,13 +2437,13 @@ fill_pcie_type(ulong pcidev, char *t)
 
 	memset(t, 0, sizeof(*t) * BUFSIZE);
 
-	readmem(pcidev + OFFSET(pci_dev_hdr_type), KVADDR, &hdr_type,
+	readmem(pcidev + LAZY_OFFSET(pci_dev_hdr_type), KVADDR, &hdr_type,
 		sizeof(char), "pci dev hdr_type", FAULT_ON_ERROR);
 
-	if (!VALID_MEMBER(pci_dev_pcie_flags_reg))
+	if (!VALID_MEMBER_LAZY(pci_dev_pcie_flags_reg))
 		goto bridge_chk;
 
-	readmem(pcidev + OFFSET(pci_dev_pcie_flags_reg), KVADDR, &pciecap,
+	readmem(pcidev + LAZY_OFFSET(pci_dev_pcie_flags_reg), KVADDR, &pciecap,
 		sizeof(unsigned short), "pci dev pcie_flags_reg", FAULT_ON_ERROR);
 
 	type = pci_pcie_type(pciecap);
@@ -2490,11 +2490,11 @@ walk_devices(ulong pci_bus)
 
 	BZERO(ld, sizeof(struct list_data));
 
-	readmem(pci_bus + OFFSET(pci_bus_devices), KVADDR,
+	readmem(pci_bus + LAZY_OFFSET(pci_bus_devices), KVADDR,
 		&ld->start, sizeof(void *), "pci bus devices",
 		FAULT_ON_ERROR);
 
-	if (VALID_MEMBER(pci_dev_pcie_flags_reg))
+	if (VALID_MEMBER_LAZY(pci_dev_pcie_flags_reg))
 		snprintf(pcidev_hdr, sizeof(pcidev_hdr), "%s %s %s %s %s\n",
 			mkstring(buf1, VADDR_PRLEN, CENTER, "PCI DEV"),
 			mkstring(buf2, strlen("0000:00:00.0"), CENTER, "DO:BU:SL.FN"),
@@ -2510,7 +2510,7 @@ walk_devices(ulong pci_bus)
 
 	fprintf(fp, "  %s", pcidev_hdr);
 
-	readmem(pci_bus + OFFSET(pci_bus_self), KVADDR, &self,
+	readmem(pci_bus + LAZY_OFFSET(pci_bus_self), KVADDR, &self,
 		sizeof(void *), "pci bus self", FAULT_ON_ERROR);
 	if (self) {
 		fill_dev_name(self, name);
@@ -2526,10 +2526,10 @@ walk_devices(ulong pci_bus)
 			mkstring(buf5, 10, CENTER, type));
 	}
 
-	if (ld->start == (pci_bus + OFFSET(pci_bus_devices)))
+	if (ld->start == (pci_bus + LAZY_OFFSET(pci_bus_devices)))
 		return;
 
-	ld->end = pci_bus + OFFSET(pci_bus_devices);
+	ld->end = pci_bus + LAZY_OFFSET(pci_bus_devices);
 	hq_open();
 	devcnt = do_list(ld);
 	devlist = (ulong *)GETBUF(devcnt * sizeof(ulong));
@@ -2566,14 +2566,14 @@ walk_buses(ulong pci_bus)
 
 	BZERO(ld, sizeof(struct list_data));
 
-	readmem(pci_bus + OFFSET(pci_bus_children), KVADDR,
+	readmem(pci_bus + LAZY_OFFSET(pci_bus_children), KVADDR,
 		&ld->start, sizeof(void *), "pci bus children",
 		FAULT_ON_ERROR);
 
-	if (ld->start == (pci_bus + OFFSET(pci_bus_children)))
+	if (ld->start == (pci_bus + LAZY_OFFSET(pci_bus_children)))
 		return;
 
-	ld->end = pci_bus + OFFSET(pci_bus_children);
+	ld->end = pci_bus + LAZY_OFFSET(pci_bus_children);
 	hq_open();
 	buscnt = do_list(ld);
 	buslist = (ulong *)GETBUF(buscnt * sizeof(ulong));
@@ -2585,7 +2585,7 @@ walk_buses(ulong pci_bus)
 		mkstring(buf2, VADDR_PRLEN, CENTER, "PARENT BUS"));
 
 	for (i = 0; i < buscnt; i++) {
-		readmem(buslist[i] + OFFSET(pci_bus_parent), KVADDR, &parent,
+		readmem(buslist[i] + LAZY_OFFSET(pci_bus_parent), KVADDR, &parent,
 			sizeof(void *), "pci bus parent", FAULT_ON_ERROR);
 
 		fprintf(fp, "  %s", pcibus_hdr);
@@ -2664,11 +2664,11 @@ do_pci(void)
 
 	BZERO(&pcilist_data, sizeof(struct list_data));
 
-	if (VALID_MEMBER(pci_dev_global_list)) {
+	if (VALID_MEMBER_LAZY(pci_dev_global_list)) {
                 get_symbol_data("pci_devices", sizeof(void *), &pcilist_data.start);
                 pcilist_data.end = symbol_value("pci_devices");
-                pcilist_data.list_head_offset = OFFSET(pci_dev_global_list);
-		readmem(symbol_value("pci_devices") + OFFSET(list_head_prev),
+                pcilist_data.list_head_offset = LAZY_OFFSET(pci_dev_global_list);
+		readmem(symbol_value("pci_devices") + LAZY_OFFSET(list_head_prev),
 			KVADDR, &prev, sizeof(void *), "list head prev",
 			FAULT_ON_ERROR);
                 /*
@@ -2678,10 +2678,10 @@ do_pci(void)
  		   (prev == pcilist_data.end))
 			error(FATAL, "no PCI devices found on this system.\n");
 
-	} else if (VALID_MEMBER(pci_dev_next)) {
+	} else if (VALID_MEMBER_LAZY(pci_dev_next)) {
 		get_symbol_data("pci_devices", sizeof(void *),
 				&pcilist_data.start);
-		pcilist_data.member_offset = OFFSET(pci_dev_next);
+		pcilist_data.member_offset = LAZY_OFFSET(pci_dev_next);
                 /*
 		 * Check if this system does not have any PCI devices.
 		 */
@@ -2707,11 +2707,11 @@ do_pci(void)
 		/*
 		 * Get the pci bus number
 		 */
-		readmem(devlist[i] + OFFSET(pci_dev_bus), KVADDR, &bus, 
+		readmem(devlist[i] + LAZY_OFFSET(pci_dev_bus), KVADDR, &bus, 
 			sizeof(void *), "pci bus", FAULT_ON_ERROR);
-		readmem(bus + OFFSET(pci_bus_number), KVADDR, &busno, 
+		readmem(bus + LAZY_OFFSET(pci_bus_number), KVADDR, &busno, 
 			sizeof(char), "pci bus number", FAULT_ON_ERROR);
-		readmem(devlist[i] + OFFSET(pci_dev_devfn), KVADDR,
+		readmem(devlist[i] + LAZY_OFFSET(pci_dev_devfn), KVADDR,
 			&devfn, sizeof(ulong), "pci devfn", FAULT_ON_ERROR);
 
 		fprintf(fp, "%lx %02x:%02lx.%lx  ", devlist[i], 
@@ -2720,12 +2720,12 @@ do_pci(void)
 		/*
 		 * Now read in the class, device, and vendor.
 		 */
-		readmem(devlist[i] + OFFSET(pci_dev_class), KVADDR,
+		readmem(devlist[i] + LAZY_OFFSET(pci_dev_class), KVADDR,
 			&class, sizeof(int), "pci class", FAULT_ON_ERROR);
-		readmem(devlist[i] + OFFSET(pci_dev_device),
+		readmem(devlist[i] + LAZY_OFFSET(pci_dev_device),
 			KVADDR, &device, sizeof(short), "pci device", 
 			FAULT_ON_ERROR);
-		readmem(devlist[i] + OFFSET(pci_dev_vendor),KVADDR,
+		readmem(devlist[i] + LAZY_OFFSET(pci_dev_vendor),KVADDR,
 			&vendor, sizeof(short), "pci vendor", FAULT_ON_ERROR);
 
 		fprintf(fp, "%s: %s %s", 
@@ -4103,29 +4103,29 @@ struct iter {
 static unsigned long 
 get_gendisk_1(unsigned long entry)
 {
-	return entry - OFFSET(kobject_entry) - OFFSET(gendisk_kobj);
+	return entry - LAZY_OFFSET(kobject_entry) - LAZY_OFFSET(gendisk_kobj);
 }
 
 /* 2.6.24 < kernel version <= 2.6.27 */
 static unsigned long 
 get_gendisk_2(unsigned long entry)
 {
-	return entry - OFFSET(device_node) - OFFSET(gendisk_dev);
+	return entry - LAZY_OFFSET(device_node) - OFFSET(gendisk_dev);
 }
 
 /* kernel version > 2.6.27 && struct gendisk contains dev/__dev */
 static unsigned long 
 get_gendisk_3(unsigned long entry)
 {
-	return entry - OFFSET(device_knode_class) - OFFSET(gendisk_dev);
+	return entry - LAZY_OFFSET(device_knode_class) - OFFSET(gendisk_dev);
 }
 
 /* kernel version > 2.6.27 && struct gendisk does not contain dev/__dev */
 static unsigned long 
 get_gendisk_4(unsigned long entry)
 {
-	return entry - OFFSET(device_knode_class) - OFFSET(hd_struct_dev) -
-		OFFSET(gendisk_part0);
+	return entry - LAZY_OFFSET(device_knode_class) - LAZY_OFFSET(hd_struct_dev) -
+		LAZY_OFFSET(gendisk_part0);
 }
 
 /* kernel version >= 5.1 */
@@ -4136,17 +4136,17 @@ get_gendisk_5(unsigned long entry)
 	unsigned long device_private_address;
 	unsigned long gendisk;
 
-	device_private_address = entry - OFFSET(device_private_knode_class);
-	readmem(device_private_address + OFFSET(device_private_device),
+	device_private_address = entry - LAZY_OFFSET(device_private_knode_class);
+	readmem(device_private_address + LAZY_OFFSET(device_private_device),
 		KVADDR, &device_address, sizeof(device_address),
 		"device_private.device", FAULT_ON_ERROR);
 
-	if (VALID_MEMBER(hd_struct_dev))
-		return device_address - OFFSET(hd_struct_dev) - OFFSET(gendisk_part0);
+	if (VALID_MEMBER_LAZY(hd_struct_dev))
+		return device_address - LAZY_OFFSET(hd_struct_dev) - LAZY_OFFSET(gendisk_part0);
 
 	/* kernel version >= 5.11 */
-	readmem(device_address - OFFSET(block_device_bd_device) +
-		OFFSET(block_device_bd_disk), KVADDR, &gendisk,
+	readmem(device_address - LAZY_OFFSET(block_device_bd_device) +
+		LAZY_OFFSET(block_device_bd_disk), KVADDR, &gendisk,
 		sizeof(ulong), "block_device.bd_disk", FAULT_ON_ERROR);
 
 	return gendisk;
@@ -4159,8 +4159,8 @@ match_list(struct iter *i, unsigned long entry)
 	unsigned long device_address;
 	unsigned long device_type;
 
-	device_address = entry - OFFSET(device_node);
-	readmem(device_address + OFFSET(device_type), KVADDR, &device_type,
+	device_address = entry - LAZY_OFFSET(device_node);
+	readmem(device_address + LAZY_OFFSET(device_type), KVADDR, &device_type,
 		sizeof(device_type), "device.type", FAULT_ON_ERROR);
 	if (device_type != i->type_address)
 		return FALSE;
@@ -4176,17 +4176,17 @@ match_klist(struct iter *i, unsigned long entry)
 	unsigned long device_type;
 	unsigned long device_private_address;
 
-	if (VALID_MEMBER(device_knode_class))
-		device_address = entry - OFFSET(device_knode_class);
+	if (VALID_MEMBER_LAZY(device_knode_class))
+		device_address = entry - LAZY_OFFSET(device_knode_class);
 	else {
 		/* kernel version >= 5.1 */
 		device_private_address = entry -
-			OFFSET(device_private_knode_class);
-		readmem(device_private_address + OFFSET(device_private_device),
+			LAZY_OFFSET(device_private_knode_class);
+		readmem(device_private_address + LAZY_OFFSET(device_private_device),
 			KVADDR, &device_address, sizeof(device_address),
 			"device_private.device", FAULT_ON_ERROR);
 	}
-	readmem(device_address + OFFSET(device_type), KVADDR, &device_type,
+	readmem(device_address + LAZY_OFFSET(device_type), KVADDR, &device_type,
 		sizeof(device_type), "device.type", FAULT_ON_ERROR);
 	if (device_type != i->type_address)
 		return FALSE;
@@ -4208,7 +4208,7 @@ next_disk_list(struct iter *i)
 
 again:
 	/* read list_head.next */
-	readmem(list_head_address + OFFSET(list_head_next), KVADDR,
+	readmem(list_head_address + LAZY_OFFSET(list_head_next), KVADDR,
 		&next_address, sizeof(next_address), "list_head.next",
 		FAULT_ON_ERROR);
 
@@ -4239,21 +4239,21 @@ next_disk_klist(struct iter* i)
 
 again:
 	/* read list_head.next */
-	readmem(list_head_address + OFFSET(list_head_next), KVADDR,
+	readmem(list_head_address + LAZY_OFFSET(list_head_next), KVADDR,
 		&next_address, sizeof(next_address), "list_head.next",
 		FAULT_ON_ERROR);
 
 	/* skip dead klist_node */
 	while(next_address != i->head_address) {
-		klist_node_address = next_address - OFFSET(klist_node_n_node);
-		readmem(klist_node_address + OFFSET(klist_node_n_klist), KVADDR,
+		klist_node_address = next_address - LAZY_OFFSET(klist_node_n_node);
+		readmem(klist_node_address + LAZY_OFFSET(klist_node_n_klist), KVADDR,
 			&n_klist, sizeof(n_klist), "klist_node.n_klist",
 			FAULT_ON_ERROR);
 		if (!(n_klist & 1))
 			break;
 
 		/* the klist_node is dead, skip to next klist_node */
-		readmem(next_address + OFFSET(list_head_next), KVADDR,
+		readmem(next_address + LAZY_OFFSET(list_head_next), KVADDR,
 			&next_address, sizeof(next_address), "list_head.next",
 			FAULT_ON_ERROR);
 	}
@@ -4275,10 +4275,10 @@ use_mq_interface(unsigned long q)
 {
 	unsigned long mq_ops;
 
-	if (!VALID_MEMBER(request_queue_mq_ops))
+	if (!VALID_MEMBER_LAZY(request_queue_mq_ops))
 		return 0;
 
-	readmem(q + OFFSET(request_queue_mq_ops), KVADDR, &mq_ops,
+	readmem(q + LAZY_OFFSET(request_queue_mq_ops), KVADDR, &mq_ops,
 		sizeof(ulong), "request_queue.mq_ops", FAULT_ON_ERROR);
 
 	if (mq_ops == 0)
@@ -4293,11 +4293,11 @@ get_one_mctx_diskio(unsigned long mctx, struct diskio *io)
 	unsigned long dispatch[2];
 	unsigned long comp[2];
 
-	readmem(mctx + OFFSET(blk_mq_ctx_rq_dispatched),
+	readmem(mctx + LAZY_OFFSET(blk_mq_ctx_rq_dispatched),
 		KVADDR, dispatch, sizeof(ulong) * 2, "blk_mq_ctx.rq_dispatched",
 		FAULT_ON_ERROR);
 
-	readmem(mctx + OFFSET(blk_mq_ctx_rq_completed),
+	readmem(mctx + LAZY_OFFSET(blk_mq_ctx_rq_completed),
 		KVADDR, comp, sizeof(ulong) * 2, "blk_mq_ctx.rq_completed",
 		FAULT_ON_ERROR);
 
@@ -4341,15 +4341,15 @@ static bool mq_check_inflight(ulong rq, void *data)
 	if (!IS_KVADDR(rq))
 		return TRUE;
 
-	addr = rq + OFFSET(request_q);
+	addr = rq + LAZY_OFFSET(request_q);
 	if (!readmem(addr, KVADDR, &queue, sizeof(ulong), "request.q", RETURN_ON_ERROR))
 		return FALSE;
 
-	addr = rq + OFFSET(request_cmd_flags);
+	addr = rq + LAZY_OFFSET(request_cmd_flags);
 	if (!readmem(addr, KVADDR, &cmd_flags, sizeof(uint), "request.cmd_flags", RETURN_ON_ERROR))
 		return FALSE;
 
-	addr = rq + OFFSET(request_state);
+	addr = rq + LAZY_OFFSET(request_state);
 	if (!readmem(addr, KVADDR, &state, sizeof(uint), "request.state", RETURN_ON_ERROR))
 		return FALSE;
 
@@ -4373,7 +4373,7 @@ static bool bt_iter(uint bitnr, void *data)
 		bitnr += iter_data->nr_reserved_tags;
 
 	/* rqs */
-	addr = tag + OFFSET(blk_mq_tags_rqs);
+	addr = tag + LAZY_OFFSET(blk_mq_tags_rqs);
 	if (!readmem(addr, KVADDR, &rqs_addr, sizeof(void *), "blk_mq_tags.rqs", RETURN_ON_ERROR))
 		return FALSE;
 
@@ -4399,7 +4399,7 @@ static void bt_for_each(ulong q, ulong tags, ulong sbq, uint reserved, uint nr_r
 		.data = &mi,
 	};
 
-	sbitmap_context_load(sbq + OFFSET(sbitmap_queue_sb), &sc);
+	sbitmap_context_load(sbq + LAZY_OFFSET(sbitmap_queue_sb), &sc);
 	sbitmap_for_each_set(&sc, bt_iter, &iter_data);
 }
 
@@ -4416,25 +4416,25 @@ static void queue_for_each_hw_ctx(ulong q, ulong *hctx, uint cnt, struct diskio 
 		uint nr_reserved_tags = 0;
 
 		/* Tags owned by the block driver */
-		addr = hctx[i] + OFFSET(blk_mq_hw_ctx_tags);
+		addr = hctx[i] + LAZY_OFFSET(blk_mq_hw_ctx_tags);
 		if (!readmem(addr, KVADDR, &tags, sizeof(ulong),
 				"blk_mq_hw_ctx.tags", RETURN_ON_ERROR))
 			break;
 
-		addr = tags + OFFSET(blk_mq_tags_nr_reserved_tags);
+		addr = tags + LAZY_OFFSET(blk_mq_tags_nr_reserved_tags);
 		if (!readmem(addr, KVADDR, &nr_reserved_tags, sizeof(uint),
 				"blk_mq_tags_nr_reserved_tags", RETURN_ON_ERROR))
 			break;
 
 		if (nr_reserved_tags) {
-			addr = tags + OFFSET(blk_mq_tags_breserved_tags);
+			addr = tags + LAZY_OFFSET(blk_mq_tags_breserved_tags);
 			if (bitmap_tags_is_ptr &&
 			    !readmem(addr, KVADDR, &addr, sizeof(ulong),
 					"blk_mq_tags.bitmap_tags", RETURN_ON_ERROR))
 				break;
 			bt_for_each(q, tags, addr, 1, nr_reserved_tags, dio);
 		}
-		addr = tags + OFFSET(blk_mq_tags_bitmap_tags);
+		addr = tags + LAZY_OFFSET(blk_mq_tags_bitmap_tags);
 		if (bitmap_tags_is_ptr &&
 		    !readmem(addr, KVADDR, &addr, sizeof(ulong),
 				"blk_mq_tags.bitmap_tags", RETURN_ON_ERROR))
@@ -4450,8 +4450,8 @@ static void get_mq_diskio_from_hw_queues(ulong q, struct diskio *dio)
 	ulong *hctx_array = NULL;
 	struct list_pair *lp = NULL;
 
-	if (VALID_MEMBER(request_queue_hctx_table)) {
-		addr = q + OFFSET(request_queue_hctx_table);
+	if (VALID_MEMBER_LAZY(request_queue_hctx_table)) {
+		addr = q + LAZY_OFFSET(request_queue_hctx_table);
 		cnt = do_xarray(addr, XARRAY_COUNT, NULL);
 		lp = (struct list_pair *)GETBUF(sizeof(struct list_pair) * (cnt + 1));
 		if (!lp)
@@ -4459,11 +4459,11 @@ static void get_mq_diskio_from_hw_queues(ulong q, struct diskio *dio)
 		lp[0].index = cnt;
 		cnt = do_xarray(addr, XARRAY_GATHER, lp);
 	} else {
-		addr = q + OFFSET(request_queue_nr_hw_queues);
+		addr = q + LAZY_OFFSET(request_queue_nr_hw_queues);
 		readmem(addr, KVADDR, &cnt, sizeof(uint),
 			"request_queue.nr_hw_queues", FAULT_ON_ERROR);
 
-		addr = q + OFFSET(request_queue_queue_hw_ctx);
+		addr = q + LAZY_OFFSET(request_queue_queue_hw_ctx);
 		readmem(addr, KVADDR, &hctx_addr, sizeof(void *),
 			"request_queue.queue_hw_ctx", FAULT_ON_ERROR);
 	}
@@ -4507,7 +4507,7 @@ get_mq_diskio(unsigned long q, unsigned long *mq_count)
 	 * before 12f5b9314545 ("blk-mq: Remove generation seqeunce"), so
 	 * filter them out.
 	 */
-	if (VALID_MEMBER(request_state)) {
+	if (VALID_MEMBER_LAZY(request_state)) {
 		if (CRASHDEBUG(1))
 			fprintf(fp, "mq: using sbitmap\n");
 		get_mq_diskio_from_hw_queues(q, &tmp);
@@ -4543,7 +4543,7 @@ get_one_diskio_from_dkstats(unsigned long dkstats, unsigned long *count)
 	for (cpu = 0; cpu < kt->cpus; cpu++) {
 		if ((kt->flags & SMP) && (kt->flags & PER_CPU_OFF)) {
 			dkstats_addr = dkstats + kt->__per_cpu_offset[cpu];
-			readmem(dkstats_addr + OFFSET(disk_stats_in_flight),
+			readmem(dkstats_addr + LAZY_OFFSET(disk_stats_in_flight),
 				KVADDR, in_flight, sizeof(long) * 2,
 				"disk_stats.in_flight", FAULT_ON_ERROR);
 			count[0] += in_flight[0];
@@ -4564,21 +4564,21 @@ get_diskio_1(unsigned long rq, unsigned long gendisk, struct diskio *io)
 	if (!use_mq_interface(rq)) {
 		if (VALID_MEMBER(request_queue_rq)) {
 			readmem(rq + OFFSET(request_queue_rq) +
-				OFFSET(request_list_count), KVADDR, count,
+				LAZY_OFFSET(request_list_count), KVADDR, count,
 				sizeof(int) * 2, "request_list.count", FAULT_ON_ERROR);
 
 			io->read = count[0];
 			io->write = count[1];
 		} else {
-			if (VALID_MEMBER(hd_struct_dkstats))
-				readmem(gendisk + OFFSET(gendisk_part0) +
-					OFFSET(hd_struct_dkstats), KVADDR, &dkstats,
+			if (VALID_MEMBER_LAZY(hd_struct_dkstats))
+				readmem(gendisk + LAZY_OFFSET(gendisk_part0) +
+					LAZY_OFFSET(hd_struct_dkstats), KVADDR, &dkstats,
 					sizeof(ulong), "gendisk.part0.dkstats", FAULT_ON_ERROR);
 			else { /* kernel version >= 5.11 */
 				ulong block_device;
-				readmem(gendisk + OFFSET(gendisk_part0), KVADDR, &block_device,
+				readmem(gendisk + LAZY_OFFSET(gendisk_part0), KVADDR, &block_device,
 					sizeof(ulong), "gendisk.part0", FAULT_ON_ERROR);
-				readmem(block_device + OFFSET(block_device_bd_stats), KVADDR,
+				readmem(block_device + LAZY_OFFSET(block_device_bd_stats), KVADDR,
 					&dkstats, sizeof(ulong), "block_device.bd_stats",
 					FAULT_ON_ERROR);
 			}
@@ -4601,7 +4601,7 @@ get_in_flight_1(unsigned long rq)
 {
 	unsigned int in_flight;
 
-	readmem(rq+ OFFSET(request_queue_in_flight), KVADDR, &in_flight,
+	readmem(rq+ LAZY_OFFSET(request_queue_in_flight), KVADDR, &in_flight,
 		sizeof(uint), "request_queue.in_flight", FAULT_ON_ERROR);
 	return in_flight;
 }
@@ -4612,7 +4612,7 @@ get_in_flight_2(unsigned long rq)
 {
 	unsigned int in_flight[2];
 
-	readmem(rq+ OFFSET(request_queue_in_flight), KVADDR, in_flight,
+	readmem(rq+ LAZY_OFFSET(request_queue_in_flight), KVADDR, in_flight,
 		sizeof(uint) * 2, "request_queue.in_flight", FAULT_ON_ERROR);
 	return in_flight[0] + in_flight[1];
 }
@@ -4650,9 +4650,9 @@ init_iter(struct iter *i)
 			block_subsys_addr = symbol_value("block_kset");
 		if (VALID_STRUCT(subsystem))
 			i->head_address = block_subsys_addr +
-				OFFSET(subsystem_kset) + OFFSET(kset_list);
+				LAZY_OFFSET(subsystem_kset) + LAZY_OFFSET(kset_list);
 		else
-			i->head_address = block_subsys_addr + OFFSET(kset_list);
+			i->head_address = block_subsys_addr + LAZY_OFFSET(kset_list);
 		i->type_address = 0;
 		i->next_disk = next_disk_list;
 		i->match = NULL;
@@ -4662,7 +4662,7 @@ init_iter(struct iter *i)
 
 		i->type_address = symbol_value("disk_type");
 		if (VALID_MEMBER(class_devices) ||
-		   (VALID_MEMBER(class_private_devices) &&
+		   (VALID_MEMBER_LAZY(class_private_devices) &&
 		      SIZE(class_private_devices) == SIZE(list_head))) {
 			/* 2.6.24 < kernel version <= 2.6.27, list */
 			if (!VALID_STRUCT(class_private)) {
@@ -4673,12 +4673,12 @@ init_iter(struct iter *i)
 				/* kernel version is 2.6.27 */
 				unsigned long class_private_addr;
 
-				readmem(block_class_addr + OFFSET(class_p),
+				readmem(block_class_addr + LAZY_OFFSET(class_p),
 					KVADDR, &class_private_addr,
 					sizeof(class_private_addr), "class.p",
 					FAULT_ON_ERROR);
 				i->head_address = class_private_addr +
-					OFFSET(class_private_devices);
+					LAZY_OFFSET(class_private_devices);
 			}
 			i->next_disk = next_disk_list;
 			i->match = match_list;
@@ -4687,10 +4687,10 @@ init_iter(struct iter *i)
 			/* kernel version > 2.6.27, klist */
 			unsigned long class_private_addr;
 
-			if (INVALID_MEMBER(class_p)) /* kernel version >= 6.4 */
+			if (INVALID_MEMBER_LAZY(class_p)) /* kernel version >= 6.4 */
 				class_private_addr = get_subsys_private("class_kset", "block");
 			else
-				readmem(block_class_addr + OFFSET(class_p), KVADDR,
+				readmem(block_class_addr + LAZY_OFFSET(class_p), KVADDR,
 					&class_private_addr, sizeof(class_private_addr),
 					"class.p", FAULT_ON_ERROR);
 
@@ -4700,18 +4700,18 @@ init_iter(struct iter *i)
 			if (VALID_STRUCT(class_private)) {
 				/* 2.6.27 < kernel version <= 2.6.37-rc2 */
 				i->head_address = class_private_addr +
-					OFFSET(class_private_devices);
+					LAZY_OFFSET(class_private_devices);
 			} else {
 				/* kernel version > 2.6.37-rc2 */
 				i->head_address = class_private_addr +
-					OFFSET(subsys_private_klist_devices);
+					LAZY_OFFSET(subsys_private_klist_devices);
 			}
-			i->head_address += OFFSET(klist_k_list);
+			i->head_address += LAZY_OFFSET(klist_k_list);
 			i->next_disk = next_disk_klist;
 			i->match = match_klist;
 			if (VALID_MEMBER(gendisk_dev))
 				i->get_gendisk = get_gendisk_3;
-			else if (VALID_MEMBER(device_knode_class))
+			else if (VALID_MEMBER_LAZY(device_knode_class))
 				i->get_gendisk = get_gendisk_4;
 			else
 				i->get_gendisk = get_gendisk_5;
@@ -4738,14 +4738,14 @@ display_one_diskio(struct iter *i, unsigned long gendisk, ulong flags)
 	struct diskio io;
 
 	memset(disk_name, 0, BUFSIZE + 1);
-	readmem(gendisk + OFFSET(gendisk_disk_name), KVADDR, disk_name,
+	readmem(gendisk + LAZY_OFFSET(gendisk_disk_name), KVADDR, disk_name,
 		i->diskname_len, "gen_disk.disk_name", FAULT_ON_ERROR);
 	if (is_skipped_disk(disk_name))
 		return;
 
-	readmem(gendisk + OFFSET(gendisk_queue), KVADDR, &queue_addr,
+	readmem(gendisk + LAZY_OFFSET(gendisk_queue), KVADDR, &queue_addr,
 		sizeof(ulong), "gen_disk.queue", FAULT_ON_ERROR);
-	readmem(gendisk + OFFSET(gendisk_major), KVADDR, &major, sizeof(int),
+	readmem(gendisk + LAZY_OFFSET(gendisk_major), KVADDR, &major, sizeof(int),
 		"gen_disk.major", FAULT_ON_ERROR);
 	i->get_diskio(queue_addr, gendisk, &io);
 
@@ -4772,7 +4772,7 @@ display_one_diskio(struct iter *i, unsigned long gendisk, ulong flags)
 			(char *)(unsigned long)io.write),
 		space(MINSPACE));
 
-	if (VALID_MEMBER(request_queue_in_flight)) {
+	if (VALID_MEMBER_LAZY(request_queue_in_flight)) {
 		if (!use_mq_interface(queue_addr)) {
 			in_flight = i->get_in_flight(queue_addr);
 			fprintf(fp, "%5u\n", in_flight);
@@ -4814,7 +4814,7 @@ display_all_diskio(ulong flags)
 		i.sync_count ? mkstring(buf4, 5, RJUST, "SYNC") :
 			mkstring(buf4, 5, RJUST, "WRITE"),
 		space(MINSPACE),
-		VALID_MEMBER(request_queue_in_flight) ? mkstring(buf5, 5, RJUST, "DRV") : "");
+		VALID_MEMBER_LAZY(request_queue_in_flight) ? mkstring(buf5, 5, RJUST, "DRV") : "");
 
 	while ((gendisk = i.next_disk(&i)) != 0)
 		display_one_diskio(&i, gendisk, flags);
@@ -4830,7 +4830,7 @@ void diskio_init(void)
 	if (INVALID_MEMBER(class_devices))
 		MEMBER_OFFSET_INIT(class_devices, "class", "devices");
 	MEMBER_OFFSET_INIT(class_p, "class", "p");
-	if (INVALID_MEMBER(class_p)) {
+	if (INVALID_MEMBER_LAZY(class_p)) {
 		MEMBER_OFFSET_INIT(kset_list, "kset", "list");
 		MEMBER_OFFSET_INIT(kset_kobj, "kset", "kobj");
 		MEMBER_OFFSET_INIT(kobject_name, "kobject", "name");

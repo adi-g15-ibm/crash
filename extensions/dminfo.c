@@ -218,7 +218,7 @@ get_next_from_list_head(unsigned long addr)
 {
 	unsigned long ret;
 
-	readmem(addr + OFFSET(list_head_next), KVADDR, &ret, sizeof(void *),
+	readmem(addr + LAZY_OFFSET(list_head_next), KVADDR, &ret, sizeof(void *),
 		MSG("get_next_from_list_head", "list_head", "next"),
 		FAULT_ON_ERROR);
 

@@ -820,7 +820,7 @@ ia64_processor_speed(void)
 
 	if (!machdep->machspec->cpu_data_address ||
 	    !VALID_STRUCT(cpuinfo_ia64) ||
-	    !VALID_MEMBER(cpuinfo_ia64_proc_freq))
+	    !VALID_MEMBER_LAZY(cpuinfo_ia64_proc_freq))
 		return (machdep->mhz = mhz);
 
 	if (symbol_exists("bootstrap_processor"))
@@ -830,7 +830,7 @@ ia64_processor_speed(void)
 		bootstrap_processor = 0;
 
         readmem(machdep->machspec->cpu_data_address + 
-		OFFSET(cpuinfo_ia64_proc_freq),
+		LAZY_OFFSET(cpuinfo_ia64_proc_freq),
         	KVADDR, &proc_freq, sizeof(ulong),
                 "cpuinfo_ia64 proc_freq", FAULT_ON_ERROR);
 
@@ -1034,9 +1034,9 @@ ia64_uvtop(struct task_context *tc, ulong uvaddr, physaddr_t *paddr, int verbose
 		return ia64_kvtop(tc, uvaddr, paddr, verbose);
 
 	if ((mm = task_mm(tc->task, TRUE)))
-        	pgd = ULONG_PTR(tt->mm_struct + OFFSET(mm_struct_pgd));
+        	pgd = ULONG_PTR(tt->mm_struct + LAZY_OFFSET(mm_struct_pgd));
 	else
-		readmem(tc->mm_struct + OFFSET(mm_struct_pgd), KVADDR, &pgd,
+		readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), KVADDR, &pgd,
 			sizeof(long), "mm_struct pgd", FAULT_ON_ERROR);
 
 	if (XEN() && (kt->xen_flags & WRITABLE_PAGE_TABLES)) {
@@ -1162,7 +1162,7 @@ ia64_get_pc(struct bt_info *bt)
 {
         ulong b0;
 
-        readmem(SWITCH_STACK_ADDR(bt->task) + OFFSET(switch_stack_b0), KVADDR,
+        readmem(SWITCH_STACK_ADDR(bt->task) + LAZY_OFFSET(switch_stack_b0), KVADDR,
                 &b0, sizeof(void *), "switch_stack b0", FAULT_ON_ERROR);
 
         return b0;
@@ -1178,7 +1178,7 @@ ia64_get_sp(struct bt_info *bt)
 {
 	ulong bspstore;
 
-        readmem(SWITCH_STACK_ADDR(bt->task) + OFFSET(switch_stack_ar_bspstore), 
+        readmem(SWITCH_STACK_ADDR(bt->task) + LAZY_OFFSET(switch_stack_ar_bspstore), 
 		KVADDR, &bspstore, sizeof(void *), "switch_stack ar_bspstore", 
 		FAULT_ON_ERROR);
 
@@ -2947,15 +2947,15 @@ ia64_post_init(void)
 		}
 	
 	        if (ms->cpu_data_address) {
-	            	if (VALID_MEMBER(cpuinfo_ia64_unimpl_va_mask))
+	            	if (VALID_MEMBER_LAZY(cpuinfo_ia64_unimpl_va_mask))
 	       			readmem(ms->cpu_data_address +
-	                		OFFSET(cpuinfo_ia64_unimpl_va_mask),
+	                		LAZY_OFFSET(cpuinfo_ia64_unimpl_va_mask),
 	                		KVADDR, &ms->unimpl_va_mask, 
 					sizeof(ulong),
 	                		"unimpl_va_mask", FAULT_ON_ERROR);
-	            	if (VALID_MEMBER(cpuinfo_ia64_unimpl_pa_mask))
+	            	if (VALID_MEMBER_LAZY(cpuinfo_ia64_unimpl_pa_mask))
 	                        readmem(ms->cpu_data_address +
-	                                OFFSET(cpuinfo_ia64_unimpl_pa_mask),
+	                                LAZY_OFFSET(cpuinfo_ia64_unimpl_pa_mask),
 	                                KVADDR, &ms->unimpl_pa_mask, 
 					sizeof(ulong),
 	                                "unimpl_pa_mask", FAULT_ON_ERROR);
@@ -3159,11 +3159,11 @@ unw_init_from_blocked_task(struct unw_frame_info *info, ulong task)
 	sw = SWITCH_STACK_ADDR(task);
 	BZERO(info, sizeof(struct unw_frame_info));
 
-        readmem(sw + OFFSET(switch_stack_b0), KVADDR,
+        readmem(sw + LAZY_OFFSET(switch_stack_b0), KVADDR,
                 &b0, sizeof(ulong), "switch_stack b0", FAULT_ON_ERROR);
-        readmem(sw + OFFSET(switch_stack_ar_pfs), KVADDR,
+        readmem(sw + LAZY_OFFSET(switch_stack_ar_pfs), KVADDR,
                 &ar_pfs, sizeof(ulong), "switch_stack ar_pfs", FAULT_ON_ERROR);
-        readmem(sw + OFFSET(switch_stack_ar_bspstore), KVADDR,
+        readmem(sw + LAZY_OFFSET(switch_stack_ar_bspstore), KVADDR,
                 &ar_bspstore, sizeof(ulong), "switch_stack ar_bspstore", 
 		FAULT_ON_ERROR);
 
@@ -3185,7 +3185,7 @@ unw_init_from_blocked_task(struct unw_frame_info *info, ulong task)
         info->regstk.top   = top;
         info->sw = (struct switch_stack *)sw;
         info->bsp = (ulong)ia64_rse_skip_regs((ulong *)info->regstk.top, -sol);
-        info->cfm = (ulong *)(sw + OFFSET(switch_stack_ar_pfs));
+        info->cfm = (ulong *)(sw + LAZY_OFFSET(switch_stack_ar_pfs));
         info->ip = b0;
 
 	if (CRASHDEBUG(1)) 
@@ -3347,7 +3347,7 @@ rse_read_reg (struct unw_frame_info *info, int regnum, int *is_nat)
 			space(unw_debug), (ulong)rnat_addr);
 
         if ((unsigned long) rnat_addr >= info->regstk.top) 
-		readmem((ulong)(info->sw) + OFFSET(switch_stack_ar_rnat), 
+		readmem((ulong)(info->sw) + LAZY_OFFSET(switch_stack_ar_rnat), 
 			KVADDR, &rnat, sizeof(long), 
 			"info->sw->ar_rnat", FAULT_ON_ERROR);
         else

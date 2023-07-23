@@ -1454,13 +1454,13 @@ userspace_return(kaddr_t frame, struct bt_info *bt)
 	ulong esp0, eframe_addr; 
 	uint32_t *stkptr, *eframeptr;
 	
-	if (INVALID_MEMBER(task_struct_thread) ||
+	if (INVALID_MEMBER_LAZY(task_struct_thread) ||
 	    (((esp0 = MEMBER_OFFSET("thread_struct", "esp0")) < 0) &&
              ((esp0 = MEMBER_OFFSET("thread_struct", "sp0")) < 0)))
 		eframe_addr = bt->stacktop - SIZE(pt_regs);
 	else
 		eframe_addr = ULONG(tt->task_struct + 
-			OFFSET(task_struct_thread) + esp0) - SIZE(pt_regs);
+			LAZY_OFFSET(task_struct_thread) + esp0) - SIZE(pt_regs);
 
 	if (!INSTACK(eframe_addr, bt))
 		return FALSE;
@@ -2049,14 +2049,14 @@ eframe_address(sframe_t *frmp, struct bt_info *bt)
 	ulong esp0, pt;
 
 	if (!(frmp->flag & SET_EX_FRAME_ADDR) ||
-	    INVALID_MEMBER(task_struct_thread) || 
+	    INVALID_MEMBER_LAZY(task_struct_thread) || 
 	    (((esp0 = MEMBER_OFFSET("thread_struct", "esp0")) < 0) &&
 	     ((esp0 = MEMBER_OFFSET("thread_struct", "sp0")) < 0)))
 		return frmp->asp;
 	/*  
 	 * Work required in rarely-seen SET_EX_FRAME_ADDR circumstances.
 	 */
-	pt = ULONG(tt->task_struct + OFFSET(task_struct_thread) + esp0) 
+	pt = ULONG(tt->task_struct + LAZY_OFFSET(task_struct_thread) + esp0) 
 	    	- SIZE(pt_regs);
 
 	if (!INSTACK(pt, bt))

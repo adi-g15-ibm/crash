@@ -87,7 +87,7 @@ static inline bool mte_is_leaf(ulong maple_enode_entry)
 
 static uint mt_height(char *mt_buf)
 {
-	return (UINT(mt_buf + OFFSET(maple_tree_ma_flags)) &
+	return (UINT(mt_buf + LAZY_OFFSET(maple_tree_ma_flags)) &
 		MT_FLAGS_HEIGHT_MASK)
 	       >> MT_FLAGS_HEIGHT_OFFSET;
 }
@@ -99,11 +99,11 @@ static void dump_mt_range64(char *mr64_buf)
 	fprintf(fp, " contents: ");
 	for (i = 0; i < mt_slots[maple_range_64] - 1; i++)
 		fprintf(fp, "%p %lu ",
-			VOID_PTR(mr64_buf + OFFSET(maple_range_64_slot)
+			VOID_PTR(mr64_buf + LAZY_OFFSET(maple_range_64_slot)
 				 + sizeof(void *) * i),
-			ULONG(mr64_buf + OFFSET(maple_range_64_pivot)
+			ULONG(mr64_buf + LAZY_OFFSET(maple_range_64_pivot)
 			      + sizeof(ulong) * i));
-	fprintf(fp, "%p\n", VOID_PTR(mr64_buf + OFFSET(maple_range_64_slot)
+	fprintf(fp, "%p\n", VOID_PTR(mr64_buf + LAZY_OFFSET(maple_range_64_slot)
 				     + sizeof(void *) * i));
 }
 
@@ -113,22 +113,22 @@ static void dump_mt_arange64(char *ma64_buf)
 
 	fprintf(fp, " contents: ");
 	for (i = 0; i < mt_slots[maple_arange_64]; i++)
-		fprintf(fp, "%lu ", ULONG(ma64_buf + OFFSET(maple_arange_64_gap)
+		fprintf(fp, "%lu ", ULONG(ma64_buf + LAZY_OFFSET(maple_arange_64_gap)
 					  + sizeof(ulong) * i));
 
 	fprintf(fp, "| %02X %02X| ",
-		UCHAR(ma64_buf + OFFSET(maple_arange_64_meta) +
-		      OFFSET(maple_metadata_end)),
-		UCHAR(ma64_buf + OFFSET(maple_arange_64_meta) +
-		      OFFSET(maple_metadata_gap)));
+		UCHAR(ma64_buf + LAZY_OFFSET(maple_arange_64_meta) +
+		      LAZY_OFFSET(maple_metadata_end)),
+		UCHAR(ma64_buf + LAZY_OFFSET(maple_arange_64_meta) +
+		      LAZY_OFFSET(maple_metadata_gap)));
 
 	for (i = 0; i < mt_slots[maple_arange_64] - 1; i++)
 		fprintf(fp, "%p %lu ",
-			VOID_PTR(ma64_buf + OFFSET(maple_arange_64_slot) +
+			VOID_PTR(ma64_buf + LAZY_OFFSET(maple_arange_64_slot) +
 				 sizeof(void *) * i),
-			ULONG(ma64_buf + OFFSET(maple_arange_64_pivot) +
+			ULONG(ma64_buf + LAZY_OFFSET(maple_arange_64_pivot) +
 			      sizeof(ulong) * i));
-	fprintf(fp, "%p\n", VOID_PTR(ma64_buf + OFFSET(maple_arange_64_slot) +
+	fprintf(fp, "%p\n", VOID_PTR(ma64_buf + LAZY_OFFSET(maple_arange_64_slot) +
 				     sizeof(void *) * i));
 }
 
@@ -154,7 +154,7 @@ static void dump_mt_node(ulong maple_node, char *node_data, uint type,
 
 	fprintf(fp, "node 0x%lx depth %d type %d parent %p",
 		maple_node, depth, type,
-		maple_node ? VOID_PTR(node_data + OFFSET(maple_node_parent)) :
+		maple_node ? VOID_PTR(node_data + LAZY_OFFSET(maple_node_parent)) :
 			     NULL);
 }
 
@@ -177,7 +177,7 @@ static void do_mt_range64(ulong entry, ulong min, ulong max,
 	readmem(maple_node_m_node, KVADDR, node_buf, SIZE(maple_node),
 		"mt_dump_range64 read maple_node", FAULT_ON_ERROR);
 
-	mr64_buf = node_buf + OFFSET(maple_node_mr64);
+	mr64_buf = node_buf + LAZY_OFFSET(maple_node_mr64);
 
 	if (td && td->flags & TREE_STRUCT_VERBOSE) {
 		dump_mt_range64(mr64_buf);
@@ -187,10 +187,10 @@ static void do_mt_range64(ulong entry, ulong min, ulong max,
 		last = max;
 
 		if (i < (mt_slots[maple_range_64] - 1))
-			last = ULONG(mr64_buf + OFFSET(maple_range_64_pivot) +
+			last = ULONG(mr64_buf + LAZY_OFFSET(maple_range_64_pivot) +
 				     sizeof(ulong) * i);
 
-		else if (!VOID_PTR(mr64_buf + OFFSET(maple_range_64_slot) +
+		else if (!VOID_PTR(mr64_buf + LAZY_OFFSET(maple_range_64_slot) +
 			  sizeof(void *) * i) &&
 			 max != mt_max[mte_node_type(entry)])
 			break;
@@ -198,13 +198,13 @@ static void do_mt_range64(ulong entry, ulong min, ulong max,
 			break;
 		if (leaf)
 			do_mt_entry(mt_slot((void **)(mr64_buf +
-						      OFFSET(maple_range_64_slot)), i),
+						      LAZY_OFFSET(maple_range_64_slot)), i),
 				    first, last, depth + 1, i, path, global_index, ops);
-		else if (VOID_PTR(mr64_buf + OFFSET(maple_range_64_slot) +
+		else if (VOID_PTR(mr64_buf + LAZY_OFFSET(maple_range_64_slot) +
 				  sizeof(void *) * i)) {
 			sprintf(path + len, "/%d", i);
 			do_mt_node(mt_slot((void **)(mr64_buf +
-						     OFFSET(maple_range_64_slot)), i),
+						     LAZY_OFFSET(maple_range_64_slot)), i),
 				   first, last, depth + 1, path, global_index, ops);
 		}
 
@@ -238,7 +238,7 @@ static void do_mt_arange64(ulong entry, ulong min, ulong max,
 	readmem(maple_node_m_node, KVADDR, node_buf, SIZE(maple_node),
 		"mt_dump_arange64 read maple_node", FAULT_ON_ERROR);
 
-	ma64_buf = node_buf + OFFSET(maple_node_ma64);
+	ma64_buf = node_buf + LAZY_OFFSET(maple_node_ma64);
 
 	if (td && td->flags & TREE_STRUCT_VERBOSE) {
 		dump_mt_arange64(ma64_buf);
@@ -248,9 +248,9 @@ static void do_mt_arange64(ulong entry, ulong min, ulong max,
 		last = max;
 
 		if (i < (mt_slots[maple_arange_64] - 1))
-			last = ULONG(ma64_buf + OFFSET(maple_arange_64_pivot) +
+			last = ULONG(ma64_buf + LAZY_OFFSET(maple_arange_64_pivot) +
 				     sizeof(ulong) * i);
-		else if (!VOID_PTR(ma64_buf + OFFSET(maple_arange_64_slot) +
+		else if (!VOID_PTR(ma64_buf + LAZY_OFFSET(maple_arange_64_slot) +
 				   sizeof(void *) * i))
 			break;
 		if (last == 0 && i > 0)
@@ -258,13 +258,13 @@ static void do_mt_arange64(ulong entry, ulong min, ulong max,
 
 		if (leaf)
 			do_mt_entry(mt_slot((void **)(ma64_buf +
-						      OFFSET(maple_arange_64_slot)), i),
+						      LAZY_OFFSET(maple_arange_64_slot)), i),
 				    first, last, depth + 1, i, path, global_index, ops);
-		else if (VOID_PTR(ma64_buf + OFFSET(maple_arange_64_slot) +
+		else if (VOID_PTR(ma64_buf + LAZY_OFFSET(maple_arange_64_slot) +
 				  sizeof(void *) * i)) {
 			sprintf(path + len, "/%d", i);
 			do_mt_node(mt_slot((void **)(ma64_buf +
-						     OFFSET(maple_arange_64_slot)), i),
+						     LAZY_OFFSET(maple_arange_64_slot)), i),
 				   first, last, depth + 1, path, global_index, ops);
 		}
 
@@ -364,7 +364,7 @@ static void do_mt_node(ulong entry, ulong min, ulong max,
 		for (i = 0; i < mt_slots[maple_dense]; i++) {
 			if (min + i > max)
 				fprintf(fp, "OUT OF RANGE: ");
-			do_mt_entry(mt_slot((void **)(node_buf + OFFSET(maple_node_slot)), i),
+			do_mt_entry(mt_slot((void **)(node_buf + LAZY_OFFSET(maple_node_slot)), i),
 				    min + i, min + i, depth, i, path, global_index, ops);
 		}
 		break;
@@ -399,11 +399,11 @@ static int do_maple_tree_traverse(ulong ptr, int is_root,
 	} else {
 		readmem(ptr, KVADDR, tree_buf, SIZE(maple_tree),
 			"mt_dump read maple_tree", FAULT_ON_ERROR);
-		entry = ULONG(tree_buf + OFFSET(maple_tree_ma_root));
+		entry = ULONG(tree_buf + LAZY_OFFSET(maple_tree_ma_root));
 
 		if (td && td->flags & TREE_STRUCT_VERBOSE) {
 			fprintf(fp, "maple_tree(%lx) flags %X, height %u root 0x%lx\n\n",
-				ptr, UINT(tree_buf + OFFSET(maple_tree_ma_flags)),
+				ptr, UINT(tree_buf + LAZY_OFFSET(maple_tree_ma_flags)),
 				mt_height(tree_buf), entry);
 		}
 

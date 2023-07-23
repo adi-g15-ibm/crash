@@ -313,7 +313,7 @@ init_module_unwind_tables(void)
 
 	BZERO(&ld, sizeof(ld));
 	ld.start = head;
-	ld.member_offset = OFFSET(unwind_table_list);
+	ld.member_offset = LAZY_OFFSET(unwind_table_list);
 	ld.flags = RETURN_ON_LIST_ERROR;
 
 	if (CRASHDEBUG(1))

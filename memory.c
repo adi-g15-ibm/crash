@@ -388,7 +388,7 @@ vm_init(void)
         MEMBER_OFFSET_INIT(task_struct_mm, "task_struct", "mm");
         MEMBER_OFFSET_INIT(mm_struct_mmap, "mm_struct", "mmap");
 	MEMBER_OFFSET_INIT(mm_struct_mm_mt, "mm_struct", "mm_mt");
-	if (VALID_MEMBER(mm_struct_mm_mt)) {
+	if (VALID_MEMBER_LAZY(mm_struct_mm_mt)) {
 		maple_init();
 	}
         MEMBER_OFFSET_INIT(mm_struct_pgd, "mm_struct", "pgd");
@@ -397,7 +397,7 @@ vm_init(void)
 		MEMBER_OFFSET_INIT(mm_struct_rss, "mm_struct", "_rss");
 	MEMBER_OFFSET_INIT(mm_struct_anon_rss, "mm_struct", "_anon_rss");
 	MEMBER_OFFSET_INIT(mm_struct_file_rss, "mm_struct", "_file_rss");
-	if (!VALID_MEMBER(mm_struct_anon_rss)) {
+	if (!VALID_MEMBER_LAZY(mm_struct_anon_rss)) {
 		MEMBER_OFFSET_INIT(mm_struct_rss_stat, "mm_struct", "rss_stat");
 		MEMBER_OFFSET_INIT(mm_rss_stat_count, "mm_rss_stat", "count");
 	}
@@ -431,9 +431,9 @@ vm_init(void)
 		MEMBER_OFFSET_INIT(vmap_area_vm, "vmap_area", "private");
 	MEMBER_OFFSET_INIT(vmap_area_purge_list, "vmap_area", "purge_list");
 	STRUCT_SIZE_INIT(vmap_area, "vmap_area");
-	if (VALID_MEMBER(vmap_area_va_start) &&
-	    VALID_MEMBER(vmap_area_va_end) &&
-	    VALID_MEMBER(vmap_area_list) &&
+	if (VALID_MEMBER_LAZY(vmap_area_va_start) &&
+	    VALID_MEMBER_LAZY(vmap_area_va_end) &&
+	    VALID_MEMBER_LAZY(vmap_area_list) &&
 	    VALID_MEMBER(vmap_area_vm) &&
 	    kernel_symbol_exists("vmap_area_list"))
 		vt->flags |= USE_VMAP_AREA;
@@ -455,11 +455,11 @@ vm_init(void)
 		MEMBER_OFFSET_INIT(page_next, "slab", "next");
 
 	MEMBER_OFFSET_INIT(page_list, "page", "list");
-	if (VALID_MEMBER(page_list)) {
-		ASSIGN_OFFSET(page_list_next) = OFFSET(page_list) +
-			OFFSET(list_head_next);
-		ASSIGN_OFFSET(page_list_prev) = OFFSET(page_list) +
-			OFFSET(list_head_prev);
+	if (VALID_MEMBER_LAZY(page_list)) {
+		ASSIGN_OFFSET(page_list_next) = LAZY_OFFSET(page_list) +
+			LAZY_OFFSET(list_head_next);
+		ASSIGN_OFFSET(page_list_prev) = LAZY_OFFSET(page_list) +
+			LAZY_OFFSET(list_head_prev);
 	}
 
 	MEMBER_OFFSET_INIT(page_next_hash, "page", "next_hash");
@@ -693,7 +693,7 @@ vm_init(void)
 						vt->kmem_cache_len_nodes = nr_node_ids;
 					} else
 						vt->kmem_cache_len_nodes = 1;
-				} else if (VALID_MEMBER(kmem_cache_cpu_cache)) {
+				} else if (VALID_MEMBER_LAZY(kmem_cache_cpu_cache)) {
 					/*
 					 * commit bf0dea23a9c094ae869a88bb694fbe966671bf6d
 					 * mm/slab: use percpu allocator for cpu cache
@@ -791,7 +791,7 @@ vm_init(void)
 		MEMBER_OFFSET_INIT(kmem_cache_name, "kmem_cache", "name");
 		MEMBER_OFFSET_INIT(kmem_cache_flags, "kmem_cache", "flags");
 		MEMBER_OFFSET_INIT(kmem_cache_random, "kmem_cache", "random");
-		if (VALID_MEMBER(kmem_cache_random))
+		if (VALID_MEMBER_LAZY(kmem_cache_random))
 			freelist_ptr_init();
 		MEMBER_OFFSET_INIT(kmem_cache_cpu_freelist, "kmem_cache_cpu", "freelist");
 		MEMBER_OFFSET_INIT(kmem_cache_cpu_page, "kmem_cache_cpu", "page");
@@ -831,14 +831,14 @@ vm_init(void)
 			ANON_MEMBER_OFFSET_INIT(page_freelist, "page", "freelist");
 		if (INVALID_MEMBER(page_freelist))
 			MEMBER_OFFSET_INIT(page_freelist, "slab", "freelist");
-		if (INVALID_MEMBER(kmem_cache_objects)) {
+		if (INVALID_MEMBER_LAZY(kmem_cache_objects)) {
 			MEMBER_OFFSET_INIT(kmem_cache_oo, "kmem_cache", "oo");
 			/* NOTE: returns offset of containing bitfield */
 			ANON_MEMBER_OFFSET_INIT(page_objects, "page", "objects");
 			if (INVALID_MEMBER(page_objects))
 				ANON_MEMBER_OFFSET_INIT(page_objects, "slab", "objects");
 		}
-		if (VALID_MEMBER(kmem_cache_node)) {
+		if (VALID_MEMBER_LAZY(kmem_cache_node)) {
                 	ARRAY_LENGTH_INIT(len, NULL, "kmem_cache.node", NULL, 0);
 			vt->flags |= CONFIG_NUMA;
 		}
@@ -904,10 +904,10 @@ vm_init(void)
 		MEMBER_OFFSET_INIT(memcg_cache_params_children_node,
 			"memcg_cache_params", "children_node");
 
-		if (VALID_MEMBER(kmem_cache_memcg_params)
-		    && VALID_MEMBER(memcg_cache_params___root_caches_node)
-		    && VALID_MEMBER(memcg_cache_params_children)
-		    && VALID_MEMBER(memcg_cache_params_children_node))
+		if (VALID_MEMBER_LAZY(kmem_cache_memcg_params)
+		    && VALID_MEMBER_LAZY(memcg_cache_params___root_caches_node)
+		    && VALID_MEMBER_LAZY(memcg_cache_params_children)
+		    && VALID_MEMBER_LAZY(memcg_cache_params_children_node))
 			vt->flags |= SLAB_ROOT_CACHES;
 	}
 
@@ -987,7 +987,7 @@ vm_init(void)
 
 	if (symbol_exists("_totalram_pages")) {
 		readmem(symbol_value("_totalram_pages") +
-			OFFSET(atomic_t_counter), KVADDR,
+			LAZY_OFFSET(atomic_t_counter), KVADDR,
 			&vt->totalram_pages, sizeof(ulong),
 			"_totalram_pages", FAULT_ON_ERROR);
 	} else {
@@ -1013,7 +1013,7 @@ vm_init(void)
 
 	if (symbol_exists("_totalhigh_pages")) {
 		readmem(symbol_value("_totalhigh_pages") +
-			OFFSET(atomic_t_counter), KVADDR,
+			LAZY_OFFSET(atomic_t_counter), KVADDR,
 			&vt->totalhigh_pages, sizeof(ulong),
 			"_totalhigh_pages", FAULT_ON_ERROR);
 		vt->total_pages += vt->totalhigh_pages;
@@ -1119,7 +1119,7 @@ vm_init(void)
 				"name");
 	                MEMBER_OFFSET_INIT(zone_struct_size, "zone_struct", 
 				"size");
-			if (INVALID_MEMBER(zone_struct_size))
+			if (INVALID_MEMBER_LAZY(zone_struct_size))
 	                	MEMBER_OFFSET_INIT(zone_struct_memsize, 
 					"zone_struct", "memsize");
 			MEMBER_OFFSET_INIT(zone_struct_zone_start_pfn,
@@ -1152,13 +1152,13 @@ vm_init(void)
 		} else if (VALID_STRUCT(zone)) {
 			MEMBER_OFFSET_INIT(zone_vm_stat, "zone", "vm_stat");
 			MEMBER_OFFSET_INIT(zone_free_pages, "zone", "free_pages");
-			if (INVALID_MEMBER(zone_free_pages) && 
-			    VALID_MEMBER(zone_vm_stat)) {
+			if (INVALID_MEMBER_LAZY(zone_free_pages) && 
+			    VALID_MEMBER_LAZY(zone_vm_stat)) {
 				long nr_free_pages = 0;
 				if (!enumerator_value("NR_FREE_PAGES", &nr_free_pages))
 					error(WARNING, 
 					    "cannot determine NR_FREE_PAGES enumerator\n");
-				ASSIGN_OFFSET(zone_free_pages) = OFFSET(zone_vm_stat) + 
+				ASSIGN_OFFSET(zone_free_pages) = LAZY_OFFSET(zone_vm_stat) + 
 					(nr_free_pages * sizeof(long));
 			}
                         MEMBER_OFFSET_INIT(zone_free_area,
@@ -3862,11 +3862,11 @@ get_vm_flags(char *vma_buf)
 	ulonglong vm_flags = 0;
 
 	if (SIZE(vm_area_struct_vm_flags) == sizeof(short))
-		vm_flags = USHORT(vma_buf + OFFSET(vm_area_struct_vm_flags));
+		vm_flags = USHORT(vma_buf + LAZY_OFFSET(vm_area_struct_vm_flags));
 	else if (SIZE(vm_area_struct_vm_flags) == sizeof(long))
-		vm_flags = ULONG(vma_buf+ OFFSET(vm_area_struct_vm_flags));
+		vm_flags = ULONG(vma_buf+ LAZY_OFFSET(vm_area_struct_vm_flags));
 	else if (SIZE(vm_area_struct_vm_flags) == sizeof(long long))
-		vm_flags = ULONGLONG(vma_buf+ OFFSET(vm_area_struct_vm_flags));
+		vm_flags = ULONGLONG(vma_buf+ LAZY_OFFSET(vm_area_struct_vm_flags));
 	else
 		error(INFO, "questionable vm_area_struct.vm_flags size: %d\n",
 			SIZE(vm_area_struct_vm_flags));
@@ -3899,7 +3899,7 @@ is_valid_mm(ulong mm)
 	if (!STRNEQ(p, "mm_struct"))
 		goto bailout;
 
-	readmem(mm + OFFSET(mm_struct_mm_count), KVADDR, &mm_count, sizeof(int),
+	readmem(mm + LAZY_OFFSET(mm_struct_mm_count), KVADDR, &mm_count, sizeof(int),
 		"mm_struct mm_count", FAULT_ON_ERROR);
 
 	if (mm_count == 0)
@@ -3996,11 +3996,11 @@ static ulong handle_each_vm_area(struct handle_each_vm_area_args *args)
 	BZERO(args->buf1, BUFSIZE);
 	*(args->vma_buf) = fill_vma_cache(args->vma);
 
-	vm_mm = ULONG(*(args->vma_buf) + OFFSET(vm_area_struct_vm_mm));
-	vm_end = ULONG(*(args->vma_buf) + OFFSET(vm_area_struct_vm_end));
-	vm_start = ULONG(*(args->vma_buf) + OFFSET(vm_area_struct_vm_start));
+	vm_mm = ULONG(*(args->vma_buf) + LAZY_OFFSET(vm_area_struct_vm_mm));
+	vm_end = ULONG(*(args->vma_buf) + LAZY_OFFSET(vm_area_struct_vm_end));
+	vm_start = ULONG(*(args->vma_buf) + LAZY_OFFSET(vm_area_struct_vm_start));
 	vm_flags = get_vm_flags(*(args->vma_buf));
-	vm_file = ULONG(*(args->vma_buf) + OFFSET(vm_area_struct_vm_file));
+	vm_file = ULONG(*(args->vma_buf) + LAZY_OFFSET(vm_area_struct_vm_file));
 
 	if (args->flag & PRINT_SINGLE_VMA) {
 		if (args->vma != *(args->single_vma))
@@ -4016,18 +4016,18 @@ static ulong handle_each_vm_area(struct handle_each_vm_area_args *args)
 
 	if (vm_file && !(args->flag & VERIFY_ADDR)) {
 		file_buf = fill_file_cache(vm_file);
-		dentry = ULONG(file_buf + OFFSET(file_f_dentry));
+		dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
 		dentry_buf = NULL;
 		if (dentry) {
 			dentry_buf = fill_dentry_cache(dentry);
-			if (VALID_MEMBER(file_f_vfsmnt)) {
-				vfsmnt = ULONG(file_buf + OFFSET(file_f_vfsmnt));
+			if (VALID_MEMBER_LAZY(file_f_vfsmnt)) {
+				vfsmnt = ULONG(file_buf + LAZY_OFFSET(file_f_vfsmnt));
 				get_pathname(dentry, args->buf1, BUFSIZE, 1, vfsmnt);
 			} else
 				get_pathname(dentry, args->buf1, BUFSIZE, 1, 0);
 		}
 		if ((args->flag & PRINT_INODES) && dentry)
-			inode = ULONG(dentry_buf + OFFSET(dentry_d_inode));
+			inode = ULONG(dentry_buf + LAZY_OFFSET(dentry_d_inode));
 	}
 
 	if (!(args->flag & UVADDR) || ((args->flag & UVADDR) &&
@@ -4213,8 +4213,8 @@ vm_area_dump(ulong task, ulong flag, ulong vaddr, struct reference *ref)
 		.vma_buf = &vma_buf,
 	};
 
-	if (INVALID_MEMBER(mm_struct_mmap) && VALID_MEMBER(mm_struct_mm_mt)) {
-		mm_mt = tm->mm_struct_addr + OFFSET(mm_struct_mm_mt);
+	if (INVALID_MEMBER_LAZY(mm_struct_mmap) && VALID_MEMBER_LAZY(mm_struct_mm_mt)) {
+		mm_mt = tm->mm_struct_addr + LAZY_OFFSET(mm_struct_mm_mt);
 		entry_num = do_maple_tree(mm_mt, MAPLE_TREE_COUNT, NULL);
 		entry_list = (struct list_pair *)GETBUF(entry_num * sizeof(struct list_pair));
 		do_maple_tree(mm_mt, MAPLE_TREE_GATHER, entry_list);
@@ -4228,13 +4228,13 @@ vm_area_dump(ulong task, ulong flag, ulong vaddr, struct reference *ref)
 		}
 		FREEBUF(entry_list);
 	} else {
-		readmem(tm->mm_struct_addr + OFFSET(mm_struct_mmap), KVADDR,
+		readmem(tm->mm_struct_addr + LAZY_OFFSET(mm_struct_mmap), KVADDR,
 			&vma, sizeof(void *), "mm_struct mmap", FAULT_ON_ERROR);
 		while (vma) {
 			args.vma = vma;
 			if (handle_each_vm_area(&args))
 				return vma;
-			vma = ULONG(vma_buf + OFFSET(vm_area_struct_vm_next));
+			vma = ULONG(vma_buf + LAZY_OFFSET(vm_area_struct_vm_next));
 		}
 	}
 
@@ -4477,7 +4477,7 @@ rss_page_types_init(void)
 	if (VALID_MEMBER(mm_struct_rss))
 		return;
 
-	if (VALID_MEMBER(mm_struct_rss_stat)) 
+	if (VALID_MEMBER_LAZY(mm_struct_rss_stat)) 
 	{
 		if (!enumerator_value("MM_FILEPAGES", &filepages) ||
 		    !enumerator_value("MM_ANONPAGES", &anonpages)) 
@@ -4811,14 +4811,14 @@ get_task_mem_usage(ulong task, struct task_mem_usage *tm)
 		/*
 		 *  Latest kernels have mm_struct.mm_rss_stat[].
 		 */ 
-		if (VALID_MEMBER(mm_struct_rss_stat) && VALID_MEMBER(mm_rss_stat_count)) {
+		if (VALID_MEMBER_LAZY(mm_struct_rss_stat) && VALID_MEMBER_LAZY(mm_rss_stat_count)) {
 			long anonpages, filepages, count;
 
 			anonpages = tt->anonpages;
 			filepages = tt->filepages;
 			count = LONG(tt->mm_struct +
-				OFFSET(mm_struct_rss_stat) +
-				OFFSET(mm_rss_stat_count) +
+				LAZY_OFFSET(mm_struct_rss_stat) +
+				LAZY_OFFSET(mm_rss_stat_count) +
 				(filepages * sizeof(long)));
 
 			/*
@@ -4830,27 +4830,27 @@ get_task_mem_usage(ulong task, struct task_mem_usage *tm)
 				rss += count;
 
 			count = LONG(tt->mm_struct +
-				OFFSET(mm_struct_rss_stat) +
-				OFFSET(mm_rss_stat_count) +
+				LAZY_OFFSET(mm_struct_rss_stat) +
+				LAZY_OFFSET(mm_rss_stat_count) +
 				(anonpages * sizeof(long)));
 			if (count > 0)
 				rss += count;
 
-		} else if (VALID_MEMBER(mm_struct_rss_stat)) {
+		} else if (VALID_MEMBER_LAZY(mm_struct_rss_stat)) {
 			/* 6.2: struct percpu_counter rss_stat[NR_MM_COUNTERS] */
 			ulong fbc;
 
-			fbc = tc->mm_struct + OFFSET(mm_struct_rss_stat) +
+			fbc = tc->mm_struct + LAZY_OFFSET(mm_struct_rss_stat) +
 				(tt->filepages * SIZE(percpu_counter));
 			rss += percpu_counter_sum_positive(fbc);
 
-			fbc = tc->mm_struct + OFFSET(mm_struct_rss_stat) +
+			fbc = tc->mm_struct + LAZY_OFFSET(mm_struct_rss_stat) +
 				(tt->anonpages * SIZE(percpu_counter));
 			rss += percpu_counter_sum_positive(fbc);
 		}
 
 		/* Check whether SPLIT_RSS_COUNTING is enabled */
-		if (VALID_MEMBER(task_struct_rss_stat)) {
+		if (VALID_MEMBER_LAZY(task_struct_rss_stat)) {
 			int sync_rss;
 			struct tgid_context tgid, *tgid_array, *tg, *first, *last;
 
@@ -4882,8 +4882,8 @@ get_task_mem_usage(ulong task, struct task_mem_usage *tm)
 					{
 						/* count 0 -> filepages */
 						if (!readmem(first->task +
-							OFFSET(task_struct_rss_stat) +
-							OFFSET(task_rss_stat_count), KVADDR,
+							LAZY_OFFSET(task_struct_rss_stat) +
+							LAZY_OFFSET(task_rss_stat_count), KVADDR,
 							&sync_rss,
 							sizeof(int),
 							"task_struct rss_stat MM_FILEPAGES",
@@ -4895,8 +4895,8 @@ get_task_mem_usage(ulong task, struct task_mem_usage *tm)
 
 						/* count 1 -> anonpages */
 						if (!readmem(first->task +
-							OFFSET(task_struct_rss_stat) +
-							OFFSET(task_rss_stat_count) +
+							LAZY_OFFSET(task_struct_rss_stat) +
+							LAZY_OFFSET(task_rss_stat_count) +
 							sizeof(int),
 							KVADDR, &sync_rss,
 							sizeof(int),
@@ -4922,15 +4922,15 @@ get_task_mem_usage(ulong task, struct task_mem_usage *tm)
 		/*  
 		 *  mm_struct._anon_rss and mm_struct._file_rss should exist. 
 		 */
-		if (VALID_MEMBER(mm_struct_anon_rss))
-			rss +=  LONG(tt->mm_struct + OFFSET(mm_struct_anon_rss));
-		if (VALID_MEMBER(mm_struct_file_rss))
-			rss +=  LONG(tt->mm_struct + OFFSET(mm_struct_file_rss));
+		if (VALID_MEMBER_LAZY(mm_struct_anon_rss))
+			rss +=  LONG(tt->mm_struct + LAZY_OFFSET(mm_struct_anon_rss));
+		if (VALID_MEMBER_LAZY(mm_struct_file_rss))
+			rss +=  LONG(tt->mm_struct + LAZY_OFFSET(mm_struct_file_rss));
 
 		tm->rss = (unsigned long)rss;
 	}
-        tm->total_vm = ULONG(tt->mm_struct + OFFSET(mm_struct_total_vm));
-        tm->pgd_addr = ULONG(tt->mm_struct + OFFSET(mm_struct_pgd));
+        tm->total_vm = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_total_vm));
+        tm->pgd_addr = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_pgd));
 
 	if (is_kernel_thread(task) && !tm->rss)
 		return;
@@ -5457,7 +5457,7 @@ PG_reserved_flag_init(void)
 		return;
 	}
 
-	flags = ULONG(buf + OFFSET(page_flags));
+	flags = ULONG(buf + LAZY_OFFSET(page_flags));
 	count = INT(buf + OFFSET(page_count));
 
 	if (count_bits_long(flags) == 1)
@@ -5491,7 +5491,7 @@ PG_slab_flag_init(void)
 		vt->PG_slab = flags;
 		if (CRASHDEBUG(2))
 			fprintf(fp, "PG_slab (enum): %lx\n", vt->PG_slab);
-	} else if (VALID_MEMBER(page_pte)) {
+	} else if (VALID_MEMBER_LAZY(page_pte)) {
                 if (THIS_KERNEL_VERSION < LINUX(2,6,0))
                         vt->PG_slab = 10;
                 else if (THIS_KERNEL_VERSION >= LINUX(2,6,0))
@@ -5504,7 +5504,7 @@ PG_slab_flag_init(void)
                     readmem(pageptr, KVADDR, buf, SIZE(page),
 		    "vm_area_cachep page", RETURN_ON_ERROR|QUIET)) {
 
-			flags = ULONG(buf + OFFSET(page_flags));
+			flags = ULONG(buf + LAZY_OFFSET(page_flags));
 
 			if ((bit = ffsl(flags))) {
 				vt->PG_slab = bit - 1;
@@ -5673,7 +5673,7 @@ dump_mem_map_SPARSEMEM(struct meminfo *mi)
 			VADDR_PRLEN,
 			space(MINSPACE));
 
-	v22 = VALID_MEMBER(page_inode);  /* page.inode vs. page.mapping */
+	v22 = VALID_MEMBER_LAZY(page_inode);  /* page.inode vs. page.mapping */
 
         if (v22) {
 		sprintf(hdr, "%s%s%s%s%s%s%s%sCNT FLAGS\n",
@@ -5861,7 +5861,7 @@ dump_mem_map_SPARSEMEM(struct meminfo *mi)
 				goto display_members;
 			}
 			
-			flags = ULONG(pcache + OFFSET(page_flags));
+			flags = ULONG(pcache + LAZY_OFFSET(page_flags));
 			if (SIZE(page_flags) == 4)
 				flags &= 0xffffffff;
 			count = UINT(pcache + OFFSET(page_count));
@@ -5870,9 +5870,9 @@ dump_mem_map_SPARSEMEM(struct meminfo *mi)
 			{
 			case GET_ALL:
 			case GET_BUFFERS_PAGES:
-				if (VALID_MEMBER(page_buffers)) {
+				if (VALID_MEMBER_LAZY(page_buffers)) {
 					tmp = ULONG(pcache + 
-						OFFSET(page_buffers));
+						LAZY_OFFSET(page_buffers));
 					if (tmp)
 						buffers++;
 				} else if (THIS_KERNEL_VERSION >= LINUX(2,6,0)) {
@@ -5924,7 +5924,7 @@ dump_mem_map_SPARSEMEM(struct meminfo *mi)
 			page_mapping = VALID_MEMBER(page_mapping);
 	
 			if (v22) {
-				inode = ULONG(pcache + OFFSET(page_inode));
+				inode = ULONG(pcache + LAZY_OFFSET(page_inode));
 				offset = ULONG(pcache + OFFSET(page_offset));
 			} else if (page_mapping) { 
 				mapping = ULONG(pcache + 
@@ -6162,7 +6162,7 @@ dump_mem_map(struct meminfo *mi)
 			VADDR_PRLEN,
 			space(MINSPACE));
 
-	v22 = VALID_MEMBER(page_inode);  /* page.inode vs. page.mapping */
+	v22 = VALID_MEMBER_LAZY(page_inode);  /* page.inode vs. page.mapping */
 
         if (v22) {
 		sprintf(hdr, "%s%s%s%s%s%s%s%sCNT FLAGS\n",
@@ -6311,7 +6311,7 @@ dump_mem_map(struct meminfo *mi)
 				goto display_members;
 			}
 
-			flags = ULONG(pcache + OFFSET(page_flags));
+			flags = ULONG(pcache + LAZY_OFFSET(page_flags));
 			if (SIZE(page_flags) == 4)
 				flags &= 0xffffffff;
 			count = UINT(pcache + OFFSET(page_count));
@@ -6320,9 +6320,9 @@ dump_mem_map(struct meminfo *mi)
 			{
 			case GET_ALL:
 			case GET_BUFFERS_PAGES:
-				if (VALID_MEMBER(page_buffers)) {
+				if (VALID_MEMBER_LAZY(page_buffers)) {
 					tmp = ULONG(pcache + 
-						OFFSET(page_buffers));
+						LAZY_OFFSET(page_buffers));
 					if (tmp)
 						buffers++;
 				} else if (THIS_KERNEL_VERSION >= LINUX(2,6,0)) {
@@ -6375,7 +6375,7 @@ dump_mem_map(struct meminfo *mi)
 			page_mapping = VALID_MEMBER(page_mapping);
 
 			if (v22) {
-				inode = ULONG(pcache + OFFSET(page_inode));
+				inode = ULONG(pcache + LAZY_OFFSET(page_inode));
 				offset = ULONG(pcache + OFFSET(page_offset));
 			} else if (page_mapping) {
 				mapping = ULONG(pcache + 
@@ -6610,10 +6610,10 @@ dump_hstates()
 	}
 
 	if (INVALID_SIZE(hstate) ||
-	    INVALID_MEMBER(hstate_order) ||
-	    INVALID_MEMBER(hstate_name) ||
-	    INVALID_MEMBER(hstate_nr_huge_pages) ||
-	    INVALID_MEMBER(hstate_free_huge_pages)) {
+	    INVALID_MEMBER_LAZY(hstate_order) ||
+	    INVALID_MEMBER_LAZY(hstate_name) ||
+	    INVALID_MEMBER_LAZY(hstate_nr_huge_pages) ||
+	    INVALID_MEMBER_LAZY(hstate_free_huge_pages)) {
 		error(INFO, "hstate structure or members have changed\n");
 		option_not_supported('h');
 	}
@@ -6631,7 +6631,7 @@ dump_hstates()
             	    SIZE(hstate), "hstate", RETURN_ON_ERROR))
 			break;
 
-		order = INT(hstate + OFFSET(hstate_order));
+		order = INT(hstate + LAZY_OFFSET(hstate_order));
 		if (!order)
 			continue;
 
@@ -6641,15 +6641,15 @@ dump_hstates()
 		shift_string_left(first_space(buf1), 1);
 		fprintf(fp, "%s  ", mkstring(buf2, 5, RJUST, buf1));
 
-		free = LONG(hstate + OFFSET(hstate_free_huge_pages));
+		free = LONG(hstate + LAZY_OFFSET(hstate_free_huge_pages));
 		sprintf(buf1, "%ld", free);
 		fprintf(fp, "%s  ", mkstring(buf2, 6, RJUST, buf1));
 
-		nr = LONG(hstate + OFFSET(hstate_nr_huge_pages));
+		nr = LONG(hstate + LAZY_OFFSET(hstate_nr_huge_pages));
 		sprintf(buf1, "%ld", nr);
 		fprintf(fp, "%s  ", mkstring(buf2, 6, RJUST, buf1));
 
-		fprintf(fp, "%s\n", hstate + OFFSET(hstate_name));
+		fprintf(fp, "%s\n", hstate + LAZY_OFFSET(hstate_name));
 	}
 
 	FREEBUF(hstate);
@@ -6680,8 +6680,8 @@ page_flags_init_from_pageflag_names(void)
 	STRUCT_SIZE_INIT(trace_print_flags, "trace_print_flags");
 
 	if (INVALID_SIZE(trace_print_flags) ||
-	    INVALID_MEMBER(trace_print_flags_mask) || 
-	    INVALID_MEMBER(trace_print_flags_name) ||
+	    INVALID_MEMBER_LAZY(trace_print_flags_mask) || 
+	    INVALID_MEMBER_LAZY(trace_print_flags_name) ||
 	    !kernel_symbol_exists("pageflag_names") ||
 	    !(len = get_array_length("pageflag_names", NULL, 0)))
 		return FALSE;
@@ -6707,9 +6707,9 @@ page_flags_init_from_pageflag_names(void)
 
 	for (i = 0; i < len; i++) {
 		mask = ULONG(buffer + (SIZE(trace_print_flags)*i) + 
-			OFFSET(trace_print_flags_mask));		
+			LAZY_OFFSET(trace_print_flags_mask));		
 		name = VOID_PTR(buffer + (SIZE(trace_print_flags)*i) + 
-			OFFSET(trace_print_flags_name));		
+			LAZY_OFFSET(trace_print_flags_name));		
 
 		if ((mask == -1UL) && !name) {   /* Linux 3.5 and earlier */
 			len--;
@@ -6963,7 +6963,7 @@ dump_page_hash_table(struct meminfo *hi)
 
                 pcache = pghash_cache + ((i%PGHASH_CACHED) * entry_len);
 		if (VALID_STRUCT(page_cache_bucket))
-			pcache += OFFSET(page_cache_bucket_chain);
+			pcache += LAZY_OFFSET(page_cache_bucket_chain);
 			
 		head = ULONG(pcache);
 
@@ -6980,7 +6980,7 @@ dump_page_hash_table(struct meminfo *hi)
                 ld->flags = verbose;
                 ld->start = head;
 		ld->searchfor = searchpage;
-		ld->member_offset = OFFSET(page_next_hash);
+		ld->member_offset = LAZY_OFFSET(page_next_hash);
                 cnt = do_list(ld);
                 total_cached += cnt;
 
@@ -7529,10 +7529,10 @@ dump_free_pages_zones_v1(struct meminfo *fi)
 	chunk_size = 0;
 	zone_size_offset = 0;
 
-	if (VALID_MEMBER(zone_struct_size))
-		zone_size_offset =  OFFSET(zone_struct_size);
-	else if (VALID_MEMBER(zone_struct_memsize))
-		zone_size_offset =  OFFSET(zone_struct_memsize);
+	if (VALID_MEMBER_LAZY(zone_struct_size))
+		zone_size_offset =  LAZY_OFFSET(zone_struct_size);
+	else if (VALID_MEMBER_LAZY(zone_struct_memsize))
+		zone_size_offset =  LAZY_OFFSET(zone_struct_memsize);
 	else
 		error(FATAL, 
 			"zone_struct has neither size nor memsize field\n");
@@ -7544,13 +7544,13 @@ dump_free_pages_zones_v1(struct meminfo *fi)
 
 	for (n = sum = found = 0; n < vt->numnodes; n++) {
                 nt = &vt->node_table[n];
-		node_zones = nt->pgdat + OFFSET(pglist_data_node_zones);
+		node_zones = nt->pgdat + LAZY_OFFSET(pglist_data_node_zones);
 
 		for (i = 0; i < vt->nr_zones; i++) {
 	
 			if (fi->flags == GET_FREE_PAGES) {
 	                	readmem(node_zones+
-					OFFSET(zone_struct_free_pages), 
+					LAZY_OFFSET(zone_struct_free_pages), 
 					KVADDR, &value, sizeof(ulong),
 	                        	"node_zones free_pages", 
 					FAULT_ON_ERROR);
@@ -7562,7 +7562,7 @@ dump_free_pages_zones_v1(struct meminfo *fi)
 	                if (fi->flags == GET_FREE_HIGHMEM_PAGES) {
 	                        if (i == vt->ZONE_HIGHMEM) {
 	                                readmem(node_zones+
-						OFFSET(zone_struct_free_pages),
+						LAZY_OFFSET(zone_struct_free_pages),
 						KVADDR, &value, sizeof(ulong),
 	                                        "node_zones free_pages",
 	                                        FAULT_ON_ERROR);
@@ -7600,7 +7600,7 @@ dump_free_pages_zones_v1(struct meminfo *fi)
 	
 			fprintf(fp, "%3d   ", i);
 	
-	        	readmem(node_zones+OFFSET(zone_struct_name), KVADDR, 
+	        	readmem(node_zones+LAZY_OFFSET(zone_struct_name), KVADDR, 
 				&value, sizeof(void *), 
 				"node_zones name", FAULT_ON_ERROR);
 	                if (read_string(value, buf, BUFSIZE-1))
@@ -7613,19 +7613,19 @@ dump_free_pages_zones_v1(struct meminfo *fi)
 				"node_zones {mem}size", FAULT_ON_ERROR);
 	                fprintf(fp, "%6ld  ", size);
 	
-	        	readmem(node_zones+OFFSET(zone_struct_free_pages), 
+	        	readmem(node_zones+LAZY_OFFSET(zone_struct_free_pages), 
 				KVADDR, &value, sizeof(ulong), 
 				"node_zones free_pages", FAULT_ON_ERROR);
 	
 	                fprintf(fp, "%6ld  ", value);
 	
-	                readmem(node_zones+OFFSET(zone_struct_zone_start_paddr),
+	                readmem(node_zones+LAZY_OFFSET(zone_struct_zone_start_paddr),
 	                        KVADDR, &zone_start_paddr, sizeof(ulong),
 	                        "node_zones zone_start_paddr", FAULT_ON_ERROR);
-	                readmem(node_zones+OFFSET(zone_struct_zone_start_mapnr),
+	                readmem(node_zones+LAZY_OFFSET(zone_struct_zone_start_mapnr),
 	                        KVADDR, &zone_start_mapnr, sizeof(ulong),
 	                        "node_zones zone_start_mapnr", FAULT_ON_ERROR);
-	                readmem(node_zones+OFFSET(zone_struct_zone_mem_map),
+	                readmem(node_zones+LAZY_OFFSET(zone_struct_zone_mem_map),
 	                        KVADDR, &zone_mem_map, sizeof(ulong),
 	                        "node_zones zone_mem_map", FAULT_ON_ERROR);
 	
@@ -7643,7 +7643,7 @@ dump_free_pages_zones_v1(struct meminfo *fi)
 
 			if (value)
 				found += dump_zone_free_area(node_zones+
-					OFFSET(zone_struct_free_area), 
+					LAZY_OFFSET(zone_struct_free_area), 
 					vt->nr_free_areas, verbose, NULL);
 
 			node_zones += SIZE(zone_struct);
@@ -7863,8 +7863,8 @@ dump_free_pages_zones_v2(struct meminfo *fi)
 	chunk_size = 0;
 	this_addr = 0;
 
-	if (VALID_MEMBER(zone_spanned_pages))
-		zone_size_offset =  OFFSET(zone_spanned_pages);
+	if (VALID_MEMBER_LAZY(zone_spanned_pages))
+		zone_size_offset =  LAZY_OFFSET(zone_spanned_pages);
 	else
 		error(FATAL, "zone struct has no spanned_pages field\n");
 
@@ -7875,12 +7875,12 @@ dump_free_pages_zones_v2(struct meminfo *fi)
 
 	for (n = sum = found = 0; n < vt->numnodes; n++) {
                 nt = &vt->node_table[n];
-		node_zones = nt->pgdat + OFFSET(pglist_data_node_zones);
+		node_zones = nt->pgdat + LAZY_OFFSET(pglist_data_node_zones);
 
 		for (i = 0; i < vt->nr_zones; i++) {
 			if (fi->flags == GET_FREE_PAGES) {
 	                	readmem(node_zones+
-					OFFSET(zone_free_pages), 
+					LAZY_OFFSET(zone_free_pages), 
 					KVADDR, &value, sizeof(ulong),
 	                        	"node_zones free_pages", 
 					FAULT_ON_ERROR);
@@ -7890,7 +7890,7 @@ dump_free_pages_zones_v2(struct meminfo *fi)
 			}
 	
 	                if (fi->flags == GET_FREE_HIGHMEM_PAGES) {
-				readmem(node_zones+OFFSET(zone_name), KVADDR,
+				readmem(node_zones+LAZY_OFFSET(zone_name), KVADDR,
 					&value, sizeof(void *),
 					"node_zones name", FAULT_ON_ERROR);
 				if (read_string(value, buf, BUFSIZE-1) &&
@@ -7899,7 +7899,7 @@ dump_free_pages_zones_v2(struct meminfo *fi)
 
 	                        if (i == vt->ZONE_HIGHMEM) {
 	                                readmem(node_zones+
-						OFFSET(zone_free_pages),
+						LAZY_OFFSET(zone_free_pages),
 						KVADDR, &value, sizeof(ulong),
 	                                        "node_zones free_pages",
 	                                        FAULT_ON_ERROR);
@@ -7937,7 +7937,7 @@ dump_free_pages_zones_v2(struct meminfo *fi)
 	
 			fprintf(fp, "%3d   ", i);
 	
-	        	readmem(node_zones+OFFSET(zone_name), KVADDR, 
+	        	readmem(node_zones+LAZY_OFFSET(zone_name), KVADDR, 
 				&value, sizeof(void *), 
 				"node_zones name", FAULT_ON_ERROR);
 	                if (read_string(value, buf, BUFSIZE-1))
@@ -7950,24 +7950,24 @@ dump_free_pages_zones_v2(struct meminfo *fi)
 				"node_zones size", FAULT_ON_ERROR);
 	                fprintf(fp, "%6ld  ", size);
 	
-	        	readmem(node_zones+OFFSET(zone_free_pages), 
+	        	readmem(node_zones+LAZY_OFFSET(zone_free_pages), 
 				KVADDR, &value, sizeof(ulong), 
 				"node_zones free_pages", FAULT_ON_ERROR);
 	
 	                fprintf(fp, "%6ld  ", value);
 	
-			if (VALID_MEMBER(zone_zone_mem_map)) {
-                        	readmem(node_zones+OFFSET(zone_zone_mem_map),
+			if (VALID_MEMBER_LAZY(zone_zone_mem_map)) {
+                        	readmem(node_zones+LAZY_OFFSET(zone_zone_mem_map),
                                 	KVADDR, &zone_mem_map, sizeof(ulong),
                                 	"node_zones zone_mem_map", FAULT_ON_ERROR);
 			}
 
-			readmem(node_zones+ OFFSET(zone_zone_start_pfn),
+			readmem(node_zones+ LAZY_OFFSET(zone_zone_start_pfn),
                                 KVADDR, &zone_start_pfn, sizeof(ulong),
                                 "node_zones zone_start_pfn", FAULT_ON_ERROR);
                         zone_start_paddr = PTOB(zone_start_pfn);
 
-			if (!VALID_MEMBER(zone_zone_mem_map)) {
+			if (!VALID_MEMBER_LAZY(zone_zone_mem_map)) {
 				if (IS_SPARSEMEM() || IS_DISCONTIGMEM()) {
 					zone_mem_map = 0;
 					if (size) {
@@ -8012,7 +8012,7 @@ dump_free_pages_zones_v2(struct meminfo *fi)
 					if ((searchphys >= nt->start_paddr) &&
 					    (searchphys < end_paddr))
 						found += dump_zone_free_area(node_zones+
-							OFFSET(zone_free_area), 
+							LAZY_OFFSET(zone_free_area), 
 							vt->nr_free_areas, verbose,
 							&callback_data);
 
@@ -8020,7 +8020,7 @@ dump_free_pages_zones_v2(struct meminfo *fi)
 						goto done_search;
 				} else 
 					found += dump_zone_free_area(node_zones+
-						OFFSET(zone_free_area), 
+						LAZY_OFFSET(zone_free_area), 
 						vt->nr_free_areas, verbose, NULL);
 			}
 
@@ -8161,19 +8161,19 @@ dump_zone_page_usage(void)
 	char buf2[BUFSIZE];
 	char buf3[BUFSIZE];
 
-	if (!VALID_MEMBER(zone_struct_inactive_dirty_pages) ||
-	    !VALID_MEMBER(zone_struct_inactive_clean_pages) ||
-	    !VALID_MEMBER(zone_struct_active_pages) ||
-	    !VALID_MEMBER(zone_struct_pages_min) ||
-	    !VALID_MEMBER(zone_struct_pages_low) ||
-	    !VALID_MEMBER(zone_struct_pages_high))
+	if (!VALID_MEMBER_LAZY(zone_struct_inactive_dirty_pages) ||
+	    !VALID_MEMBER_LAZY(zone_struct_inactive_clean_pages) ||
+	    !VALID_MEMBER_LAZY(zone_struct_active_pages) ||
+	    !VALID_MEMBER_LAZY(zone_struct_pages_min) ||
+	    !VALID_MEMBER_LAZY(zone_struct_pages_low) ||
+	    !VALID_MEMBER_LAZY(zone_struct_pages_high))
 		return FALSE;
 
 	fprintf(fp, "\n");
 
         for (n = 0; n < vt->numnodes; n++) {
                 nt = &vt->node_table[n];
-                node_zones = nt->pgdat + OFFSET(pglist_data_node_zones);
+                node_zones = nt->pgdat + LAZY_OFFSET(pglist_data_node_zones);
                 
 		if ((vt->numnodes > 1) && (vt->flags & NODES)) {
                 	fprintf(fp, "%sNODE\n %2d\n",
@@ -8182,33 +8182,33 @@ dump_zone_page_usage(void)
 		fprintf(fp, "%s\n", page_usage_hdr);
 
                 for (i = 0; i < vt->nr_zones; i++) {
-			readmem(node_zones+OFFSET(zone_struct_free_pages),
+			readmem(node_zones+LAZY_OFFSET(zone_struct_free_pages),
                                 KVADDR, &free_pages, sizeof(ulong),
                                 "node_zones free_pages", FAULT_ON_ERROR);
 		        readmem(node_zones+
-				OFFSET(zone_struct_inactive_dirty_pages),
+				LAZY_OFFSET(zone_struct_inactive_dirty_pages),
 		                KVADDR, &inactive_dirty_pages, sizeof(ulong),
 		                "node_zones inactive_dirty_pages", 
 				FAULT_ON_ERROR);
 		        readmem(node_zones+
-				OFFSET(zone_struct_inactive_clean_pages),
+				LAZY_OFFSET(zone_struct_inactive_clean_pages),
 		                KVADDR, &inactive_clean_pages, sizeof(ulong),
 		                "node_zones inactive_clean_pages", 
 				FAULT_ON_ERROR);
-		        readmem(node_zones+OFFSET(zone_struct_active_pages),
+		        readmem(node_zones+LAZY_OFFSET(zone_struct_active_pages),
 		                KVADDR, &active_pages, sizeof(ulong),
 		                "node_zones active_pages", FAULT_ON_ERROR);
-		        readmem(node_zones+OFFSET(zone_struct_pages_min),
+		        readmem(node_zones+LAZY_OFFSET(zone_struct_pages_min),
 		                KVADDR, &pages_min, sizeof(ulong),
 		                "node_zones pages_min", FAULT_ON_ERROR);
-		        readmem(node_zones+OFFSET(zone_struct_pages_low),
+		        readmem(node_zones+LAZY_OFFSET(zone_struct_pages_low),
 		                KVADDR, &pages_low, sizeof(ulong),
 		                "node_zones pages_low", FAULT_ON_ERROR);
-		        readmem(node_zones+OFFSET(zone_struct_pages_high),
+		        readmem(node_zones+LAZY_OFFSET(zone_struct_pages_high),
 		                KVADDR, &pages_high, sizeof(ulong),
 		                "node_zones pages_high", FAULT_ON_ERROR);
 
-                        readmem(node_zones+OFFSET(zone_struct_name), KVADDR,
+                        readmem(node_zones+LAZY_OFFSET(zone_struct_name), KVADDR,
                                 &value, sizeof(void *),
                                 "node_zones name", FAULT_ON_ERROR);
                         if (read_string(value, buf1, BUFSIZE-1))
@@ -8324,10 +8324,10 @@ dump_zone_free_area(ulong free_area, int num, ulong verbose,
                 ld->start = free_area_buf[0];
                 ld->end = free_area;
 		if (VALID_MEMBER(page_list_next))
-			ld->list_head_offset = OFFSET(page_list);
+			ld->list_head_offset = LAZY_OFFSET(page_list);
         	else if (VALID_MEMBER(page_lru))
 			ld->list_head_offset = OFFSET(page_lru)+
-				OFFSET(list_head_next);
+				LAZY_OFFSET(list_head_next);
 		else error(FATAL, 
 			"neither page.list or page.lru exist?\n");
 
@@ -8390,7 +8390,7 @@ multiple_lists:
 			ld->start = *free_ptr;
 			ld->end = free_list;
 			ld->list_head_offset = OFFSET(page_lru) + 
-				OFFSET(list_head_next);
+				LAZY_OFFSET(list_head_next);
 			if (callback_data) {
 				ld->flags &= ~VERBOSE;
 				ld->flags |= (LIST_CALLBACK|CALLBACK_RETURN);
@@ -8759,11 +8759,11 @@ dump_kmeminfo(void)
 				* overcommit_ratio / 100);
 		}
 		if (symbol_exists("vm_committed_as")) {
-			if (INVALID_MEMBER(percpu_counter_count))
+			if (INVALID_MEMBER_LAZY(percpu_counter_count))
 				goto bailout;
 
 			readmem(symbol_value("vm_committed_as") +
-				OFFSET(percpu_counter_count),
+				LAZY_OFFSET(percpu_counter_count),
 				KVADDR, &committed, sizeof(long),
 				"percpu_counter count", FAULT_ON_ERROR);
 
@@ -8771,11 +8771,11 @@ dump_kmeminfo(void)
 			if (committed < 0)
 				committed = 0;
 		} else {
-			if (INVALID_MEMBER(atomic_t_counter))
+			if (INVALID_MEMBER_LAZY(atomic_t_counter))
 				goto bailout;
 
 			readmem(symbol_value("vm_committed_space") +
-				OFFSET(atomic_t_counter), KVADDR,
+				LAZY_OFFSET(atomic_t_counter), KVADDR,
 				&committed, sizeof(int), 
 				"atomic_t counter", FAULT_ON_ERROR);
 		}
@@ -8821,7 +8821,7 @@ nr_blockdev_pages(void)
 		return 0;
 	ld->flags |= LIST_ALLOCATE;
 	ld->end = symbol_value("all_bdevs");
-        ld->list_head_offset = OFFSET(block_device_bd_list);
+        ld->list_head_offset = LAZY_OFFSET(block_device_bd_list);
 
 	block_device_buf = GETBUF(SIZE(block_device));
 	inode_buf = GETBUF(SIZE(inode));
@@ -8838,10 +8838,10 @@ nr_blockdev_pages(void)
                 readmem(ld->list_ptr[i], KVADDR, block_device_buf, 
 			SIZE(block_device), "block_device buffer", 
 			FAULT_ON_ERROR);
-		inode = ULONG(block_device_buf + OFFSET(block_device_bd_inode));
+		inode = ULONG(block_device_buf + LAZY_OFFSET(block_device_bd_inode));
                 readmem(inode, KVADDR, inode_buf, SIZE(inode), "inode buffer", 
 			FAULT_ON_ERROR);
-		address_space = ULONG(inode_buf + OFFSET(inode_i_mapping));
+		address_space = ULONG(inode_buf + LAZY_OFFSET(inode_i_mapping));
                 readmem(address_space, KVADDR, address_space_buf, 
 			SIZE(address_space), "address_space buffer", 
 			FAULT_ON_ERROR);
@@ -8873,14 +8873,14 @@ nr_blockdev_pages_v2(void)
 	BZERO(ld, sizeof(struct list_data));
 
 	get_symbol_data("blockdev_superblock", sizeof(void *), &bd_sb);
-	readmem(bd_sb + OFFSET(super_block_s_inodes), KVADDR, &ld->start,
+	readmem(bd_sb + LAZY_OFFSET(super_block_s_inodes), KVADDR, &ld->start,
 		sizeof(ulong), "blockdev_superblock.s_inodes", FAULT_ON_ERROR);
 
 	if (empty_list(ld->start))
 		return 0;
 	ld->flags |= LIST_ALLOCATE;
-	ld->end = bd_sb + OFFSET(super_block_s_inodes);
-	ld->list_head_offset = OFFSET(inode_i_sb_list);
+	ld->end = bd_sb + LAZY_OFFSET(super_block_s_inodes);
+	ld->list_head_offset = LAZY_OFFSET(inode_i_sb_list);
 
 	inode_buf = GETBUF(SIZE(inode));
 	address_space_buf = GETBUF(SIZE(address_space));
@@ -8895,7 +8895,7 @@ nr_blockdev_pages_v2(void)
 	for (i = nrpages = 0; i < inode_count; i++) {
 		readmem(ld->list_ptr[i], KVADDR, inode_buf, SIZE(inode), "inode buffer",
 			FAULT_ON_ERROR);
-		address_space = ULONG(inode_buf + OFFSET(inode_i_mapping));
+		address_space = ULONG(inode_buf + LAZY_OFFSET(inode_i_mapping));
 		readmem(address_space, KVADDR, address_space_buf, SIZE(address_space),
 			"address_space buffer", FAULT_ON_ERROR);
 		nrpages += ULONG(address_space_buf + OFFSET(address_space_nrpages));
@@ -8946,10 +8946,10 @@ dump_vmlist(struct meminfo *vi)
 			pc->curcmd_flags |= HEADER_PRINTED;
 		}
 
-                readmem(next+OFFSET(vm_struct_addr), KVADDR, 
+                readmem(next+LAZY_OFFSET(vm_struct_addr), KVADDR, 
 			&addr, sizeof(void *),
                         "vmlist addr", FAULT_ON_ERROR);
-                readmem(next+OFFSET(vm_struct_size), KVADDR, 
+                readmem(next+LAZY_OFFSET(vm_struct_size), KVADDR, 
 			&size, sizeof(ulong),
                         "vmlist size", FAULT_ON_ERROR);
 
@@ -9013,7 +9013,7 @@ dump_vmlist(struct meminfo *vi)
 
 		}
 next_entry:
-                readmem(next+OFFSET(vm_struct_next), 
+                readmem(next+LAZY_OFFSET(vm_struct_next), 
 			KVADDR, &next, sizeof(void *),
                         "vmlist next", FAULT_ON_ERROR);
 		
@@ -9056,7 +9056,7 @@ dump_vmap_area(struct meminfo *vi)
 	BZERO(ld, sizeof(struct list_data));
 	ld->flags = LIST_HEAD_FORMAT|LIST_HEAD_POINTER|LIST_ALLOCATE;
 	get_symbol_data("vmap_area_list", sizeof(void *), &ld->start);
-	ld->list_head_offset = OFFSET(vmap_area_list);
+	ld->list_head_offset = LAZY_OFFSET(vmap_area_list);
 	ld->end = symbol_value("vmap_area_list");
 	cnt = do_list(ld);
 	if (cnt < 0) {
@@ -9085,9 +9085,9 @@ dump_vmap_area(struct meminfo *vi)
 		readmem(ld->list_ptr[i], KVADDR, vmap_area_buf,
                         SIZE(vmap_area), "vmap_area struct", FAULT_ON_ERROR); 
 
-		if (VALID_MEMBER(vmap_area_flags) &&
+		if (VALID_MEMBER_LAZY(vmap_area_flags) &&
 		    VALID_MEMBER(vmap_area_purge_list)) {
-			flags = ULONG(vmap_area_buf + OFFSET(vmap_area_flags));
+			flags = ULONG(vmap_area_buf + LAZY_OFFSET(vmap_area_flags));
 			if (flags != VM_VM_AREA)
 				continue;
 		} else {
@@ -9095,8 +9095,8 @@ dump_vmap_area(struct meminfo *vi)
 			if (!vm)
 				continue;
 		}
-		start = ULONG(vmap_area_buf + OFFSET(vmap_area_va_start));
-		end = ULONG(vmap_area_buf + OFFSET(vmap_area_va_end));
+		start = ULONG(vmap_area_buf + LAZY_OFFSET(vmap_area_va_start));
+		end = ULONG(vmap_area_buf + LAZY_OFFSET(vmap_area_va_end));
 		vm_struct = ULONG(vmap_area_buf + OFFSET(vmap_area_vm));
 
 		size = end - start;
@@ -9346,7 +9346,7 @@ dump_page_lists(struct meminfo *mi)
         }
 
         if (mi->flags & GET_INACTIVE_CLEAN) {
-		if (INVALID_MEMBER(zone_struct_inactive_clean_list))
+		if (INVALID_MEMBER_LAZY(zone_struct_inactive_clean_list))
 			error(FATAL, 
 		        "inactive_clean_list(s) do not exist in this kernel\n");
 
@@ -9359,10 +9359,10 @@ dump_page_lists(struct meminfo *mi)
         	for (n = 0; pgdat; n++) {
                 	nt = &vt->node_table[n];
 
-                	node_zones = nt->pgdat + OFFSET(pglist_data_node_zones);
+                	node_zones = nt->pgdat + LAZY_OFFSET(pglist_data_node_zones);
 
                 	for (i = 0; i < vt->nr_zones; i++) {
-                        	readmem(node_zones+OFFSET(zone_struct_name), 
+                        	readmem(node_zones+LAZY_OFFSET(zone_struct_name), 
 					KVADDR, &value, sizeof(void *),
                                 	"zone_struct name", FAULT_ON_ERROR);
                         	if (!read_string(value, buf, BUFSIZE-1))
@@ -9377,20 +9377,20 @@ dump_page_lists(struct meminfo *mi)
 				}
 
 				readmem(node_zones +
-				    OFFSET(zone_struct_inactive_clean_pages),
+				    LAZY_OFFSET(zone_struct_inactive_clean_pages),
                                     KVADDR, &inactive_clean_pages, 
 				    sizeof(ulong), "inactive_clean_pages", 
 				    FAULT_ON_ERROR);
 
                                 readmem(node_zones +
-                                    OFFSET(zone_struct_inactive_clean_list),
+                                    LAZY_OFFSET(zone_struct_inactive_clean_list),
                                     KVADDR, &inactive_clean_list, 
                                     sizeof(ulong), "inactive_clean_list", 
                                     FAULT_ON_ERROR);
 
 				ld->start = inactive_clean_list;
 				ld->end = node_zones +
-                                    OFFSET(zone_struct_inactive_clean_list);
+                                    LAZY_OFFSET(zone_struct_inactive_clean_list);
         			if (mi->flags & ADDRESS_SPECIFIED)
                 			ld->searchfor = mi->spec_addr;
 
@@ -9463,9 +9463,9 @@ is_kmem_cache_addr(ulong vaddr, char *kbuf)
 		return is_kmem_cache_addr_common(vaddr, kbuf);
 
         name_offset = vt->flags & (PERCPU_KMALLOC_V1|PERCPU_KMALLOC_V2) ?
-                OFFSET(kmem_cache_s_name) : OFFSET(kmem_cache_s_c_name);
+                OFFSET(kmem_cache_s_name) : LAZY_OFFSET(kmem_cache_s_c_name);
         next_offset = vt->flags & (PERCPU_KMALLOC_V1|PERCPU_KMALLOC_V2) ?
-                OFFSET(kmem_cache_s_next) : OFFSET(kmem_cache_s_c_nextp);
+                OFFSET(kmem_cache_s_next) : LAZY_OFFSET(kmem_cache_s_c_nextp);
 
         cache = cache_cache = symbol_value("cache_cache");
 
@@ -9535,9 +9535,9 @@ kmem_cache_list(struct meminfo *mi)
 	}
 
         name_offset = vt->flags & (PERCPU_KMALLOC_V1|PERCPU_KMALLOC_V2) ?
-                OFFSET(kmem_cache_s_name) : OFFSET(kmem_cache_s_c_name);
+                OFFSET(kmem_cache_s_name) : LAZY_OFFSET(kmem_cache_s_c_name);
         next_offset = vt->flags & (PERCPU_KMALLOC_V1|PERCPU_KMALLOC_V2) ?
-                OFFSET(kmem_cache_s_next) : OFFSET(kmem_cache_s_c_nextp);
+                OFFSET(kmem_cache_s_next) : LAZY_OFFSET(kmem_cache_s_c_nextp);
 
         cache = cache_cache = symbol_value("cache_cache");
 
@@ -9610,14 +9610,14 @@ vaddr_to_kmem_cache(ulong vaddr, char *buf, int verbose)
 	}
 
 	if (vt->PG_slab) {
-		readmem(page+OFFSET(page_flags), KVADDR,
+		readmem(page+LAZY_OFFSET(page_flags), KVADDR,
 			&page_flags, sizeof(ulong), "page.flags",
 			FAULT_ON_ERROR);
 		if (!(page_flags & (1 << vt->PG_slab))) {
 			if (((vt->flags & KMALLOC_SLUB) || VALID_MEMBER(page_compound_head)) ||
 			    ((vt->flags & KMALLOC_COMMON) &&
 			    VALID_MEMBER(page_slab) && VALID_MEMBER(page_first_page))) {
-				readmem(compound_head(page)+OFFSET(page_flags), KVADDR,
+				readmem(compound_head(page)+LAZY_OFFSET(page_flags), KVADDR,
 					&page_flags, sizeof(ulong), "page.flags",
 					FAULT_ON_ERROR);
 				if (!(page_flags & (1 << vt->PG_slab)))
@@ -9642,7 +9642,7 @@ vaddr_to_kmem_cache(ulong vaddr, char *buf, int verbose)
                         KVADDR, &cache, sizeof(void *),
                         "page.list.next", FAULT_ON_ERROR);
 	else if (VALID_MEMBER(page_lru))
-                readmem(page+OFFSET(page_lru)+OFFSET(list_head_next),
+                readmem(page+OFFSET(page_lru)+LAZY_OFFSET(list_head_next),
                         KVADDR, &cache, sizeof(void *),
                         "page.lru.next", FAULT_ON_ERROR);
 	else
@@ -9708,8 +9708,8 @@ vaddr_to_slab(ulong vaddr)
                 readmem(page+OFFSET(page_slab_page),
                         KVADDR, &slab, sizeof(void *),
                         "page.slab_page", FAULT_ON_ERROR);
-        else if (VALID_MEMBER(page_prev))
-                readmem(page+OFFSET(page_prev),
+        else if (VALID_MEMBER_LAZY(page_prev))
+                readmem(page+LAZY_OFFSET(page_prev),
                         KVADDR, &slab, sizeof(void *),
                         "page.prev", FAULT_ON_ERROR);
         else if (VALID_MEMBER(page_list_prev))
@@ -9717,7 +9717,7 @@ vaddr_to_slab(ulong vaddr)
                         KVADDR, &slab, sizeof(void *),
                         "page.list.prev", FAULT_ON_ERROR);
 	else if (VALID_MEMBER(page_lru))
-                readmem(page+OFFSET(page_lru)+OFFSET(list_head_prev),
+                readmem(page+OFFSET(page_lru)+LAZY_OFFSET(list_head_prev),
                         KVADDR, &slab, sizeof(void *),
                         "page.lru.prev", FAULT_ON_ERROR);
         else
@@ -9781,9 +9781,9 @@ kmem_cache_init(void)
 	}
 
 	num_offset = vt->flags & (PERCPU_KMALLOC_V1|PERCPU_KMALLOC_V2) ? 
-		OFFSET(kmem_cache_s_num) : OFFSET(kmem_cache_s_c_num);
+		OFFSET(kmem_cache_s_num) : LAZY_OFFSET(kmem_cache_s_c_num);
 	next_offset = vt->flags & (PERCPU_KMALLOC_V1|PERCPU_KMALLOC_V2) ?
-		OFFSET(kmem_cache_s_next) : OFFSET(kmem_cache_s_c_nextp);
+		OFFSET(kmem_cache_s_next) : LAZY_OFFSET(kmem_cache_s_c_nextp);
         max_cnum = max_limit = max_cpus = cache_count = tmp2 = 0;
 
 	/*
@@ -10018,7 +10018,7 @@ kmem_cache_downsize(void)
                     "kmem_cache_boot object_size", RETURN_ON_ERROR))
                         ASSIGN_SIZE(kmem_cache_s) = object_size;
 		else {
-			object_size = OFFSET(kmem_cache_node) +
+			object_size = LAZY_OFFSET(kmem_cache_node) +
 				(sizeof(void *) * vt->kmem_cache_len_nodes);
                         ASSIGN_SIZE(kmem_cache_s) = object_size;
 		}
@@ -10138,12 +10138,12 @@ max_cpudata_limit(ulong cache, ulong *cpus)
 	if (vt->flags & PERCPU_KMALLOC_V2)
 		goto kmem_cache_s_array;
 	
-	 if (INVALID_MEMBER(kmem_cache_s_cpudata)) {
+	 if (INVALID_MEMBER_LAZY(kmem_cache_s_cpudata)) {
 		*cpus = 0;
 		return 0;
 	}
 
-	if (!readmem(cache+OFFSET(kmem_cache_s_cpudata),
+	if (!readmem(cache+LAZY_OFFSET(kmem_cache_s_cpudata),
             KVADDR, &cpudata[0], 
 	    sizeof(ulong) * ARRAY_LENGTH(kmem_cache_s_cpudata),
             "cpudata array", RETURN_ON_ERROR))
@@ -10151,7 +10151,7 @@ max_cpudata_limit(ulong cache, ulong *cpus)
 
 	for (i = max_limit = 0; (i < ARRAY_LENGTH(kmem_cache_s_cpudata)) && 
 	     cpudata[i]; i++) {
-		if (!readmem(cpudata[i]+OFFSET(cpucache_s_limit),
+		if (!readmem(cpudata[i]+LAZY_OFFSET(cpucache_s_limit),
         	    KVADDR, &limit, sizeof(int),
                     "cpucache limit", RETURN_ON_ERROR))
 			goto bail_out;
@@ -10173,7 +10173,7 @@ kmem_cache_s_array:
 
 	for (i = max_limit = 0; (i < ARRAY_LENGTH(kmem_cache_s_array)) && 
 	     cpudata[i]; i++) {
-                if (!readmem(cpudata[i]+OFFSET(array_cache_limit),
+                if (!readmem(cpudata[i]+LAZY_OFFSET(array_cache_limit),
                     KVADDR, &limit, sizeof(int),
                     "array cache limit", RETURN_ON_ERROR))
 			goto bail_out;
@@ -10189,7 +10189,7 @@ kmem_cache_s_array:
             readmem(cache+OFFSET(kmem_cache_s_lists)+OFFSET(kmem_list3_shared),
 	    KVADDR, &shared, sizeof(void *), "kmem_list3 shared", 
 	    RETURN_ON_ERROR|QUIET) &&
-	    readmem(shared+OFFSET(array_cache_limit), 
+	    readmem(shared+LAZY_OFFSET(array_cache_limit), 
 	    KVADDR, &limit, sizeof(int), "shared array_cache limit",
 	    RETURN_ON_ERROR|QUIET)) {
 		if (limit > max_limit)
@@ -10205,7 +10205,7 @@ kmem_cache_s_array_nodes:
 		fprintf(fp, "kmem_cache: %lx\n", cache);
 
 	if (vt->flags & SLAB_CPU_CACHE) {
-		if (!readmem(cache+OFFSET(kmem_cache_cpu_cache), KVADDR, &percpu_ptr, 
+		if (!readmem(cache+LAZY_OFFSET(kmem_cache_cpu_cache), KVADDR, &percpu_ptr, 
 		    sizeof(void *), "kmem_cache.cpu_cache", RETURN_ON_ERROR))
 			goto bail_out;
 
@@ -10225,7 +10225,7 @@ kmem_cache_s_array_nodes:
 		if (!cpudata[i])
 			break;
 
-                if (!readmem(cpudata[i]+OFFSET(array_cache_limit),
+                if (!readmem(cpudata[i]+LAZY_OFFSET(array_cache_limit),
                     KVADDR, &limit, sizeof(int),
                     "array cache limit", RETURN_ON_ERROR)) {
 			error(INFO, 
@@ -10265,7 +10265,7 @@ kmem_cache_s_array_nodes:
 					break;
 			} else
 				continue;
-			if (readmem(shared + OFFSET(array_cache_limit),
+			if (readmem(shared + LAZY_OFFSET(array_cache_limit),
 	       		    KVADDR, &limit, sizeof(int), "shared array_cache limit",
 		            RETURN_ON_ERROR|QUIET)) {
 				if (CRASHDEBUG(3))
@@ -10436,7 +10436,7 @@ dump_kmem_cache(struct meminfo *si)
 	si->addrlist = (ulong *)GETBUF((vt->kmem_max_c_num+1) * sizeof(ulong));
 	cnt = 0;
 	if (si->flags & CACHE_SET) {
-		readmem(si->cache+OFFSET(kmem_cache_s_c_nextp),
+		readmem(si->cache+LAZY_OFFSET(kmem_cache_s_c_nextp),
 			KVADDR, &cache_cache, sizeof(ulong),
 			"kmem_cache next", FAULT_ON_ERROR);
 	} else
@@ -10470,11 +10470,11 @@ dump_kmem_cache(struct meminfo *si)
                 	"kmem_cache buffer", FAULT_ON_ERROR);
 
 		if (vt->kmem_cache_namelen) {
-			BCOPY(si->cache_buf + OFFSET(kmem_cache_s_c_name),
+			BCOPY(si->cache_buf + LAZY_OFFSET(kmem_cache_s_c_name),
 				buf, vt->kmem_cache_namelen);
 		} else {
 			name = ULONG(si->cache_buf + 
-				OFFSET(kmem_cache_s_c_name));
+				LAZY_OFFSET(kmem_cache_s_c_name));
                 	if (!read_string(name, buf, BUFSIZE-1)) {
 				error(WARNING, 
 			      "cannot read kmem_cache_s.c_name string at %lx\n",
@@ -10497,12 +10497,12 @@ dump_kmem_cache(struct meminfo *si)
 			fprintf(fp, "cache: %lx %s\n", si->cache, si->curname);
 		console("cache: %lx %s\n", si->cache, si->curname);
 
-		magic = ULONG(si->cache_buf + OFFSET(kmem_cache_s_c_magic));
+		magic = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_s_c_magic));
 
 		if (magic == SLAB_C_MAGIC) {
 
 			si->size = ULONG(si->cache_buf + 
-				OFFSET(kmem_cache_s_c_org_size));
+				LAZY_OFFSET(kmem_cache_s_c_org_size));
 			if (!si->size) {
 				if (STREQ(si->curname, "kmem_cache"))
 					si->size = SIZE(kmem_cache_s);
@@ -10514,13 +10514,13 @@ dump_kmem_cache(struct meminfo *si)
 				}
 			}
 			si->c_flags = ULONG(si->cache_buf +
-				OFFSET(kmem_cache_s_c_flags));
+				LAZY_OFFSET(kmem_cache_s_c_flags));
 			si->c_offset = ULONG(si->cache_buf + 
-				OFFSET(kmem_cache_s_c_offset));
+				LAZY_OFFSET(kmem_cache_s_c_offset));
 			si->order = ULONG(si->cache_buf + 
-				OFFSET(kmem_cache_s_c_gfporder));
+				LAZY_OFFSET(kmem_cache_s_c_gfporder));
 			si->c_num = ULONG(si->cache_buf +
-				OFFSET(kmem_cache_s_c_num));
+				LAZY_OFFSET(kmem_cache_s_c_num));
 
 			do_slab_chain(SLAB_GET_COUNTS, si);
 
@@ -10594,7 +10594,7 @@ dump_kmem_cache(struct meminfo *si)
 		}
 
 next_cache:
-		si->cache = ULONG(si->cache_buf + OFFSET(kmem_cache_s_c_nextp));
+		si->cache = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_s_c_nextp));
 
 	} while (si->cache != cache_cache);
 
@@ -10866,8 +10866,8 @@ dump_kmem_cache_percpu_v2(struct meminfo *si)
 	if (vt->flags & SLAB_OVERLOAD_PAGE) {
 		si->freelist = si->kmem_bufctl;
 		si->freelist_index_size = slab_freelist_index_size();
-		si->list_offset = VALID_MEMBER(slab_slab_list) ?
-					OFFSET(slab_slab_list) : OFFSET(page_lru);
+		si->list_offset = VALID_MEMBER_LAZY(slab_slab_list) ?
+					LAZY_OFFSET(slab_slab_list) : OFFSET(page_lru);
 	}
 	for (i = 0; i < vt->kmem_max_cpus; i++) 
 		si->cpudata[i] = (ulong *)
@@ -11138,12 +11138,12 @@ do_slab_chain(int cmd, struct meminfo *si)
 
 	si->slabsize = (power(2, si->order) * PAGESIZE());
 
-	kmem_slab_end = si->cache + OFFSET(kmem_cache_s_c_offset);
+	kmem_slab_end = si->cache + LAZY_OFFSET(kmem_cache_s_c_offset);
 
 	switch (cmd)
 	{
 	case SLAB_GET_COUNTS:
-		si->slab = ULONG(si->cache_buf + OFFSET(kmem_cache_s_c_firstp));
+		si->slab = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_s_c_firstp));
 
 		if (slab_data_saved(si))
 			return;
@@ -11166,12 +11166,12 @@ do_slab_chain(int cmd, struct meminfo *si)
 				FAULT_ON_ERROR);
 
 			magic = ULONG(kmem_slab_s_buf +
-				OFFSET(kmem_slab_s_s_magic));
+				LAZY_OFFSET(kmem_slab_s_s_magic));
 
 			if (magic == SLAB_MAGIC_ALLOC) {
 	
 				tmp = ULONG(kmem_slab_s_buf +
-					OFFSET(kmem_slab_s_s_inuse));
+					LAZY_OFFSET(kmem_slab_s_s_inuse));
 	
 				si->inuse += tmp;
 				si->num_slabs++;
@@ -11185,7 +11185,7 @@ do_slab_chain(int cmd, struct meminfo *si)
 			}
 	
 			si->slab = ULONG(kmem_slab_s_buf +
-				OFFSET(kmem_slab_s_s_nextp));
+				LAZY_OFFSET(kmem_slab_s_s_nextp));
 	
 		} while (si->slab != kmem_slab_end);
 		
@@ -11196,7 +11196,7 @@ do_slab_chain(int cmd, struct meminfo *si)
 	case SLAB_WALKTHROUGH:
         	if (!si->slab)
 			si->slab = ULONG(si->cache_buf + 
-				OFFSET(kmem_cache_s_c_firstp));
+				LAZY_OFFSET(kmem_cache_s_c_firstp));
 
 		if (si->slab == kmem_slab_end)
 			return;
@@ -11228,7 +11228,7 @@ do_slab_chain(int cmd, struct meminfo *si)
 			}
 	
 			si->slab = ULONG(kmem_slab_s_buf +
-				OFFSET(kmem_slab_s_s_nextp));
+				LAZY_OFFSET(kmem_slab_s_s_nextp));
 	
 	        } while (si->slab != kmem_slab_end);
 
@@ -11265,14 +11265,14 @@ do_slab_chain_percpu_v1(long cmd, struct meminfo *si)
 	si->slabsize = (power(2, si->order) * PAGESIZE());
 	si->cpucached_slab = 0;
 
-	if (VALID_MEMBER(kmem_cache_s_slabs)) {
-		slab_chains[0] = si->cache + OFFSET(kmem_cache_s_slabs);
+	if (VALID_MEMBER_LAZY(kmem_cache_s_slabs)) {
+		slab_chains[0] = si->cache + LAZY_OFFSET(kmem_cache_s_slabs);
 		slab_chains[1] = 0;
 		slab_chains[2] = 0;
 	} else {
-		slab_chains[0] = si->cache + OFFSET(kmem_cache_s_slabs_full);
-		slab_chains[1] = si->cache + OFFSET(kmem_cache_s_slabs_partial);
-		slab_chains[2] = si->cache + OFFSET(kmem_cache_s_slabs_free);
+		slab_chains[0] = si->cache + LAZY_OFFSET(kmem_cache_s_slabs_full);
+		slab_chains[1] = si->cache + LAZY_OFFSET(kmem_cache_s_slabs_partial);
+		slab_chains[2] = si->cache + LAZY_OFFSET(kmem_cache_s_slabs_free);
 	}
 
 	if (CRASHDEBUG(1)) {
@@ -11328,27 +11328,27 @@ do_slab_chain_percpu_v1(long cmd, struct meminfo *si)
 					list_borked = 1;
 					continue;
 				}
-				last = si->slab - OFFSET(slab_s_list);
+				last = si->slab - LAZY_OFFSET(slab_s_list);
 	
 		                readmem(si->slab, KVADDR, slab_s_buf, 
 					SIZE(slab_s), "slab_s buffer", 
 					FAULT_ON_ERROR);
 	
-				tmp = INT(slab_s_buf + OFFSET(slab_s_inuse));
+				tmp = INT(slab_s_buf + LAZY_OFFSET(slab_s_inuse));
 				si->inuse += tmp;
 	
 				if (ACTIVE())
 					gather_cpudata_list_v1(si); 
 
 				si->s_mem = ULONG(slab_s_buf + 
-					OFFSET(slab_s_s_mem));
+					LAZY_OFFSET(slab_s_s_mem));
 				gather_slab_cached_count(si);
 	
 				si->num_slabs++;
 		
 				si->slab = ULONG(slab_s_buf + 
-					OFFSET(slab_s_list));
-				si->slab -= OFFSET(slab_s_list);
+					LAZY_OFFSET(slab_s_list));
+				si->slab -= LAZY_OFFSET(slab_s_list);
 
 				/*
 				 *  Check for slab transition. (Tony Dziedzic)
@@ -11415,7 +11415,7 @@ do_slab_chain_percpu_v1(long cmd, struct meminfo *si)
 					list_borked = 1;
 					continue;
 				}
-				last = si->slab - OFFSET(slab_s_list);
+				last = si->slab - LAZY_OFFSET(slab_s_list);
 	
 		                dump_slab_percpu_v1(si);
 		
@@ -11423,11 +11423,11 @@ do_slab_chain_percpu_v1(long cmd, struct meminfo *si)
 					return;
 				}
 		
-		                readmem(si->slab+OFFSET(slab_s_list),
+		                readmem(si->slab+LAZY_OFFSET(slab_s_list),
 		                        KVADDR, &si->slab, sizeof(ulong),
 		                        "slab list", FAULT_ON_ERROR);
 		
-				si->slab -= OFFSET(slab_s_list);
+				si->slab -= LAZY_OFFSET(slab_s_list);
 	
 		        } while (si->slab != slab_chains[s] && !list_borked);
 		}
@@ -11462,7 +11462,7 @@ verify_slab_v1(struct meminfo *si, ulong last, int s)
         }                        
 
         list_head = (struct kernel_list_head *)
-		(slab_s_buf + OFFSET(slab_s_list));
+		(slab_s_buf + LAZY_OFFSET(slab_s_list));
 
 	if (!IS_KVADDR((ulong)list_head->next) || 
 	    !accessible((ulong)list_head->next)) {
@@ -11479,7 +11479,7 @@ verify_slab_v1(struct meminfo *si, ulong last, int s)
 		errcnt++;
 	}
 
-	inuse = UINT(slab_s_buf + OFFSET(slab_s_inuse));
+	inuse = UINT(slab_s_buf + LAZY_OFFSET(slab_s_inuse));
 	if (inuse > si->c_num) {
                 error(INFO, "%s: %s list: slab: %lx  bad inuse counter: %ld\n",
                         si->curname, list, si->slab, inuse);
@@ -11492,7 +11492,7 @@ verify_slab_v1(struct meminfo *si, ulong last, int s)
 	switch (s) 
 	{
 	case 0: /* full -- but can be one singular list */
-                if (VALID_MEMBER(kmem_cache_s_slabs_full) && 
+                if (VALID_MEMBER_LAZY(kmem_cache_s_slabs_full) && 
 		    (inuse != si->c_num)) {
                         error(INFO,
                             "%s: %s list: slab: %lx  bad inuse counter: %ld\n",
@@ -11521,7 +11521,7 @@ verify_slab_v1(struct meminfo *si, ulong last, int s)
 	}
 
 no_inuse_check_v1:
-	s_mem = ULONG(slab_s_buf + OFFSET(slab_s_s_mem));
+	s_mem = ULONG(slab_s_buf + LAZY_OFFSET(slab_s_s_mem));
 	if (!IS_KVADDR(s_mem) || !accessible(s_mem)) {
                 error(INFO, "%s: %s list: slab: %lx  bad s_mem pointer: %lx\n",
                         si->curname, list, si->slab, s_mem);
@@ -12531,7 +12531,7 @@ dump_saved_slab_data(void)
 static void
 dump_slab(struct meminfo *si)
 {
-	si->s_mem = ULONG(si->slab_buf + OFFSET(kmem_slab_s_s_mem));
+	si->s_mem = ULONG(si->slab_buf + LAZY_OFFSET(kmem_slab_s_s_mem));
 	si->s_mem = PTOB(BTOP(si->s_mem));
 
         if (si->flags & ADDRESS_SPECIFIED)  {
@@ -12546,9 +12546,9 @@ dump_slab(struct meminfo *si)
 			return;
         }
 
-	si->s_freep = VOID_PTR(si->slab_buf + OFFSET(kmem_slab_s_s_freep));
-	si->s_inuse = ULONG(si->slab_buf + OFFSET(kmem_slab_s_s_inuse));
-	si->s_index = ULONG_PTR(si->slab_buf + OFFSET(kmem_slab_s_s_index));
+	si->s_freep = VOID_PTR(si->slab_buf + LAZY_OFFSET(kmem_slab_s_s_freep));
+	si->s_inuse = ULONG(si->slab_buf + LAZY_OFFSET(kmem_slab_s_s_inuse));
+	si->s_index = ULONG_PTR(si->slab_buf + LAZY_OFFSET(kmem_slab_s_s_index));
 
 	if (!(si->flags & ADDRESS_SPECIFIED)) {
 		fprintf(fp, "%s", slab_hdr);
@@ -12567,7 +12567,7 @@ dump_slab_percpu_v1(struct meminfo *si)
 {
 	int tmp;
 
-        readmem(si->slab+OFFSET(slab_s_s_mem),
+        readmem(si->slab+LAZY_OFFSET(slab_s_s_mem),
                 KVADDR, &si->s_mem, sizeof(ulong),
                 "s_mem", FAULT_ON_ERROR);
 
@@ -12590,12 +12590,12 @@ dump_slab_percpu_v1(struct meminfo *si)
 			return;
         }
 
-        readmem(si->slab+OFFSET(slab_s_inuse),
+        readmem(si->slab+LAZY_OFFSET(slab_s_inuse),
                 KVADDR, &tmp, sizeof(int),
                 "inuse", FAULT_ON_ERROR);
 	si->s_inuse = tmp;
 
-        readmem(si->slab+OFFSET(slab_s_free),
+        readmem(si->slab+LAZY_OFFSET(slab_s_free),
                 KVADDR, &si->free, SIZE(kmem_bufctl_t),
                 "kmem_bufctl_t", FAULT_ON_ERROR);
 
@@ -13044,7 +13044,7 @@ dump_slab_objects(struct meminfo *si)
 		 *  Get the "real" s_mem, i.e., without the offset stripped off.
 		 *  It contains the address of the first object.
 		 */
-        	readmem(si->slab+OFFSET(kmem_slab_s_s_mem),
+        	readmem(si->slab+LAZY_OFFSET(kmem_slab_s_s_mem),
                 	KVADDR, &obj, sizeof(ulong),
                 	"s_mem", FAULT_ON_ERROR);
 
@@ -13265,10 +13265,10 @@ gather_cpudata_list_v1(struct meminfo *si)
 	int avail;
         ulong cpudata[NR_CPUS];
 
-        if (INVALID_MEMBER(kmem_cache_s_cpudata))
+        if (INVALID_MEMBER_LAZY(kmem_cache_s_cpudata))
                 return;
 
-        readmem(si->cache+OFFSET(kmem_cache_s_cpudata),
+        readmem(si->cache+LAZY_OFFSET(kmem_cache_s_cpudata),
                 KVADDR, &cpudata[0], 
 		sizeof(ulong) * ARRAY_LENGTH(kmem_cache_s_cpudata),
                 "cpudata array", FAULT_ON_ERROR);
@@ -13277,7 +13277,7 @@ gather_cpudata_list_v1(struct meminfo *si)
 	     cpudata[i]; i++) {
 		BZERO(si->cpudata[i], sizeof(ulong) * vt->kmem_max_limit);
 
-                readmem(cpudata[i]+OFFSET(cpucache_s_avail),
+                readmem(cpudata[i]+LAZY_OFFSET(cpucache_s_avail),
                         KVADDR, &avail, sizeof(int),
                         "cpucache avail", FAULT_ON_ERROR);
 
@@ -13327,7 +13327,7 @@ gather_cpudata_list_v2(struct meminfo *si)
 	     cpudata[i]; i++) {
 		BZERO(si->cpudata[i], sizeof(ulong) * vt->kmem_max_limit);
 
-                readmem(cpudata[i]+OFFSET(array_cache_avail),
+                readmem(cpudata[i]+LAZY_OFFSET(array_cache_avail),
                         KVADDR, &avail, sizeof(int),
                         "array cache avail", FAULT_ON_ERROR);
 
@@ -13365,7 +13365,7 @@ gather_cpudata_list_v2(struct meminfo *si)
             !readmem(si->cache+OFFSET(kmem_cache_s_lists)+
        	    OFFSET(kmem_list3_shared), KVADDR, &shared, sizeof(void *),
 	    "kmem_list3 shared", RETURN_ON_ERROR|QUIET) ||
-	    !readmem(shared+OFFSET(array_cache_avail),
+	    !readmem(shared+LAZY_OFFSET(array_cache_avail),
             KVADDR, &avail, sizeof(int), "shared array_cache avail",
             RETURN_ON_ERROR|QUIET) || !avail)
 		return;
@@ -13408,7 +13408,7 @@ gather_cpudata_list_v2_nodes(struct meminfo *si, int index)
 	start_address = (ulong *) GETBUF(sizeof(ulong) * vt->kmem_cache_len_nodes);
 
 	if (vt->flags & SLAB_CPU_CACHE) {
-		readmem(si->cache+OFFSET(kmem_cache_cpu_cache), KVADDR, 
+		readmem(si->cache+LAZY_OFFSET(kmem_cache_cpu_cache), KVADDR, 
 			&percpu_ptr, sizeof(void *), "kmem_cache.cpu_cache", 
 		    	FAULT_ON_ERROR);
 
@@ -13427,7 +13427,7 @@ gather_cpudata_list_v2_nodes(struct meminfo *si, int index)
 		else
 			continue;
 
-                readmem(cpudata[i]+OFFSET(array_cache_avail),
+                readmem(cpudata[i]+LAZY_OFFSET(array_cache_avail),
                         KVADDR, &avail, sizeof(int),
                         "array cache avail", FAULT_ON_ERROR);
 
@@ -13470,7 +13470,7 @@ gather_cpudata_list_v2_nodes(struct meminfo *si, int index)
 	    RETURN_ON_ERROR) ||  
 	    !readmem(start_address[index] + OFFSET(kmem_list3_shared), KVADDR, &shared,
 	     sizeof(void *), "kmem_list3 shared", RETURN_ON_ERROR|QUIET) || !shared ||
-	    !readmem(shared + OFFSET(array_cache_avail), KVADDR, &avail, sizeof(int), 
+	    !readmem(shared + LAZY_OFFSET(array_cache_avail), KVADDR, &avail, sizeof(int), 
 	    "shared array_cache avail", RETURN_ON_ERROR|QUIET) || !avail) {
 		FREEBUF(start_address);
 		return;
@@ -14279,8 +14279,8 @@ address_space_start(struct task_context *tc, ulong *addr)
         if (!tc->mm_struct)
                 return FALSE;
 
-	if (INVALID_MEMBER(mm_struct_mmap) && VALID_MEMBER(mm_struct_mm_mt)) {
-		mm_mt = tc->mm_struct + OFFSET(mm_struct_mm_mt);
+	if (INVALID_MEMBER_LAZY(mm_struct_mmap) && VALID_MEMBER_LAZY(mm_struct_mm_mt)) {
+		mm_mt = tc->mm_struct + LAZY_OFFSET(mm_struct_mm_mt);
 		entry_num = do_maple_tree(mm_mt, MAPLE_TREE_COUNT, NULL);
 		entry_list = (struct list_pair *)GETBUF(entry_num * sizeof(struct list_pair));
 		do_maple_tree(mm_mt, MAPLE_TREE_GATHER, entry_list);
@@ -14291,13 +14291,13 @@ address_space_start(struct task_context *tc, ulong *addr)
 		FREEBUF(entry_list);
 	} else {
 		fill_mm_struct(tc->mm_struct);
-		vma = ULONG(tt->mm_struct + OFFSET(mm_struct_mmap));
+		vma = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_mmap));
 	}
 
         if (!vma)
                 return FALSE;
 	vma_buf = fill_vma_cache(vma);
-        *addr = ULONG(vma_buf + OFFSET(vm_area_struct_vm_start));
+        *addr = ULONG(vma_buf + LAZY_OFFSET(vm_area_struct_vm_start));
 	
 	return TRUE;
 }
@@ -15540,10 +15540,10 @@ check_vma(ulong vma, ulong vaddr, ulong *vm_next, ulong *nextvaddr)
 
 	vma_buf = fill_vma_cache(vma);
 
-	vm_start = ULONG(vma_buf + OFFSET(vm_area_struct_vm_start));
-	vm_end = ULONG(vma_buf + OFFSET(vm_area_struct_vm_end));
+	vm_start = ULONG(vma_buf + LAZY_OFFSET(vm_area_struct_vm_start));
+	vm_end = ULONG(vma_buf + LAZY_OFFSET(vm_area_struct_vm_end));
 	if (vm_next)
-		*vm_next = ULONG(vma_buf + OFFSET(vm_area_struct_vm_next));
+		*vm_next = ULONG(vma_buf + LAZY_OFFSET(vm_area_struct_vm_next));
 
 	if (vaddr <= vm_start) {
 		*nextvaddr = vm_start;
@@ -15574,12 +15574,12 @@ next_upage(struct task_context *tc, ulong vaddr, ulong *nextvaddr)
 
 	fill_mm_struct(tc->mm_struct);
 	vaddr = VIRTPAGEBASE(vaddr) + PAGESIZE();  /* first possible page */
-	total_vm = ULONG(tt->mm_struct + OFFSET(mm_struct_total_vm));
+	total_vm = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_total_vm));
 	if (!total_vm)
 		return FALSE;
 
-	if (INVALID_MEMBER(mm_struct_mmap) && VALID_MEMBER(mm_struct_mm_mt)) {
-		mm_mt = tc->mm_struct + OFFSET(mm_struct_mm_mt);
+	if (INVALID_MEMBER_LAZY(mm_struct_mmap) && VALID_MEMBER_LAZY(mm_struct_mm_mt)) {
+		mm_mt = tc->mm_struct + LAZY_OFFSET(mm_struct_mm_mt);
 		entry_num = do_maple_tree(mm_mt, MAPLE_TREE_COUNT, NULL);
 		entry_list = (struct list_pair *)GETBUF(entry_num * sizeof(struct list_pair));
 		do_maple_tree(mm_mt, MAPLE_TREE_GATHER, entry_list);
@@ -15592,7 +15592,7 @@ next_upage(struct task_context *tc, ulong vaddr, ulong *nextvaddr)
 		}
 		FREEBUF(entry_list);
 	} else {
-		vma = ULONG(tt->mm_struct + OFFSET(mm_struct_mmap));
+		vma = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_mmap));
 
 		if (!vma)
 			return FALSE;
@@ -15855,9 +15855,9 @@ get_hugetlb_total_pages(ulong *nr_total_pages, ulong *nr_total_free_pages)
 	if (kernel_symbol_exists("hstates")) {
 
 		if (INVALID_SIZE(hstate) ||
-		    INVALID_MEMBER(hstate_order) ||
-		    INVALID_MEMBER(hstate_nr_huge_pages) ||
-		    INVALID_MEMBER(hstate_free_huge_pages))
+		    INVALID_MEMBER_LAZY(hstate_order) ||
+		    INVALID_MEMBER_LAZY(hstate_nr_huge_pages) ||
+		    INVALID_MEMBER_LAZY(hstate_free_huge_pages))
 			return FALSE;
 
 		len = get_array_length("hstates", NULL, 0);
@@ -15866,18 +15866,18 @@ get_hugetlb_total_pages(ulong *nr_total_pages, ulong *nr_total_free_pages)
 		for (i = 0; i < len; i++) {
 			vaddr = hstate_p + (SIZE(hstate) * i);
 
-			readmem(vaddr + OFFSET(hstate_order),
+			readmem(vaddr + LAZY_OFFSET(hstate_order),
 				KVADDR, &horder, sizeof(uint),
 				"hstate_order", FAULT_ON_ERROR);
 
 			if (!horder)
 				continue;
 
-			readmem(vaddr + OFFSET(hstate_nr_huge_pages),
+			readmem(vaddr + LAZY_OFFSET(hstate_nr_huge_pages),
 				KVADDR, &nr_huge_pages, sizeof(ulong),
 				"hstate_nr_huge_pages", FAULT_ON_ERROR);
 
-			readmem(vaddr + OFFSET(hstate_free_huge_pages),
+			readmem(vaddr + LAZY_OFFSET(hstate_free_huge_pages),
 				KVADDR, &free_huge_pages, sizeof(ulong),
 				"hstate_free_huge_pages", FAULT_ON_ERROR);
 
@@ -15984,23 +15984,23 @@ dump_swap_info(ulong swapflags, ulong *totalswap_pages, ulong *totalused_pages)
 
 		if (MEMBER_SIZE("swap_info_struct", "flags") == sizeof(uint))
 			flags = UINT(vt->swap_info_struct +
-				OFFSET(swap_info_struct_flags));
+				LAZY_OFFSET(swap_info_struct_flags));
 		else
 			flags = ULONG(vt->swap_info_struct +
-				OFFSET(swap_info_struct_flags));
+				LAZY_OFFSET(swap_info_struct_flags));
 
 		if (!(flags & SWP_USED))
 			continue;
 
 		swap_file = ULONG(vt->swap_info_struct + 
-			OFFSET(swap_info_struct_swap_file));
+			LAZY_OFFSET(swap_info_struct_swap_file));
 
                 swap_device = INT(vt->swap_info_struct +
                         OFFSET_OPTION(swap_info_struct_swap_device, 
 			swap_info_struct_old_block_size));
 
                 pages = INT(vt->swap_info_struct +
-                        OFFSET(swap_info_struct_pages));
+                        LAZY_OFFSET(swap_info_struct_pages));
 
 		totalswap += pages;
 		pages <<= (PAGESHIFT() - 10);
@@ -16008,34 +16008,34 @@ dump_swap_info(ulong swapflags, ulong *totalswap_pages, ulong *totalused_pages)
 
 		if (MEMBER_SIZE("swap_info_struct", "prio") == sizeof(short))
 			prio = SHORT(vt->swap_info_struct + 
-				OFFSET(swap_info_struct_prio));
+				LAZY_OFFSET(swap_info_struct_prio));
 		else
 			prio = INT(vt->swap_info_struct + 
-				OFFSET(swap_info_struct_prio));
+				LAZY_OFFSET(swap_info_struct_prio));
 
 		if (MEMBER_SIZE("swap_info_struct", "max") == sizeof(int))
 			max = UINT(vt->swap_info_struct +
-				OFFSET(swap_info_struct_max));
+				LAZY_OFFSET(swap_info_struct_max));
 		else
 			max = ULONG(vt->swap_info_struct +
-				OFFSET(swap_info_struct_max));
+				LAZY_OFFSET(swap_info_struct_max));
 
-		if (VALID_MEMBER(swap_info_struct_inuse_pages)) {
+		if (VALID_MEMBER_LAZY(swap_info_struct_inuse_pages)) {
 			if (MEMBER_SIZE("swap_info_struct", "inuse_pages") == sizeof(int))
 				inuse_pages = UINT(vt->swap_info_struct +
-					OFFSET(swap_info_struct_inuse_pages));
+					LAZY_OFFSET(swap_info_struct_inuse_pages));
 			else
 				inuse_pages = ULONG(vt->swap_info_struct +
-					OFFSET(swap_info_struct_inuse_pages));
+					LAZY_OFFSET(swap_info_struct_inuse_pages));
 		}
 
 		swap_map = ULONG(vt->swap_info_struct +
-			OFFSET(swap_info_struct_swap_map));
+			LAZY_OFFSET(swap_info_struct_swap_map));
 
 		if (swap_file) {
-			if (VALID_MEMBER(swap_info_struct_swap_vfsmnt)) {
+			if (VALID_MEMBER_LAZY(swap_info_struct_swap_vfsmnt)) {
                 		vfsmnt = ULONG(vt->swap_info_struct +
-                        		OFFSET(swap_info_struct_swap_vfsmnt));
+                        		LAZY_OFFSET(swap_info_struct_swap_vfsmnt));
 				get_pathname(swap_file, buf, BUFSIZE, 
 					1, vfsmnt);
 			} else if (VALID_MEMBER
@@ -16242,12 +16242,12 @@ get_swapdev(ulong type, char *buf)
 	}
 
 	swap_file = ULONG(vt->swap_info_struct + 
-		OFFSET(swap_info_struct_swap_file));
+		LAZY_OFFSET(swap_info_struct_swap_file));
 
         if (swap_file) {
-		if (VALID_MEMBER(swap_info_struct_swap_vfsmnt)) {
+		if (VALID_MEMBER_LAZY(swap_info_struct_swap_vfsmnt)) {
 			vfsmnt = ULONG(vt->swap_info_struct + 
-				OFFSET(swap_info_struct_swap_vfsmnt));
+				LAZY_OFFSET(swap_info_struct_swap_vfsmnt));
         		get_pathname(swap_file, buf, BUFSIZE, 1, vfsmnt);
                 } else if (VALID_MEMBER (swap_info_struct_old_block_size)) {
 			devname = vfsmount_devname(file_to_vfsmnt(swap_file),
@@ -16315,20 +16315,20 @@ vma_file_offset(ulong vma, ulong vaddr, char *buf)
 
         vma_buf = fill_vma_cache(vma);
 
-        vm_file = ULONG(vma_buf + OFFSET(vm_area_struct_vm_file));
+        vm_file = ULONG(vma_buf + LAZY_OFFSET(vm_area_struct_vm_file));
 
 	if (!vm_file) 
 		goto no_file_offset;
 
         file_buf = fill_file_cache(vm_file);
-        dentry = ULONG(file_buf + OFFSET(file_f_dentry));
+        dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
 
 	if (!dentry) 
 		goto no_file_offset;
 
 	file[0] = NULLCHAR;
-	if (VALID_MEMBER(file_f_vfsmnt)) {
-        	vfsmnt = ULONG(file_buf + OFFSET(file_f_vfsmnt));
+	if (VALID_MEMBER_LAZY(file_f_vfsmnt)) {
+        	vfsmnt = ULONG(file_buf + LAZY_OFFSET(file_f_vfsmnt));
                	get_pathname(dentry, file, BUFSIZE, 1, vfsmnt);
 	} else 
                	get_pathname(dentry, file, BUFSIZE, 1, 0);
@@ -16336,16 +16336,16 @@ vma_file_offset(ulong vma, ulong vaddr, char *buf)
 	if (!strlen(file)) 
 		goto no_file_offset;
 
-        vm_start = ULONG(vma_buf + OFFSET(vm_area_struct_vm_start));
+        vm_start = ULONG(vma_buf + LAZY_OFFSET(vm_area_struct_vm_start));
 
 	vm_offset = vm_pgoff = 0xdeadbeef;
 
-	if (VALID_MEMBER(vm_area_struct_vm_offset)) 
+	if (VALID_MEMBER_LAZY(vm_area_struct_vm_offset)) 
         	vm_offset = ULONG(vma_buf + 
-			OFFSET(vm_area_struct_vm_offset));
-	else if (VALID_MEMBER(vm_area_struct_vm_pgoff))
+			LAZY_OFFSET(vm_area_struct_vm_offset));
+	else if (VALID_MEMBER_LAZY(vm_area_struct_vm_pgoff))
         	vm_pgoff = ULONG(vma_buf + 
-			OFFSET(vm_area_struct_vm_pgoff));
+			LAZY_OFFSET(vm_area_struct_vm_pgoff));
 	else 
 		goto no_file_offset;
 
@@ -16458,8 +16458,8 @@ dump_memory_nodes(int initialize)
 		 *  This order may have to change based upon architecture...
 		 */
 		if (symbol_exists("pgdat_list") && 
-		    (VALID_MEMBER(pglist_data_node_next) || 
-		     VALID_MEMBER(pglist_data_pgdat_next))) {
+		    (VALID_MEMBER_LAZY(pglist_data_node_next) || 
+		     VALID_MEMBER_LAZY(pglist_data_pgdat_next))) {
                         get_symbol_data("pgdat_list", sizeof(void *), &pgdat);
 			vt->flags &= ~NODES_ONLINE;
 		} else if (vt->flags & NODES_ONLINE) {
@@ -16488,11 +16488,11 @@ dump_memory_nodes(int initialize)
 
 		nt = &vt->node_table[n];
 
-		readmem(pgdat+OFFSET(pglist_data_node_id), KVADDR, &id,
+		readmem(pgdat+LAZY_OFFSET(pglist_data_node_id), KVADDR, &id,
 			sizeof(int), "pglist node_id", FAULT_ON_ERROR);
 
-		if (VALID_MEMBER(pglist_data_node_mem_map)) {
-			readmem(pgdat+OFFSET(pglist_data_node_mem_map), KVADDR, 
+		if (VALID_MEMBER_LAZY(pglist_data_node_mem_map)) {
+			readmem(pgdat+LAZY_OFFSET(pglist_data_node_mem_map), KVADDR, 
 				&node_mem_map, sizeof(ulong), 
 				"node_mem_map", FAULT_ON_ERROR);
 		} else {
@@ -16500,14 +16500,14 @@ dump_memory_nodes(int initialize)
 			badaddr = TRUE;
 		}
 
-		if (VALID_MEMBER(pglist_data_node_start_paddr)) {
-			readmem(pgdat+OFFSET(pglist_data_node_start_paddr), 
+		if (VALID_MEMBER_LAZY(pglist_data_node_start_paddr)) {
+			readmem(pgdat+LAZY_OFFSET(pglist_data_node_start_paddr), 
 				KVADDR, &temp_node_start_paddr, sizeof(ulong), 
 				"pglist node_start_paddr", FAULT_ON_ERROR);
 			node_start_paddr = temp_node_start_paddr;
 		}
-		else if (VALID_MEMBER(pglist_data_node_start_pfn)) {
-			readmem(pgdat+OFFSET(pglist_data_node_start_pfn), 
+		else if (VALID_MEMBER_LAZY(pglist_data_node_start_pfn)) {
+			readmem(pgdat+LAZY_OFFSET(pglist_data_node_start_pfn), 
 				KVADDR, &node_start_pfn, sizeof(ulong), 
 				"pglist node_start_pfn", FAULT_ON_ERROR);
 				node_start_mapnr = node_start_pfn;
@@ -16523,31 +16523,31 @@ dump_memory_nodes(int initialize)
 		} else error(INFO, 
 			"cannot determine zone starting physical address\n");
 
-		if (VALID_MEMBER(pglist_data_node_start_mapnr))
-			readmem(pgdat+OFFSET(pglist_data_node_start_mapnr), 
+		if (VALID_MEMBER_LAZY(pglist_data_node_start_mapnr))
+			readmem(pgdat+LAZY_OFFSET(pglist_data_node_start_mapnr), 
 				KVADDR, &node_start_mapnr, sizeof(ulong), 
 				"pglist node_start_mapnr", FAULT_ON_ERROR);
 
-		if (VALID_MEMBER(pglist_data_node_size)) 
-			readmem(pgdat+OFFSET(pglist_data_node_size), 
+		if (VALID_MEMBER_LAZY(pglist_data_node_size)) 
+			readmem(pgdat+LAZY_OFFSET(pglist_data_node_size), 
 				KVADDR, &node_size, sizeof(ulong), 
 				"pglist node_size", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(pglist_data_node_spanned_pages)) {
-			readmem(pgdat+OFFSET(pglist_data_node_spanned_pages), 
+		else if (VALID_MEMBER_LAZY(pglist_data_node_spanned_pages)) {
+			readmem(pgdat+LAZY_OFFSET(pglist_data_node_spanned_pages), 
 				KVADDR, &node_spanned_pages, sizeof(ulong), 
 				"pglist node_spanned_pages", FAULT_ON_ERROR);
 			node_size = node_spanned_pages;
 		} else error(INFO, "cannot determine zone size\n");
 
-		if (VALID_MEMBER(pglist_data_node_present_pages))
-                        readmem(pgdat+OFFSET(pglist_data_node_present_pages),
+		if (VALID_MEMBER_LAZY(pglist_data_node_present_pages))
+                        readmem(pgdat+LAZY_OFFSET(pglist_data_node_present_pages),
                                 KVADDR, &node_present_pages, sizeof(ulong),
                                 "pglist node_present_pages", FAULT_ON_ERROR);
 		else
 			node_present_pages = 0;
 
-		if (VALID_MEMBER(pglist_data_bdata))
-			readmem(pgdat+OFFSET(pglist_data_bdata), KVADDR, &bdata,
+		if (VALID_MEMBER_LAZY(pglist_data_bdata))
+			readmem(pgdat+LAZY_OFFSET(pglist_data_bdata), KVADDR, &bdata,
 				sizeof(ulong), "pglist bdata", FAULT_ON_ERROR);
 		else
 			bdata = BADADDR;
@@ -16555,7 +16555,7 @@ dump_memory_nodes(int initialize)
 		if (initialize) {
 			nt->node_id = id;
 			nt->pgdat = pgdat;
-			if (VALID_MEMBER(zone_struct_memsize)) 
+			if (VALID_MEMBER_LAZY(zone_struct_memsize)) 
 				nt->size = 0;  /* initialize below */
 			else 
 				nt->size = node_size;
@@ -16589,7 +16589,7 @@ dump_memory_nodes(int initialize)
 			    mkstring(buf3, flen, CENTER|LJUST, "BOOTMEM_DATA"),
 			    mkstring(buf4, flen, CENTER|LJUST, "NODE_ZONES"));
 
-			node_zones = pgdat + OFFSET(pglist_data_node_zones);
+			node_zones = pgdat + LAZY_OFFSET(pglist_data_node_zones);
 			sprintf(buf5, " %2d   %s  %s  %s  %s\n", id, 
 			    mkstring(buf1, 8, CENTER|LJUST|LONG_DEC, 
 				MKSTR(node_size)),
@@ -16630,23 +16630,23 @@ dump_memory_nodes(int initialize)
 			fprintf(fp, "\n%s\n", buf2);
 		}
 
-       		node_zones = pgdat + OFFSET(pglist_data_node_zones);
+       		node_zones = pgdat + LAZY_OFFSET(pglist_data_node_zones);
 		cum_zone_size = 0;
 		for (i = 0; i < vt->nr_zones; i++) {
 			if (CRASHDEBUG(7))
 				fprintf(fp, "zone %d at %lx\n", i, node_zones);
 
-			if (VALID_MEMBER(zone_struct_size))
-                		readmem(node_zones+OFFSET(zone_struct_size), 
+			if (VALID_MEMBER_LAZY(zone_struct_size))
+                		readmem(node_zones+LAZY_OFFSET(zone_struct_size), 
 				    	KVADDR, &zone_size, sizeof(ulong),
                         		"zone_struct size", FAULT_ON_ERROR);
-			else if (VALID_MEMBER(zone_struct_memsize)) {
-                		readmem(node_zones+OFFSET(zone_struct_memsize), 
+			else if (VALID_MEMBER_LAZY(zone_struct_memsize)) {
+                		readmem(node_zones+LAZY_OFFSET(zone_struct_memsize), 
 				    	KVADDR, &zone_size, sizeof(ulong),
                         		"zone_struct memsize", FAULT_ON_ERROR);
 				nt->size += zone_size;
-			} else if (VALID_MEMBER(zone_spanned_pages)) {
-                		readmem(node_zones+ OFFSET(zone_spanned_pages), 
+			} else if (VALID_MEMBER_LAZY(zone_spanned_pages)) {
+                		readmem(node_zones+ LAZY_OFFSET(zone_spanned_pages), 
 				    	KVADDR, &zone_size, sizeof(ulong),
                         		"zone spanned_pages", FAULT_ON_ERROR);
 			} else error(FATAL, 
@@ -16663,7 +16663,7 @@ dump_memory_nodes(int initialize)
                 	if (!read_string(value, buf1, BUFSIZE-1))
                         	sprintf(buf1, "(unknown) ");
 			if (VALID_STRUCT(zone_struct)) {
-				if (VALID_MEMBER(zone_struct_zone_start_paddr))
+				if (VALID_MEMBER_LAZY(zone_struct_zone_start_paddr))
 				{
                         		readmem(node_zones+OFFSET
 					    (zone_struct_zone_start_paddr),
@@ -16673,7 +16673,7 @@ dump_memory_nodes(int initialize)
 					    FAULT_ON_ERROR);
 				} else {
 					readmem(node_zones+
-					    OFFSET(zone_struct_zone_start_pfn),
+					    LAZY_OFFSET(zone_struct_zone_start_pfn),
 					    KVADDR, &zone_start_pfn,
 					    sizeof(ulong),
 					    "node_zones zone_start_pfn",
@@ -16682,14 +16682,14 @@ dump_memory_nodes(int initialize)
 						PTOB(zone_start_pfn);
 				}
                         	readmem(node_zones+
-					OFFSET(zone_struct_zone_start_mapnr),
+					LAZY_OFFSET(zone_struct_zone_start_mapnr),
                                 	KVADDR, &zone_start_mapnr, 
 					sizeof(ulong), 
 					"node_zones zone_start_mapnr", 
 					FAULT_ON_ERROR);
 			} else {
                                 readmem(node_zones+
-                                        OFFSET(zone_zone_start_pfn),
+                                        LAZY_OFFSET(zone_zone_start_pfn),
                                         KVADDR, &zone_start_pfn,
                                         sizeof(ulong),
                                         "node_zones zone_start_pfn",
@@ -16705,14 +16705,14 @@ dump_memory_nodes(int initialize)
 					}
 
 				} else if (!(vt->flags & NODES) && 
-				    INVALID_MEMBER(zone_zone_mem_map)) {
-					readmem(pgdat+OFFSET(pglist_data_node_mem_map),
+				    INVALID_MEMBER_LAZY(zone_zone_mem_map)) {
+					readmem(pgdat+LAZY_OFFSET(pglist_data_node_mem_map),
                                     	    KVADDR, &zone_mem_map, sizeof(void *),
                                     	    "contig_page_data mem_map", FAULT_ON_ERROR);
 					if (zone_size)
 						zone_mem_map += cum_zone_size * SIZE(page);
 				} else readmem(node_zones+
-                                        OFFSET(zone_zone_mem_map),
+                                        LAZY_OFFSET(zone_zone_mem_map),
                                         KVADDR, &zone_mem_map,
                                         sizeof(ulong),
                                         "node_zones zone_mem_map",
@@ -16734,9 +16734,9 @@ dump_memory_nodes(int initialize)
 						zone_mem_map = pp;
 				}
 			} else if (!(vt->flags & NODES) && 
-			    INVALID_MEMBER(zone_struct_zone_mem_map) &&
-			    INVALID_MEMBER(zone_zone_mem_map)) {
-                		readmem(pgdat+OFFSET(pglist_data_node_mem_map),
+			    INVALID_MEMBER_LAZY(zone_struct_zone_mem_map) &&
+			    INVALID_MEMBER_LAZY(zone_zone_mem_map)) {
+                		readmem(pgdat+LAZY_OFFSET(pglist_data_node_mem_map),
 				    KVADDR, &zone_mem_map, sizeof(void *), 
 				    "contig_page_data mem_map", FAULT_ON_ERROR);
 				if (zone_size)
@@ -16848,7 +16848,7 @@ dump_zone_stats(void)
 	vm_stat_init();
 
         for (n = 0; pgdat; n++) {
-                node_zones = pgdat + OFFSET(pglist_data_node_zones);
+                node_zones = pgdat + LAZY_OFFSET(pglist_data_node_zones);
 
                 for (i = 0; i < vt->nr_zones; i++) {
 
@@ -16863,17 +16863,17 @@ dump_zone_stats(void)
                         if (!read_string(value1, buf1, BUFSIZE-1))
                                 sprintf(buf1, "(unknown) ");
 
-			if (VALID_MEMBER(zone_struct_size))
+			if (VALID_MEMBER_LAZY(zone_struct_size))
 				value1 = value6 = ULONG(zonebuf + 
-					OFFSET(zone_struct_size));
-			else if (VALID_MEMBER(zone_struct_memsize)) {
+					LAZY_OFFSET(zone_struct_size));
+			else if (VALID_MEMBER_LAZY(zone_struct_memsize)) {
 				value1 = value6 = ULONG(zonebuf + 
-					OFFSET(zone_struct_memsize));
-			} else if (VALID_MEMBER(zone_spanned_pages)) {
+					LAZY_OFFSET(zone_struct_memsize));
+			} else if (VALID_MEMBER_LAZY(zone_spanned_pages)) {
 				value1 = ULONG(zonebuf + 
-					OFFSET(zone_spanned_pages));
+					LAZY_OFFSET(zone_spanned_pages));
 				value6 = ULONG(zonebuf + 
-					OFFSET(zone_present_pages));
+					LAZY_OFFSET(zone_present_pages));
 			} else error(FATAL, 
 			    	"zone struct has unknown size field\n");
 
@@ -16916,58 +16916,58 @@ dump_zone_stats(void)
 			fprintf(fp, "  MIN/LOW/HIGH: %ld/%ld/%ld",
 				value2, value3, value4);
 
-			if (VALID_MEMBER(zone_vm_stat)) 
+			if (VALID_MEMBER_LAZY(zone_vm_stat)) 
 			    	dump_vm_stat("NR_FREE_PAGES", (long *)&value5, 
-			    		node_zones + OFFSET(zone_vm_stat));
+			    		node_zones + LAZY_OFFSET(zone_vm_stat));
 
-			if (VALID_MEMBER(zone_nr_active) && 
-			    VALID_MEMBER(zone_nr_inactive)) {
+			if (VALID_MEMBER_LAZY(zone_nr_active) && 
+			    VALID_MEMBER_LAZY(zone_nr_inactive)) {
 				value1 = ULONG(zonebuf + 
-					OFFSET(zone_nr_active));
+					LAZY_OFFSET(zone_nr_active));
 				value2 = ULONG(zonebuf + 
-					OFFSET(zone_nr_inactive));
+					LAZY_OFFSET(zone_nr_inactive));
 				fprintf(fp, 
 			    "\n  NR_ACTIVE: %ld  NR_INACTIVE: %ld  FREE: %ld\n",
 					value1, value2, value5); 
-				if (VALID_MEMBER(zone_vm_stat)) {
+				if (VALID_MEMBER_LAZY(zone_vm_stat)) {
 					fprintf(fp, "  VM_STAT:\n");
 					dump_vm_stat(NULL, NULL, node_zones +
-						OFFSET(zone_vm_stat));
+						LAZY_OFFSET(zone_vm_stat));
 				}
-			} else if (VALID_MEMBER(zone_vm_stat) &&
+			} else if (VALID_MEMBER_LAZY(zone_vm_stat) &&
 				dump_vm_stat("NR_ACTIVE", (long *)&value1, 
-				node_zones + OFFSET(zone_vm_stat)) &&
+				node_zones + LAZY_OFFSET(zone_vm_stat)) &&
 				dump_vm_stat("NR_INACTIVE", (long *)&value2, 
-				node_zones + OFFSET(zone_vm_stat))) {
+				node_zones + LAZY_OFFSET(zone_vm_stat))) {
 				fprintf(fp, "\n  VM_STAT:\n");
 				dump_vm_stat(NULL, NULL, node_zones + 
-					OFFSET(zone_vm_stat));
+					LAZY_OFFSET(zone_vm_stat));
 			} else {
-				if (VALID_MEMBER(zone_vm_stat)) {
+				if (VALID_MEMBER_LAZY(zone_vm_stat)) {
 					fprintf(fp, "\n  VM_STAT:\n");
 					dump_vm_stat(NULL, NULL, node_zones + 
-						OFFSET(zone_vm_stat));
+						LAZY_OFFSET(zone_vm_stat));
 				} else
 					fprintf(fp, "  FREE: %ld\n", value5); 
 			}
 
-			if (VALID_MEMBER(zone_all_unreclaimable)) {
+			if (VALID_MEMBER_LAZY(zone_all_unreclaimable)) {
 				ivalue = UINT(zonebuf + 
-					OFFSET(zone_all_unreclaimable));
+					LAZY_OFFSET(zone_all_unreclaimable));
 				fprintf(fp, "  ALL_UNRECLAIMABLE: %s  ", 
 					ivalue ? "yes" : "no");
-			} else if (VALID_MEMBER(zone_flags) &&
+			} else if (VALID_MEMBER_LAZY(zone_flags) &&
 				enumerator_value("ZONE_ALL_UNRECLAIMABLE", 
 				(long *)&value1)) {
-				value2 = ULONG(zonebuf + OFFSET(zone_flags));
+				value2 = ULONG(zonebuf + LAZY_OFFSET(zone_flags));
 				value3 = value2 & (1 << value1);
 				fprintf(fp, "  ALL_UNRECLAIMABLE: %s  ", 
 					value3 ? "yes" : "no");
 			}
 
-			if (VALID_MEMBER(zone_pages_scanned)) {
+			if (VALID_MEMBER_LAZY(zone_pages_scanned)) {
 				value1 = ULONG(zonebuf + 
-					OFFSET(zone_pages_scanned));
+					LAZY_OFFSET(zone_pages_scanned));
 				fprintf(fp, "PAGES_SCANNED: %lu  ", value1);
 			} 
 			fprintf(fp, "\n");
@@ -17000,8 +17000,8 @@ node_table_init(void)
 	 *  Override numnodes -- some kernels may leave it at 1 on a system
 	 *  with multiple memory nodes.
 	 */
-	if ((vt->flags & NODES) && (VALID_MEMBER(pglist_data_node_next) || 
-	    VALID_MEMBER(pglist_data_pgdat_next))) {
+	if ((vt->flags & NODES) && (VALID_MEMBER_LAZY(pglist_data_node_next) || 
+	    VALID_MEMBER_LAZY(pglist_data_pgdat_next))) {
 
 	        get_symbol_data("pgdat_list", sizeof(void *), &pgdat);
 	
@@ -17196,8 +17196,8 @@ first_vmalloc_address(void)
 		get_symbol_data("vmap_area_list", sizeof(void *), &vmap_area);
 		if (!vmap_area)
 			return 0;
-		if (!readmem(vmap_area - OFFSET(vmap_area_list) +
-		    OFFSET(vmap_area_va_start), KVADDR, &vmalloc_start, 
+		if (!readmem(vmap_area - LAZY_OFFSET(vmap_area_list) +
+		    LAZY_OFFSET(vmap_area_va_start), KVADDR, &vmalloc_start, 
 		    sizeof(void *), "first vmap_area va_start", RETURN_ON_ERROR)) 
 			non_matching_kernel();
 
@@ -17205,7 +17205,7 @@ first_vmalloc_address(void)
 		get_symbol_data("vmlist", sizeof(void *), &vm_struct);
 		if (!vm_struct)
 			return 0;
-		if (!readmem(vm_struct+OFFSET(vm_struct_addr), KVADDR, 
+		if (!readmem(vm_struct+LAZY_OFFSET(vm_struct_addr), KVADDR, 
 		    &vmalloc_start, sizeof(void *), 
 		    "first vmlist addr", RETURN_ON_ERROR)) 
 			non_matching_kernel();
@@ -17305,9 +17305,9 @@ l1_cache_size(void)
 
 	retval = -1;
 
-	if (VALID_MEMBER(kmem_cache_s_c_align)) {
+	if (VALID_MEMBER_LAZY(kmem_cache_s_c_align)) {
         	cache = symbol_value("cache_cache");
-                readmem(cache+OFFSET(kmem_cache_s_c_align),
+                readmem(cache+LAZY_OFFSET(kmem_cache_s_c_align),
                 	KVADDR, &c_align, sizeof(ulong),
                         "c_align", FAULT_ON_ERROR);
 		retval = (int)c_align;
@@ -17575,7 +17575,7 @@ valid_section(ulong addr)
 
 	if ((mem_section = read_mem_section(addr)))
         	return (ULONG(mem_section + 
-			OFFSET(mem_section_section_mem_map))
+			LAZY_OFFSET(mem_section_section_mem_map))
 			& SECTION_MARKED_PRESENT);
 	return 0;
 }
@@ -17593,7 +17593,7 @@ section_has_mem_map(ulong addr)
 
 	if ((mem_section = read_mem_section(addr)))
 		return (ULONG(mem_section + 
-			OFFSET(mem_section_section_mem_map))
+			LAZY_OFFSET(mem_section_section_mem_map))
 			& kernel_version_bit);
 	return 0;
 }
@@ -17606,7 +17606,7 @@ section_mem_map_addr(ulong addr, int raw)
 
 	if ((mem_section = read_mem_section(addr))) {
 		map = ULONG(mem_section + 
-			OFFSET(mem_section_section_mem_map));
+			LAZY_OFFSET(mem_section_section_mem_map));
 		if (!raw)
 			map &= SECTION_MAP_MASK;
 		return map;
@@ -17742,7 +17742,7 @@ fill_memory_block_state(ulong memblock, char *buf)
 
 	memset(buf, 0, sizeof(*buf) * BUFSIZE);
 
-	readmem(memblock + OFFSET(memory_block_state), KVADDR, &state,
+	readmem(memblock + LAZY_OFFSET(memory_block_state), KVADDR, &state,
 		sizeof(void *), "memory_block state", FAULT_ON_ERROR);
 
 	switch (state) {
@@ -17782,9 +17782,9 @@ fill_memory_block_name(ulong memblock, char *name)
 
 	memset(name, 0, sizeof(*name) * BUFSIZE);
 
-	kobj = memblock + OFFSET(memory_block_dev) + OFFSET(device_kobj);
+	kobj = memblock + LAZY_OFFSET(memory_block_dev) + LAZY_OFFSET(device_kobj);
 
-	readmem(kobj + OFFSET(kobject_name),
+	readmem(kobj + LAZY_OFFSET(kobject_name),
 		KVADDR, &value, sizeof(void *), "kobject name",
 		FAULT_ON_ERROR);
 
@@ -17831,7 +17831,7 @@ print_memory_block(ulong memory_block)
 	char buf6[BUFSIZE];
 	char buf7[BUFSIZE];
 
-	readmem(memory_block + OFFSET(memory_block_start_section_nr), KVADDR,
+	readmem(memory_block + LAZY_OFFSET(memory_block_start_section_nr), KVADDR,
 		&start_sec, sizeof(void *), "memory_block start_section_nr",
 		FAULT_ON_ERROR);
 
@@ -17844,7 +17844,7 @@ print_memory_block(ulong memory_block)
 			FAULT_ON_ERROR);
 		end_addr = start_addr + mbs - 1;
 	} else if (MEMBER_EXISTS("memory_block", "end_section_nr")) {
-	        readmem(memory_block + OFFSET(memory_block_end_section_nr), KVADDR,
+	        readmem(memory_block + LAZY_OFFSET(memory_block_end_section_nr), KVADDR,
 			&end_sec, sizeof(void *), "memory_block end_section_nr",
 			FAULT_ON_ERROR);
 		end_addr = pfn_to_phys(section_nr_to_pfn(end_sec + 1)) - 1;
@@ -17856,7 +17856,7 @@ print_memory_block(ulong memory_block)
 	fill_memory_block_srange(start_sec, srangebuf);
 
 	if (MEMBER_EXISTS("memory_block", "nid")) {
-		readmem(memory_block + OFFSET(memory_block_nid), KVADDR, &nid,
+		readmem(memory_block + LAZY_OFFSET(memory_block_nid), KVADDR, &nid,
 			sizeof(int), "memory_block nid", FAULT_ON_ERROR);
 		fprintf(fp, " %s %s %s %s  %s %s\n",
 			mkstring(buf1, VADDR_PRLEN, LJUST|LONG_HEX,
@@ -17883,7 +17883,7 @@ static void
 init_memory_block_offset(void)
 {
 	MEMBER_OFFSET_INIT(bus_type_p, "bus_type", "p");
-	if (INVALID_MEMBER(bus_type_p)) {
+	if (INVALID_MEMBER_LAZY(bus_type_p)) {
 		MEMBER_OFFSET_INIT(kset_list, "kset", "list");
 		MEMBER_OFFSET_INIT(kset_kobj, "kset", "kobj");
 		MEMBER_OFFSET_INIT(kobject_name, "kobject", "name");
@@ -17924,19 +17924,19 @@ init_memory_block(int *klistcnt, ulong **klistbuf)
 	 * v6.3-rc1
 	 * d2bf38c088e0 driver core: remove private pointer from struct bus_type
 	 */
-	if (INVALID_MEMBER(bus_type_p))
+	if (INVALID_MEMBER_LAZY(bus_type_p))
 		private = get_subsys_private("bus_kset", "memory");
 	else {
 		ulong memory_subsys = symbol_value("memory_subsys");
-		readmem(memory_subsys + OFFSET(bus_type_p), KVADDR, &private,
+		readmem(memory_subsys + LAZY_OFFSET(bus_type_p), KVADDR, &private,
 			sizeof(void *), "memory_subsys.private", FAULT_ON_ERROR);
 	}
 
 	if (!private)
 		error(FATAL, "cannot determine subsys_private for memory.\n");
 
-	klist = private + OFFSET(subsys_private_klist_devices) +
-					OFFSET(klist_k_list);
+	klist = private + LAZY_OFFSET(subsys_private_klist_devices) +
+					LAZY_OFFSET(klist_k_list);
 	BZERO(ld, sizeof(struct list_data));
 
 	readmem(klist, KVADDR, &start,
@@ -17944,8 +17944,8 @@ init_memory_block(int *klistcnt, ulong **klistbuf)
 
 	ld->start = start;
 	ld->end = klist;
-	ld->list_head_offset = OFFSET(klist_node_n_node) +
-					OFFSET(device_private_knode_bus);
+	ld->list_head_offset = LAZY_OFFSET(klist_node_n_node) +
+					LAZY_OFFSET(device_private_knode_bus);
 	hq_open();
 	*klistcnt = do_list(ld);
 	*klistbuf = (ulong *)GETBUF(*klistcnt * sizeof(ulong));
@@ -18001,10 +18001,10 @@ dump_memory_blocks(int initialize)
 	fprintf(fp, "%s", mb_hdr);
 
 	for (i = 0; i < klistcnt; i++) {
-		readmem(klistbuf[i] + OFFSET(device_private_device), KVADDR,
+		readmem(klistbuf[i] + LAZY_OFFSET(device_private_device), KVADDR,
 			&device, sizeof(void *), "device_private device",
 			FAULT_ON_ERROR);
-		memory_block = device - OFFSET(memory_block_dev);
+		memory_block = device - LAZY_OFFSET(memory_block_dev);
 		print_memory_block(memory_block);
 	}
 	FREEBUF(klistbuf);
@@ -18876,7 +18876,7 @@ kmem_cache_list_common(struct meminfo *mi)
 	for (i = 0; i < cnt; i++) {
 		fprintf(fp, "%lx ", cache_list[i]);
 
-		readmem(cache_list[i] + OFFSET(kmem_cache_name), 
+		readmem(cache_list[i] + LAZY_OFFSET(kmem_cache_name), 
 			KVADDR, &name, sizeof(char *),
 			"kmem_cache.name", FAULT_ON_ERROR);
 
@@ -18899,7 +18899,7 @@ dump_kmem_cache_slub(struct meminfo *si)
 	char kbuf[BUFSIZE];
 	char buf[BUFSIZE];
 
-	if (INVALID_MEMBER(kmem_cache_node_nr_slabs)) {
+	if (INVALID_MEMBER_LAZY(kmem_cache_node_nr_slabs)) {
 		error(INFO, 
 		    "option requires kmem_cache_node.nr_slabs member!\n"
 		    "(the kernel must be built with CONFIG_SLUB_DEBUG)\n");
@@ -18914,8 +18914,8 @@ dump_kmem_cache_slub(struct meminfo *si)
 
 	si->cache_buf = GETBUF(SIZE(kmem_cache));
 
-	si->list_offset = VALID_MEMBER(slab_slab_list) ?
-				OFFSET(slab_slab_list) : OFFSET(page_lru);
+	si->list_offset = VALID_MEMBER_LAZY(slab_slab_list) ?
+				LAZY_OFFSET(slab_slab_list) : OFFSET(page_lru);
 
 	if (VALID_MEMBER(page_objects) &&
 	    OFFSET(page_objects) == OFFSET(page_inuse))
@@ -18952,7 +18952,7 @@ dump_kmem_cache_slub(struct meminfo *si)
 		    RETURN_ON_ERROR|RETURN_PARTIAL))
 			goto next_cache;
 
-		name = ULONG(si->cache_buf + OFFSET(kmem_cache_name)); 
+		name = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_name)); 
 		if (!read_string(name, buf, BUFSIZE-1))
 			sprintf(buf, "(unknown)");
 		if (reqname) {
@@ -18966,14 +18966,14 @@ dump_kmem_cache_slub(struct meminfo *si)
 		}
 
 		objsize = UINT(si->cache_buf + OFFSET(kmem_cache_objsize)); 
-		size = UINT(si->cache_buf + OFFSET(kmem_cache_size)); 
-		offset = UINT(si->cache_buf + OFFSET(kmem_cache_offset));
-		if (VALID_MEMBER(kmem_cache_objects)) {
+		size = UINT(si->cache_buf + LAZY_OFFSET(kmem_cache_size)); 
+		offset = UINT(si->cache_buf + LAZY_OFFSET(kmem_cache_offset));
+		if (VALID_MEMBER_LAZY(kmem_cache_objects)) {
 			objects = UINT(si->cache_buf + 
-				OFFSET(kmem_cache_objects)); 
-			order = UINT(si->cache_buf + OFFSET(kmem_cache_order)); 
-		} else if (VALID_MEMBER(kmem_cache_oo)) {
-			oo = ULONG(si->cache_buf + OFFSET(kmem_cache_oo));
+				LAZY_OFFSET(kmem_cache_objects)); 
+			order = UINT(si->cache_buf + LAZY_OFFSET(kmem_cache_order)); 
+		} else if (VALID_MEMBER_LAZY(kmem_cache_oo)) {
+			oo = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_oo));
 			objects = oo_objects(oo);
 			order = oo_order(oo);
 		} else
@@ -18988,8 +18988,8 @@ dump_kmem_cache_slub(struct meminfo *si)
 		si->slabsize = (PAGESIZE() << order);
 		si->inuse = si->num_slabs = 0;
 		si->slab_offset = offset;
-		si->random = VALID_MEMBER(kmem_cache_random) ?
-			ULONG(si->cache_buf + OFFSET(kmem_cache_random)) : 0;
+		si->random = VALID_MEMBER_LAZY(kmem_cache_random) ?
+			ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_random)) : 0;
 
 		if (!get_kmem_cache_slub_data(GET_SLUB_SLABS, si) ||
 		    !get_kmem_cache_slub_data(GET_SLUB_OBJECTS, si))
@@ -19019,19 +19019,19 @@ dump_kmem_cache_slub(struct meminfo *si)
 				    RETURN_ON_ERROR|RETURN_PARTIAL))
 					continue;
 
-				name = ULONG(mi->cache_buf + OFFSET(kmem_cache_name));
+				name = ULONG(mi->cache_buf + LAZY_OFFSET(kmem_cache_name));
 				if (!read_string(name, buf2, BUFSIZE-1))
 					sprintf(buf2, "(unknown)");
 
 				objsize = UINT(mi->cache_buf + OFFSET(kmem_cache_objsize));
-				size = UINT(mi->cache_buf + OFFSET(kmem_cache_size));
-				offset = UINT(mi->cache_buf + OFFSET(kmem_cache_offset));
-				if (VALID_MEMBER(kmem_cache_objects)) {
+				size = UINT(mi->cache_buf + LAZY_OFFSET(kmem_cache_size));
+				offset = UINT(mi->cache_buf + LAZY_OFFSET(kmem_cache_offset));
+				if (VALID_MEMBER_LAZY(kmem_cache_objects)) {
 					objects = UINT(mi->cache_buf +
-						OFFSET(kmem_cache_objects));
-					order = UINT(mi->cache_buf + OFFSET(kmem_cache_order));
-				} else if (VALID_MEMBER(kmem_cache_oo)) {
-					oo = ULONG(mi->cache_buf + OFFSET(kmem_cache_oo));
+						LAZY_OFFSET(kmem_cache_objects));
+					order = UINT(mi->cache_buf + LAZY_OFFSET(kmem_cache_order));
+				} else if (VALID_MEMBER_LAZY(kmem_cache_oo)) {
+					oo = ULONG(mi->cache_buf + LAZY_OFFSET(kmem_cache_oo));
 					objects = oo_objects(oo);
 					order = oo_order(oo);
 				} else
@@ -19046,8 +19046,8 @@ dump_kmem_cache_slub(struct meminfo *si)
 				mi->slabsize = (PAGESIZE() << order);
 				mi->inuse = mi->num_slabs = 0;
 				mi->slab_offset = offset;
-				mi->random = VALID_MEMBER(kmem_cache_random) ?
-					ULONG(mi->cache_buf + OFFSET(kmem_cache_random)) : 0;
+				mi->random = VALID_MEMBER_LAZY(kmem_cache_random) ?
+					ULONG(mi->cache_buf + LAZY_OFFSET(kmem_cache_random)) : 0;
 
 				if (!get_kmem_cache_slub_data(GET_SLUB_SLABS, mi) ||
 				    !get_kmem_cache_slub_data(GET_SLUB_OBJECTS, mi)) {
@@ -19151,9 +19151,9 @@ count_cpu_partial(struct meminfo *si, int cpu)
 
 	free_objects = 0;
 
-	if (VALID_MEMBER(kmem_cache_cpu_partial) && VALID_MEMBER(page_objects)) {
-		readmem(ULONG(si->cache_buf + OFFSET(kmem_cache_cpu_slab)) +
-			kt->__per_cpu_offset[cpu] + OFFSET(kmem_cache_cpu_partial),
+	if (VALID_MEMBER_LAZY(kmem_cache_cpu_partial) && VALID_MEMBER(page_objects)) {
+		readmem(ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_cpu_slab)) +
+			kt->__per_cpu_offset[cpu] + LAZY_OFFSET(kmem_cache_cpu_partial),
 			KVADDR, &cpu_partial, sizeof(ulong),
 			"kmem_cache_cpu.partial", RETURN_ON_ERROR);
 
@@ -19208,7 +19208,7 @@ get_kmem_cache_slub_data(long cmd, struct meminfo *si)
         per_cpu = nodes + vt->numnodes;
 
 	total_slabs = total_objects = free_objects = cpu_freelist = 0;
-	node_total_avail = VALID_MEMBER(kmem_cache_node_total_objects) ? TRUE : FALSE;
+	node_total_avail = VALID_MEMBER_LAZY(kmem_cache_node_total_objects) ? TRUE : FALSE;
 
 	for (i = 0; i < kt->cpus; i++) {
 		cpu_slab_ptr = get_cpu_slab_ptr(si, i, &cpu_freelist);
@@ -19261,25 +19261,25 @@ get_kmem_cache_slub_data(long cmd, struct meminfo *si)
 		if (vt->flags & CONFIG_NUMA) {
 			nt = &vt->node_table[n];
 			node_ptr = ULONG(si->cache_buf +
-				OFFSET(kmem_cache_node) +
+				LAZY_OFFSET(kmem_cache_node) +
 				(sizeof(void *) * nt->node_id));
 		} else
 			node_ptr = si->cache + 
-				OFFSET(kmem_cache_local_node);
+				LAZY_OFFSET(kmem_cache_local_node);
 
 		if (!node_ptr) 
 			continue; 
 		
-               	if (!readmem(node_ptr + OFFSET(kmem_cache_node_nr_partial), 
+               	if (!readmem(node_ptr + LAZY_OFFSET(kmem_cache_node_nr_partial), 
 		    KVADDR, &node_nr_partial, sizeof(ulong), 
 		    "kmem_cache_node nr_partial", RETURN_ON_ERROR))
 			goto bailout;
-               	if (!readmem(node_ptr + OFFSET(kmem_cache_node_nr_slabs), 
+               	if (!readmem(node_ptr + LAZY_OFFSET(kmem_cache_node_nr_slabs), 
 		    KVADDR, &node_nr_slabs, sizeof(ulong), 
 		    "kmem_cache_node nr_slabs", RETURN_ON_ERROR))
 			goto bailout;
 		if (node_total_avail) {
-			if (!readmem(node_ptr + OFFSET(kmem_cache_node_total_objects),
+			if (!readmem(node_ptr + LAZY_OFFSET(kmem_cache_node_total_objects),
 			    KVADDR, &node_total_objects, sizeof(ulong),
 			    "kmem_cache_node total_objects", RETURN_ON_ERROR))
 				goto bailout;
@@ -19354,9 +19354,9 @@ do_cpu_partial_slub(struct meminfo *si, int cpu)
 	ulong cpu_slab_ptr;
 	void *partial;
 
-	cpu_slab_ptr = ULONG(si->cache_buf + OFFSET(kmem_cache_cpu_slab)) +
+	cpu_slab_ptr = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_cpu_slab)) +
 				kt->__per_cpu_offset[cpu];
-	readmem(cpu_slab_ptr + OFFSET(kmem_cache_cpu_partial), KVADDR,
+	readmem(cpu_slab_ptr + LAZY_OFFSET(kmem_cache_cpu_partial), KVADDR,
 		&partial, sizeof(void *), "kmem_cache_cpu.partial",
 		RETURN_ON_ERROR);
 
@@ -19404,7 +19404,7 @@ do_kmem_cache_slub(struct meminfo *si)
 			continue;
 		}
 
-		cpu_slab_ptr = ULONG(si->cache_buf + OFFSET(kmem_cache_cpu_slab)) +
+		cpu_slab_ptr = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_cpu_slab)) +
 				kt->__per_cpu_offset[i];
 		fprintf(fp, "CPU %d KMEM_CACHE_CPU:\n  %lx\n", i, cpu_slab_ptr);
 
@@ -19422,7 +19422,7 @@ do_kmem_cache_slub(struct meminfo *si)
 				continue;	
 		}
 
-		if (VALID_MEMBER(kmem_cache_cpu_partial))
+		if (VALID_MEMBER_LAZY(kmem_cache_cpu_partial))
 			do_cpu_partial_slub(si, i);
 
 		if (received_SIGINT())
@@ -19433,18 +19433,18 @@ do_kmem_cache_slub(struct meminfo *si)
                 if (vt->flags & CONFIG_NUMA) {
 			nt = &vt->node_table[n];
                         node_ptr = ULONG(si->cache_buf +
-                                OFFSET(kmem_cache_node) +
+                                LAZY_OFFSET(kmem_cache_node) +
                                 (sizeof(void *)* nt->node_id));
                 } else
                         node_ptr = si->cache +
-                                OFFSET(kmem_cache_local_node);
+                                LAZY_OFFSET(kmem_cache_local_node);
 
 		if (node_ptr) { 
-		 	if (!readmem(node_ptr + OFFSET(kmem_cache_node_nr_partial),
+		 	if (!readmem(node_ptr + LAZY_OFFSET(kmem_cache_node_nr_partial),
 			    KVADDR, &node_nr_partial, sizeof(ulong),
 			    "kmem_cache_node nr_partial", RETURN_ON_ERROR))
 				break;
-			if (!readmem(node_ptr + OFFSET(kmem_cache_node_nr_slabs),
+			if (!readmem(node_ptr + LAZY_OFFSET(kmem_cache_node_nr_slabs),
 			    KVADDR, &node_nr_slabs, sizeof(ulong),
 			    "kmem_cache_node nr_slabs", RETURN_ON_ERROR))
 				break;
@@ -19574,10 +19574,10 @@ do_slab_slub(struct meminfo *si, int verbose)
 	}
 
 	red_left_pad = 0;
-	if (VALID_MEMBER(kmem_cache_red_left_pad)) {
-		flags = ULONG(si->cache_buf + OFFSET(kmem_cache_flags));
+	if (VALID_MEMBER_LAZY(kmem_cache_red_left_pad)) {
+		flags = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_flags));
 		if (flags & SLAB_RED_ZONE)
-			red_left_pad = ULONG(si->cache_buf + OFFSET(kmem_cache_red_left_pad));
+			red_left_pad = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_red_left_pad));
 	}
 
 	for (p = vaddr; p < vaddr + objects * si->size; p += si->size) {
@@ -19698,7 +19698,7 @@ freelist_ptr_init(void)
 static ulong
 freelist_ptr(struct meminfo *si, ulong ptr, ulong ptr_addr)
 {
-	if (VALID_MEMBER(kmem_cache_random)) {
+	if (VALID_MEMBER_LAZY(kmem_cache_random)) {
 		/* CONFIG_SLAB_FREELIST_HARDENED */
 
 		if (vt->flags & FREELIST_PTR_BSWAP)
@@ -19734,7 +19734,7 @@ do_node_lists_slub(struct meminfo *si, ulong node_ptr, int node)
 	if (!node_ptr)
 		return;
 
-	list_head = node_ptr + OFFSET(kmem_cache_node_partial);
+	list_head = node_ptr + LAZY_OFFSET(kmem_cache_node_partial);
  	if (!readmem(list_head, KVADDR, &next, sizeof(ulong),
 	    "kmem_cache_node partial", RETURN_ON_ERROR))
 		return;
@@ -19776,15 +19776,15 @@ do_node_lists_slub(struct meminfo *si, ulong node_ptr, int node)
         }
 
 #define SLAB_STORE_USER (0x00010000UL)
-	flags = ULONG(si->cache_buf + OFFSET(kmem_cache_flags));
+	flags = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_flags));
 	
-	if (INVALID_MEMBER(kmem_cache_node_full) ||
+	if (INVALID_MEMBER_LAZY(kmem_cache_node_full) ||
 	    !(flags & SLAB_STORE_USER)) {
 		fprintf(fp, "NODE %d FULL:\n  (not tracked)\n", node);
 		return;
 	}
 
-	list_head = node_ptr + OFFSET(kmem_cache_node_full);
+	list_head = node_ptr + LAZY_OFFSET(kmem_cache_node_full);
  	if (!readmem(list_head, KVADDR, &next, sizeof(ulong),
 	    "kmem_cache_node full", RETURN_ON_ERROR))
 		return;
@@ -19835,7 +19835,7 @@ is_kmem_cache_addr_common(ulong vaddr, char *kbuf)
 		if (cache_list[i] != vaddr)
 			continue;
 
-		if (!readmem(cache_list[i] + OFFSET(kmem_cache_name), 
+		if (!readmem(cache_list[i] + LAZY_OFFSET(kmem_cache_name), 
 		    KVADDR, &name, sizeof(char *),
 		    "kmem_cache.name", RETURN_ON_ERROR))
 			break;
@@ -19901,7 +19901,7 @@ get_kmem_cache_list(ulong **cache_buf)
 	BZERO(ld, sizeof(struct list_data));
 	ld->flags |= LIST_ALLOCATE;
 	ld->start = vaddr;
-	ld->list_head_offset = OFFSET(kmem_cache_list);
+	ld->list_head_offset = LAZY_OFFSET(kmem_cache_list);
 	ld->end = symbol_value("slab_caches");
 	if (CRASHDEBUG(3))
 		ld->flags |= VERBOSE;
@@ -19925,8 +19925,8 @@ get_kmem_cache_root_list(ulong **cache_buf)
 	BZERO(ld, sizeof(struct list_data));
 	ld->flags |= LIST_ALLOCATE;
 	ld->start = vaddr;
-	ld->list_head_offset = OFFSET(kmem_cache_memcg_params)
-		+ OFFSET(memcg_cache_params___root_caches_node);
+	ld->list_head_offset = LAZY_OFFSET(kmem_cache_memcg_params)
+		+ LAZY_OFFSET(memcg_cache_params___root_caches_node);
 	ld->end = symbol_value("slab_root_caches");
 	if (CRASHDEBUG(3))
 		ld->flags |= VERBOSE;
@@ -19944,8 +19944,8 @@ get_kmem_cache_child_list(ulong **cache_buf, ulong root)
 	ulong vaddr, children;
 	struct list_data list_data, *ld;
 
-	children = root + OFFSET(kmem_cache_memcg_params)
-			+ OFFSET(memcg_cache_params_children);
+	children = root + LAZY_OFFSET(kmem_cache_memcg_params)
+			+ LAZY_OFFSET(memcg_cache_params_children);
 
 	readmem(children, KVADDR, &vaddr, sizeof(ulong),
 		"kmem_cache.memcg_params.children",
@@ -19965,8 +19965,8 @@ get_kmem_cache_child_list(ulong **cache_buf, ulong root)
 	ld->flags |= LIST_ALLOCATE;
 	ld->start = vaddr;
 	ld->list_head_offset =
-		OFFSET(kmem_cache_memcg_params)
-		+ OFFSET(memcg_cache_params_children_node);
+		LAZY_OFFSET(kmem_cache_memcg_params)
+		+ LAZY_OFFSET(memcg_cache_params_children_node);
 	ld->end = children;
 	if (CRASHDEBUG(3))
 		ld->flags |= VERBOSE;
@@ -19993,7 +19993,7 @@ compound_head(ulong page)
 			if (compound_head & 1)
 				first_page = compound_head - 1;
 		}
-	} else if (readmem(page+OFFSET(page_flags), KVADDR, &flags, sizeof(ulong),
+	} else if (readmem(page+LAZY_OFFSET(page_flags), KVADDR, &flags, sizeof(ulong),
 		"page.flags", RETURN_ON_ERROR)) {
 		if ((flags & vt->PG_head_tail_mask) == vt->PG_head_tail_mask)
 			readmem(page+OFFSET(page_first_page), KVADDR, &first_page, 
@@ -20013,7 +20013,7 @@ count_partial(ulong node, struct meminfo *si, ulong *free)
 
 	count = 0;
 	total_inuse = 0;
-	list_head = node + OFFSET(kmem_cache_node_partial);
+	list_head = node + LAZY_OFFSET(kmem_cache_node_partial);
 	if (!readmem(list_head, KVADDR, &next, sizeof(ulong),
 	    "kmem_cache_node.partial", RETURN_ON_ERROR))
 		return -1;
@@ -20093,7 +20093,7 @@ is_slab_page(struct meminfo *si, char *buf)
 	if (!is_page_ptr((ulong)si->spec_addr, NULL))
 		return NULL;
 
-	if (!readmem(si->spec_addr + OFFSET(page_flags), KVADDR, 
+	if (!readmem(si->spec_addr + LAZY_OFFSET(page_flags), KVADDR, 
 	    &page_flags, sizeof(ulong), "page.flags", 
 	    RETURN_ON_ERROR|QUIET))
 		return NULL;
@@ -20111,7 +20111,7 @@ is_slab_page(struct meminfo *si, char *buf)
 
 	for (i = 0; i < cnt; i++) {
 		if (page_slab == cache_list[i]) {
-			if (!readmem(cache_list[i] + OFFSET(kmem_cache_name), 
+			if (!readmem(cache_list[i] + LAZY_OFFSET(kmem_cache_name), 
 			    KVADDR, &name, sizeof(char *),
 			    "kmem_cache.name", QUIET|RETURN_ON_ERROR))
 				goto bailout;
@@ -20148,21 +20148,21 @@ get_cpu_slab_ptr(struct meminfo *si, int cpu, ulong *cpu_freelist)
 	{
 	case TYPE_CODE_STRUCT:
 		cpu_slab_ptr = ULONG(si->cache_buf +
-                        OFFSET(kmem_cache_cpu_slab) +
+                        LAZY_OFFSET(kmem_cache_cpu_slab) +
 			OFFSET(kmem_cache_cpu_page));
-		if (cpu_freelist && VALID_MEMBER(kmem_cache_cpu_freelist))
+		if (cpu_freelist && VALID_MEMBER_LAZY(kmem_cache_cpu_freelist))
 			*cpu_freelist = ULONG(si->cache_buf +
-                        	OFFSET(kmem_cache_cpu_slab) +
-                        	OFFSET(kmem_cache_cpu_freelist));
+                        	LAZY_OFFSET(kmem_cache_cpu_slab) +
+                        	LAZY_OFFSET(kmem_cache_cpu_freelist));
 		break;
 
 	case TYPE_CODE_ARRAY:
 		cpu_slab_ptr = ULONG(si->cache_buf +
-			OFFSET(kmem_cache_cpu_slab) + (sizeof(void *)*cpu));
+			LAZY_OFFSET(kmem_cache_cpu_slab) + (sizeof(void *)*cpu));
 
 		if (cpu_slab_ptr && cpu_freelist &&
-		    VALID_MEMBER(kmem_cache_cpu_freelist)) {
-			if (readmem(cpu_slab_ptr + OFFSET(kmem_cache_cpu_freelist),
+		    VALID_MEMBER_LAZY(kmem_cache_cpu_freelist)) {
+			if (readmem(cpu_slab_ptr + LAZY_OFFSET(kmem_cache_cpu_freelist),
 			    KVADDR, &freelist, sizeof(void *),
 			    "kmem_cache_cpu.freelist", RETURN_ON_ERROR))
 				*cpu_freelist = freelist;
@@ -20179,12 +20179,12 @@ get_cpu_slab_ptr(struct meminfo *si, int cpu, ulong *cpu_freelist)
 		break;
 
 	case TYPE_CODE_PTR:
-		cpu_slab_ptr = ULONG(si->cache_buf + OFFSET(kmem_cache_cpu_slab)) +
+		cpu_slab_ptr = ULONG(si->cache_buf + LAZY_OFFSET(kmem_cache_cpu_slab)) +
 			kt->__per_cpu_offset[cpu];
 
 		if (cpu_slab_ptr && cpu_freelist &&
-		    VALID_MEMBER(kmem_cache_cpu_freelist)) {
-			if (readmem(cpu_slab_ptr + OFFSET(kmem_cache_cpu_freelist),
+		    VALID_MEMBER_LAZY(kmem_cache_cpu_freelist)) {
+			if (readmem(cpu_slab_ptr + LAZY_OFFSET(kmem_cache_cpu_freelist),
 			    KVADDR, &freelist, sizeof(void *),
 			    "kmem_cache_cpu.freelist", RETURN_ON_ERROR))
 				*cpu_freelist = freelist;
@@ -20234,10 +20234,10 @@ slab_to_kmem_cache_node(struct meminfo *si, ulong slab_page)
 	if (vt->flags & CONFIG_NUMA) {
 		node = page_to_nid(slab_page);
 		node_ptr = ULONG(si->cache_buf +
-			OFFSET(kmem_cache_node) +
+			LAZY_OFFSET(kmem_cache_node) +
 			(sizeof(void *)*node));
 	} else
-		node_ptr = si->cache + OFFSET(kmem_cache_local_node);
+		node_ptr = si->cache + LAZY_OFFSET(kmem_cache_local_node);
 
 	return node_ptr;
 }
@@ -20256,7 +20256,7 @@ get_kmem_cache_by_name(char *request)
         found = 0;
 
         for (i = 0; i < cnt; i++) {
-		readmem(cache_list[i] + OFFSET(kmem_cache_name), 
+		readmem(cache_list[i] + LAZY_OFFSET(kmem_cache_name), 
 			KVADDR, &name, sizeof(char *),
 			"kmem_cache.name", FAULT_ON_ERROR);
 

@@ -2288,13 +2288,13 @@ x86_uvtop(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbose)
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_cr3)) 
+	    	if (VALID_MEMBER_LAZY(thread_struct_cr3)) 
                 	pgd = (ulong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (INVALID_MEMBER_LAZY(task_struct_active_mm))
 				error(FATAL, "no cr3 or active_mm?\n");
 
-                	readmem(tc->task + OFFSET(task_struct_active_mm), 
+                	readmem(tc->task + LAZY_OFFSET(task_struct_active_mm), 
 				KVADDR, &active_mm, sizeof(void *),
                         	"task active_mm contents", FAULT_ON_ERROR);
 
@@ -2302,16 +2302,16 @@ x86_uvtop(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbose)
 				error(FATAL, 
 				     "no active_mm for this kernel thread\n");
 
-			readmem(active_mm + OFFSET(mm_struct_pgd), 
+			readmem(active_mm + LAZY_OFFSET(mm_struct_pgd), 
 				KVADDR, &pgd, sizeof(long), 
 				"mm_struct pgd", FAULT_ON_ERROR);
 		}
         } else {
 		if ((mm = task_mm(tc->task, TRUE)))
 			pgd = ULONG_PTR(tt->mm_struct + 
-				OFFSET(mm_struct_pgd));
+				LAZY_OFFSET(mm_struct_pgd));
 		else
-			readmem(tc->mm_struct + OFFSET(mm_struct_pgd), 
+			readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), 
 				KVADDR, &pgd, sizeof(long), "mm_struct pgd", 
 				FAULT_ON_ERROR);
 	}
@@ -2423,13 +2423,13 @@ x86_uvtop_xen_wpt(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int v
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_cr3)) 
+	    	if (VALID_MEMBER_LAZY(thread_struct_cr3)) 
                 	pgd = (ulong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (INVALID_MEMBER_LAZY(task_struct_active_mm))
 				error(FATAL, "no cr3 or active_mm?\n");
 
-                	readmem(tc->task + OFFSET(task_struct_active_mm), 
+                	readmem(tc->task + LAZY_OFFSET(task_struct_active_mm), 
 				KVADDR, &active_mm, sizeof(void *),
                         	"task active_mm contents", FAULT_ON_ERROR);
 
@@ -2437,16 +2437,16 @@ x86_uvtop_xen_wpt(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int v
 				error(FATAL, 
 				     "no active_mm for this kernel thread\n");
 
-			readmem(active_mm + OFFSET(mm_struct_pgd), 
+			readmem(active_mm + LAZY_OFFSET(mm_struct_pgd), 
 				KVADDR, &pgd, sizeof(long), 
 				"mm_struct pgd", FAULT_ON_ERROR);
 		}
         } else {
 		if ((mm = task_mm(tc->task, TRUE)))
 			pgd = ULONG_PTR(tt->mm_struct + 
-				OFFSET(mm_struct_pgd));
+				LAZY_OFFSET(mm_struct_pgd));
 		else
-			readmem(tc->mm_struct + OFFSET(mm_struct_pgd), 
+			readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), 
 				KVADDR, &pgd, sizeof(long), "mm_struct pgd", 
 				FAULT_ON_ERROR);
 	}
@@ -2588,13 +2588,13 @@ x86_uvtop_PAE(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbo
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_cr3)) 
+	    	if (VALID_MEMBER_LAZY(thread_struct_cr3)) 
                 	pgd = (ulonglong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (INVALID_MEMBER_LAZY(task_struct_active_mm))
 				error(FATAL, "no cr3 or active_mm?\n");
 
-                	readmem(tc->task + OFFSET(task_struct_active_mm), 
+                	readmem(tc->task + LAZY_OFFSET(task_struct_active_mm), 
 				KVADDR, &active_mm, sizeof(void *),
                         	"task active_mm contents", FAULT_ON_ERROR);
 
@@ -2602,16 +2602,16 @@ x86_uvtop_PAE(struct task_context *tc, ulong vaddr, physaddr_t *paddr, int verbo
 				error(FATAL, 
 				     "no active_mm for this kernel thread\n");
 
-			readmem(active_mm + OFFSET(mm_struct_pgd), 
+			readmem(active_mm + LAZY_OFFSET(mm_struct_pgd), 
 				KVADDR, &pgd, sizeof(long), 
 				"mm_struct pgd", FAULT_ON_ERROR);
 		}
         } else {
 		if ((mm = task_mm(tc->task, TRUE)))
 			pgd = (ulonglong *)(ULONG_PTR(tt->mm_struct + 
-				OFFSET(mm_struct_pgd)));
+				LAZY_OFFSET(mm_struct_pgd)));
 		else
-			readmem(tc->mm_struct + OFFSET(mm_struct_pgd), 
+			readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), 
 				KVADDR, &pgd, sizeof(long), "mm_struct pgd", 
 				FAULT_ON_ERROR);
 	}
@@ -2738,13 +2738,13 @@ x86_uvtop_xen_wpt_PAE(struct task_context *tc, ulong vaddr, physaddr_t *paddr, i
 	*paddr = 0;
 
         if (is_kernel_thread(tc->task) && IS_KVADDR(vaddr)) { 
-	    	if (VALID_MEMBER(thread_struct_cr3)) 
+	    	if (VALID_MEMBER_LAZY(thread_struct_cr3)) 
                 	pgd = (ulonglong *)machdep->get_task_pgd(tc->task);
 		else {
-			if (INVALID_MEMBER(task_struct_active_mm))
+			if (INVALID_MEMBER_LAZY(task_struct_active_mm))
 				error(FATAL, "no cr3 or active_mm?\n");
 
-                	readmem(tc->task + OFFSET(task_struct_active_mm), 
+                	readmem(tc->task + LAZY_OFFSET(task_struct_active_mm), 
 				KVADDR, &active_mm, sizeof(void *),
                         	"task active_mm contents", FAULT_ON_ERROR);
 
@@ -2752,16 +2752,16 @@ x86_uvtop_xen_wpt_PAE(struct task_context *tc, ulong vaddr, physaddr_t *paddr, i
 				error(FATAL, 
 				     "no active_mm for this kernel thread\n");
 
-			readmem(active_mm + OFFSET(mm_struct_pgd), 
+			readmem(active_mm + LAZY_OFFSET(mm_struct_pgd), 
 				KVADDR, &pgd, sizeof(long), 
 				"mm_struct pgd", FAULT_ON_ERROR);
 		}
         } else {
 		if ((mm = task_mm(tc->task, TRUE)))
 			pgd = (ulonglong *)(ULONG_PTR(tt->mm_struct + 
-				OFFSET(mm_struct_pgd)));
+				LAZY_OFFSET(mm_struct_pgd)));
 		else
-			readmem(tc->mm_struct + OFFSET(mm_struct_pgd), 
+			readmem(tc->mm_struct + LAZY_OFFSET(mm_struct_pgd), 
 				KVADDR, &pgd, sizeof(long), "mm_struct pgd", 
 				FAULT_ON_ERROR);
 	}
@@ -3477,11 +3477,11 @@ x86_get_task_pgd(ulong task)
 
 	offset = OFFSET_OPTION(task_struct_thread, task_struct_tss);
 
-	if (INVALID_MEMBER(thread_struct_cr3))
+	if (INVALID_MEMBER_LAZY(thread_struct_cr3))
 		error(FATAL, 
 		    "cr3 does not exist in this kernel's thread_struct\n"); 
 
-	offset += OFFSET(thread_struct_cr3);
+	offset += LAZY_OFFSET(thread_struct_cr3);
 
         readmem(task + offset, KVADDR, &cr3,
                 sizeof(ulong), "task thread cr3", FAULT_ON_ERROR);
@@ -3720,11 +3720,11 @@ x86_get_pc(struct bt_info *bt)
 			readmem(bt->task + OFFSET(task_struct_thread_eip), KVADDR,
 				&eip, sizeof(void *), 
 				"thread_struct eip", FAULT_ON_ERROR);
-		else if (VALID_MEMBER(inactive_task_frame_ret_addr)) {
+		else if (VALID_MEMBER_LAZY(inactive_task_frame_ret_addr)) {
 			readmem(bt->task + OFFSET(task_struct_thread_esp), KVADDR,
 				&inactive_task_frame, sizeof(void *),
 				"task_struct.inactive_task_frame", FAULT_ON_ERROR);
-			readmem(inactive_task_frame + OFFSET(inactive_task_frame_ret_addr), 
+			readmem(inactive_task_frame + LAZY_OFFSET(inactive_task_frame_ret_addr), 
 				KVADDR, &eip, sizeof(void *),
 				"inactive_task_frame.ret_addr", FAULT_ON_ERROR);
 		} else
@@ -3753,8 +3753,8 @@ x86_get_sp(struct bt_info *bt)
                 readmem(bt->task + OFFSET(task_struct_thread_esp), KVADDR,
                         &ksp, sizeof(void *),
                         "thread_struct esp", FAULT_ON_ERROR);
-		if (VALID_MEMBER(inactive_task_frame_ret_addr))
-			ksp += OFFSET(inactive_task_frame_ret_addr);
+		if (VALID_MEMBER_LAZY(inactive_task_frame_ret_addr))
+			ksp += LAZY_OFFSET(inactive_task_frame_ret_addr);
                 return ksp;
 	} 
 
@@ -5478,13 +5478,13 @@ x86_xendump_panic_task(struct xendump_data *xd)
 	ulong task;
 
 
-	if (INVALID_MEMBER(vcpu_guest_context_user_regs) ||
-	    INVALID_MEMBER(cpu_user_regs_esp))
+	if (INVALID_MEMBER_LAZY(vcpu_guest_context_user_regs) ||
+	    INVALID_MEMBER_LAZY(cpu_user_regs_esp))
 		return NO_TASK;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) +
-		(off_t)OFFSET(cpu_user_regs_esp);
+                (off_t)LAZY_OFFSET(vcpu_guest_context_user_regs) +
+		(off_t)LAZY_OFFSET(cpu_user_regs_esp);
 
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
 		return NO_TASK;
@@ -5527,22 +5527,22 @@ x86_get_xendump_regs(struct xendump_data *xd, struct bt_info *bt, ulong *eip, ul
 	ulong task, xeip, xesp;
 	off_t offset;
 
-        if (INVALID_MEMBER(vcpu_guest_context_user_regs) ||
-            INVALID_MEMBER(cpu_user_regs_eip) ||
-            INVALID_MEMBER(cpu_user_regs_esp))
+        if (INVALID_MEMBER_LAZY(vcpu_guest_context_user_regs) ||
+            INVALID_MEMBER_LAZY(cpu_user_regs_eip) ||
+            INVALID_MEMBER_LAZY(cpu_user_regs_esp))
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) +
-                (off_t)OFFSET(cpu_user_regs_esp);
+                (off_t)LAZY_OFFSET(vcpu_guest_context_user_regs) +
+                (off_t)LAZY_OFFSET(cpu_user_regs_esp);
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
                 goto generic;
         if (read(xd->xfd, &xesp, sizeof(ulong)) != sizeof(ulong))
                 goto generic;
 
         offset = xd->xc_core.header.xch_ctxt_offset +
-                (off_t)OFFSET(vcpu_guest_context_user_regs) +
-                (off_t)OFFSET(cpu_user_regs_eip);
+                (off_t)LAZY_OFFSET(vcpu_guest_context_user_regs) +
+                (off_t)LAZY_OFFSET(cpu_user_regs_eip);
         if (lseek(xd->xfd, offset, SEEK_SET) == -1)
                 goto generic;
         if (read(xd->xfd, &xeip, sizeof(ulong)) != sizeof(ulong))
