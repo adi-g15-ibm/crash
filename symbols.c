@@ -13102,27 +13102,6 @@ add_symbol_file_kallsyms(struct load_module *lm, struct gnu_request *req)
 #endif
 	if (!(st->flags & (MODSECT_VMASK|MODSECT_UNKNOWN))) {
 		STRUCT_SIZE_INIT(module_sect_attr, "module_sect_attr");
-		MEMBER_OFFSET_INIT(module_sect_attrs, 
-			"module", "sect_attrs");
-		MEMBER_OFFSET_INIT(module_sect_attrs_attrs, 
-			"module_sect_attrs", "attrs");
-		MEMBER_OFFSET_INIT(module_sect_attrs_nsections, 
-			"module_sect_attrs", "nsections");
-		MEMBER_OFFSET_INIT(module_sect_attr_mattr, 
-			"module_sect_attr", "mattr");
-		MEMBER_OFFSET_INIT(module_sect_attr_name, 
-			"module_sect_attr", "name");
-		MEMBER_OFFSET_INIT(module_sect_attr_address, 
-			"module_sect_attr", "address");
-		MEMBER_OFFSET_INIT(module_attribute_attr, 
-			"module_attribute", "attr");
-		MEMBER_OFFSET_INIT(module_sect_attr_attr, 
-			"module_sect_attr", "attr");
-		MEMBER_OFFSET_INIT(module_sections_attrs,
-			"module_sections", "attrs");
-		MEMBER_OFFSET_INIT(attribute_owner,
-			"attribute", "owner");
-
 		if (VALID_MEMBER_LAZY(module_sect_attrs_attrs) &&
 		    VALID_MEMBER_LAZY(module_sect_attr_mattr) &&
 		    VALID_MEMBER_LAZY(module_attribute_attr) &&

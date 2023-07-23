@@ -544,29 +544,6 @@ void sbitmapq_init(void)
 	if (INVALID_SIZE(sbitmap))
 		command_not_supported();
 
-	MEMBER_OFFSET_INIT(sbitmap_word_depth, "sbitmap_word", "depth");
-	MEMBER_OFFSET_INIT(sbitmap_word_word, "sbitmap_word", "word");
-	MEMBER_OFFSET_INIT(sbitmap_word_cleared, "sbitmap_word", "cleared");
-
-	MEMBER_OFFSET_INIT(sbitmap_depth, "sbitmap", "depth");
-	MEMBER_OFFSET_INIT(sbitmap_shift, "sbitmap", "shift");
-	MEMBER_OFFSET_INIT(sbitmap_map_nr, "sbitmap", "map_nr");
-	MEMBER_OFFSET_INIT(sbitmap_map, "sbitmap", "map");
-	MEMBER_OFFSET_INIT(sbitmap_alloc_hint, "sbitmap", "alloc_hint");
-	MEMBER_OFFSET_INIT(sbitmap_round_robin, "sbitmap", "round_robin");
-
-	MEMBER_OFFSET_INIT(sbitmap_queue_sb, "sbitmap_queue", "sb");
-	MEMBER_OFFSET_INIT(sbitmap_queue_alloc_hint, "sbitmap_queue", "alloc_hint");
-	MEMBER_OFFSET_INIT(sbitmap_queue_wake_batch, "sbitmap_queue", "wake_batch");
-	MEMBER_OFFSET_INIT(sbitmap_queue_wake_index, "sbitmap_queue", "wake_index");
-	MEMBER_OFFSET_INIT(sbitmap_queue_ws, "sbitmap_queue", "ws");
-	MEMBER_OFFSET_INIT(sbitmap_queue_ws_active, "sbitmap_queue", "ws_active");
-	MEMBER_OFFSET_INIT(sbitmap_queue_round_robin, "sbitmap_queue", "round_robin");
-	MEMBER_OFFSET_INIT(sbitmap_queue_min_shallow_depth, "sbitmap_queue", "min_shallow_depth");
-
-	MEMBER_OFFSET_INIT(sbq_wait_state_wait_cnt, "sbq_wait_state", "wait_cnt");
-	MEMBER_OFFSET_INIT(sbq_wait_state_wait, "sbq_wait_state", "wait");
-
 	sb_flags |= SB_FLAG_INIT;
 }
 

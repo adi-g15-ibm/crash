@@ -853,12 +853,6 @@ gather_in_memory_unwind_tables(void)
 	ulong name;
 
 	STRUCT_SIZE_INIT(unwind_table, "unwind_table");
-	MEMBER_OFFSET_INIT(unwind_table_core, "unwind_table", "core");
-	MEMBER_OFFSET_INIT(unwind_table_init, "unwind_table", "init");
-	MEMBER_OFFSET_INIT(unwind_table_address, "unwind_table", "address");
-	MEMBER_OFFSET_INIT(unwind_table_size, "unwind_table", "size");
-	MEMBER_OFFSET_INIT(unwind_table_link, "unwind_table", "link");
-	MEMBER_OFFSET_INIT(unwind_table_name, "unwind_table", "name");
 
 	if (INVALID_SIZE(unwind_table) ||
 	    INVALID_MEMBER_LAZY(unwind_table_core) ||

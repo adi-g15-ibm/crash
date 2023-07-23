@@ -189,14 +189,12 @@ task_init(void)
 	        tt->max_tasks = (tt->task_end-tt->task_start) / sizeof(void *);
 		allocate_task_space(tt->max_tasks);
 
-		tss_offset = MEMBER_OFFSET_INIT(task_struct_tss,  
-			"task_struct", "tss");
+		tss_offset = LAZY_OFFSET(task_struct_tss);
 		eip_offset = MEMBER_OFFSET_INIT(thread_struct_eip, 
 			"thread_struct", "eip");
 		esp_offset = MEMBER_OFFSET_INIT(thread_struct_esp,
 			"thread_struct", "esp");
-		ksp_offset = MEMBER_OFFSET_INIT(thread_struct_ksp, 
-			"thread_struct", "ksp");
+		ksp_offset = LAZY_OFFSET(thread_struct_ksp);
 	        ASSIGN_OFFSET(task_struct_tss_eip) = 
 			(eip_offset == INVALID_OFFSET) ? 
 			INVALID_OFFSET : tss_offset + eip_offset;
@@ -222,8 +220,7 @@ task_init(void)
 		tt->max_tasks = tt->nr_threads + NR_CPUS + TASK_SLUSH; 
 		allocate_task_space(tt->max_tasks);
 	
-		thread_offset = MEMBER_OFFSET_INIT(task_struct_thread, 
-			"task_struct", "thread");
+		thread_offset = LAZY_OFFSET(task_struct_thread);
 		eip_offset = MEMBER_OFFSET_INIT(thread_struct_eip,
 			"thread_struct", "eip");
 		esp_offset = MEMBER_OFFSET_INIT(thread_struct_esp,
@@ -237,8 +234,7 @@ task_init(void)
 		if (esp_offset == INVALID_OFFSET)
 			esp_offset = MEMBER_OFFSET_INIT(thread_struct_esp,
 				"thread_struct", "sp");
-		ksp_offset = MEMBER_OFFSET_INIT(thread_struct_ksp,
-			"thread_struct", "ksp");
+		ksp_offset = LAZY_OFFSET(thread_struct_ksp);
 	        ASSIGN_OFFSET(task_struct_thread_eip) = 
 		    (eip_offset == INVALID_OFFSET) ? 
 			INVALID_OFFSET : thread_offset + eip_offset;
@@ -255,12 +251,6 @@ task_init(void)
 		get_idle_threads(&tt->idle_threads[0], kt->cpus);
 	}
 
-	/*
-	 * Handle CONFIG_THREAD_INFO_IN_TASK changes
-	 */
-	MEMBER_OFFSET_INIT(task_struct_stack, "task_struct", "stack");
-	MEMBER_OFFSET_INIT(task_struct_thread_info, "task_struct", "thread_info");
-
 	if (VALID_MEMBER(task_struct_thread_info)) {
 		switch (MEMBER_TYPE("task_struct", "thread_info"))
 		{
@@ -275,24 +265,14 @@ task_init(void)
 				MEMBER_TYPE("task_struct", "thread_info"));
 			break;
 		}
-	} else if (VALID_MEMBER_LAZY(task_struct_stack))
-		MEMBER_OFFSET_INIT(task_struct_thread_info, "task_struct", "stack");
-
-	MEMBER_OFFSET_INIT(task_struct_cpu, "task_struct", "cpu");
+	}
 
 	if (VALID_MEMBER(task_struct_thread_info)) {
 		if (tt->flags & THREAD_INFO_IN_TASK && VALID_MEMBER_LAZY(task_struct_cpu)) {
-			MEMBER_OFFSET_INIT(thread_info_flags, "thread_info", "flags");
 			/* (unnecessary) reminders */
 			ASSIGN_OFFSET(thread_info_task) = INVALID_OFFSET;
 			ASSIGN_OFFSET(thread_info_cpu) = INVALID_OFFSET;
 			ASSIGN_OFFSET(thread_info_previous_esp) = INVALID_OFFSET;
-		} else {
-			MEMBER_OFFSET_INIT(thread_info_task, "thread_info", "task"); 
-			MEMBER_OFFSET_INIT(thread_info_cpu, "thread_info", "cpu");
-			MEMBER_OFFSET_INIT(thread_info_flags, "thread_info", "flags");
-			MEMBER_OFFSET_INIT(thread_info_previous_esp, "thread_info", 
-				"previous_esp");
 		}
 		STRUCT_SIZE_INIT(thread_info, "thread_info");
 		tt->flags |= THREAD_INFO;
@@ -304,36 +284,12 @@ task_init(void)
 		MEMBER_OFFSET_INIT(task_struct_state, "task_struct", "__state");
 		MEMBER_SIZE_INIT(task_struct_state, "task_struct", "__state");
 	}
-        MEMBER_OFFSET_INIT(task_struct_exit_state, "task_struct", "exit_state");
-        MEMBER_OFFSET_INIT(task_struct_pid, "task_struct", "pid");
-        MEMBER_OFFSET_INIT(task_struct_comm, "task_struct", "comm");
-        MEMBER_OFFSET_INIT(task_struct_next_task, "task_struct", "next_task");
-        MEMBER_OFFSET_INIT(task_struct_processor, "task_struct", "processor");
-        MEMBER_OFFSET_INIT(task_struct_p_pptr, "task_struct", "p_pptr");
         MEMBER_OFFSET_INIT(task_struct_parent, "task_struct", "parent");
 	if (INVALID_MEMBER(task_struct_parent))
 		MEMBER_OFFSET_INIT(task_struct_parent, "task_struct", 
 			"real_parent");
-        MEMBER_OFFSET_INIT(task_struct_has_cpu, "task_struct", "has_cpu");
-        MEMBER_OFFSET_INIT(task_struct_cpus_runnable,  
-		"task_struct", "cpus_runnable");
-	MEMBER_OFFSET_INIT(task_struct_active_mm, "task_struct", "active_mm");
-	MEMBER_OFFSET_INIT(task_struct_next_run, "task_struct", "next_run");
-	MEMBER_OFFSET_INIT(task_struct_flags, "task_struct", "flags");
 	MEMBER_SIZE_INIT(task_struct_flags, "task_struct", "flags");
-	MEMBER_OFFSET_INIT(task_struct_policy, "task_struct", "policy");
 	MEMBER_SIZE_INIT(task_struct_policy, "task_struct", "policy");
-        MEMBER_OFFSET_INIT(task_struct_pidhash_next,
-                "task_struct", "pidhash_next");
-	MEMBER_OFFSET_INIT(task_struct_pgrp, "task_struct", "pgrp");
-	MEMBER_OFFSET_INIT(task_struct_tgid, "task_struct", "tgid");
-        MEMBER_OFFSET_INIT(task_struct_pids, "task_struct", "pids");
-        MEMBER_OFFSET_INIT(task_struct_last_run, "task_struct", "last_run");
-        MEMBER_OFFSET_INIT(task_struct_timestamp, "task_struct", "timestamp");
-        MEMBER_OFFSET_INIT(task_struct_sched_info, "task_struct", "sched_info");
-	if (VALID_MEMBER_LAZY(task_struct_sched_info))
-		MEMBER_OFFSET_INIT(sched_info_last_arrival, 
-			"sched_info", "last_arrival");
 	if (VALID_MEMBER_LAZY(task_struct_last_run) || 
 	    VALID_MEMBER_LAZY(task_struct_timestamp) ||
 	    VALID_MEMBER_LAZY(sched_info_last_arrival)) {
@@ -341,23 +297,13 @@ task_init(void)
 	        strcpy(buf, "alias last ps -l");
         	alias_init(buf);
 	}
-	MEMBER_OFFSET_INIT(task_struct_pid_links, "task_struct", "pid_links");
-	MEMBER_OFFSET_INIT(pid_link_pid, "pid_link", "pid");
-	MEMBER_OFFSET_INIT(pid_hash_chain, "pid", "hash_chain");
 
 	STRUCT_SIZE_INIT(pid_link, "pid_link");
 	STRUCT_SIZE_INIT(upid, "upid");
 	if (VALID_STRUCT(upid)) {
-		MEMBER_OFFSET_INIT(upid_nr, "upid", "nr");
-		MEMBER_OFFSET_INIT(upid_ns, "upid", "ns"); 
-		MEMBER_OFFSET_INIT(upid_pid_chain, "upid", "pid_chain");
-		MEMBER_OFFSET_INIT(pid_numbers, "pid", "numbers");
 		ARRAY_LENGTH_INIT(len, pid_numbers, "pid.numbers", NULL, 0);
-		MEMBER_OFFSET_INIT(pid_tasks, "pid", "tasks");
 		tt->init_pid_ns = symbol_value("init_pid_ns");
 	}
-
-	MEMBER_OFFSET_INIT(pid_pid_chain, "pid", "pid_chain");
 
 	STRUCT_SIZE_INIT(task_struct, "task_struct");
 
@@ -374,53 +320,19 @@ task_init(void)
 				SIZE(task_struct));
 	}
 
-	MEMBER_OFFSET_INIT(task_struct_sig, "task_struct", "sig");
-	MEMBER_OFFSET_INIT(task_struct_signal, "task_struct", "signal");
-	MEMBER_OFFSET_INIT(task_struct_blocked, "task_struct", "blocked");
-	MEMBER_OFFSET_INIT(task_struct_sigpending, "task_struct", "sigpending");
-	MEMBER_OFFSET_INIT(task_struct_pending, "task_struct", "pending");
-	MEMBER_OFFSET_INIT(task_struct_sigqueue, "task_struct", "sigqueue");
-	MEMBER_OFFSET_INIT(task_struct_sighand, "task_struct", "sighand");
-	 
-	MEMBER_OFFSET_INIT(signal_struct_count, "signal_struct", "count");
-	MEMBER_OFFSET_INIT(signal_struct_nr_threads, "signal_struct", "nr_threads");
-	MEMBER_OFFSET_INIT(signal_struct_action, "signal_struct", "action");
-	MEMBER_OFFSET_INIT(signal_struct_shared_pending, "signal_struct",
-		"shared_pending");
-
-	MEMBER_OFFSET_INIT(k_sigaction_sa, "k_sigaction", "sa");
-	
-	MEMBER_OFFSET_INIT(sigaction_sa_handler, "sigaction", "sa_handler");
-	MEMBER_OFFSET_INIT(sigaction_sa_mask, "sigaction", "sa_mask");
-	MEMBER_OFFSET_INIT(sigaction_sa_flags, "sigaction", "sa_flags");
-	MEMBER_OFFSET_INIT(sigpending_head, "sigpending", "head");
-	if (INVALID_MEMBER_LAZY(sigpending_head))
-		MEMBER_OFFSET_INIT(sigpending_list, "sigpending", "list");
-	MEMBER_OFFSET_INIT(sigpending_signal, "sigpending", "signal");
 	MEMBER_SIZE_INIT(sigpending_signal, "sigpending", "signal");
 
 	STRUCT_SIZE_INIT(sigqueue, "sigqueue");
        	STRUCT_SIZE_INIT(signal_queue, "signal_queue");
 
 	STRUCT_SIZE_INIT(sighand_struct, "sighand_struct");
-	if (VALID_STRUCT(sighand_struct))
-		MEMBER_OFFSET_INIT(sighand_struct_action, "sighand_struct", 
-			"action");
-
-        MEMBER_OFFSET_INIT(siginfo_si_signo, "siginfo", "si_signo");
 
 	STRUCT_SIZE_INIT(signal_struct, "signal_struct");
 	STRUCT_SIZE_INIT(k_sigaction, "k_sigaction");
 
-        MEMBER_OFFSET_INIT(task_struct_start_time, "task_struct", "start_time");
         MEMBER_SIZE_INIT(task_struct_start_time, "task_struct", "start_time");
         MEMBER_SIZE_INIT(task_struct_utime, "task_struct", "utime");
         MEMBER_SIZE_INIT(task_struct_stime, "task_struct", "stime");
-        MEMBER_OFFSET_INIT(task_struct_times, "task_struct", "times");
-        MEMBER_OFFSET_INIT(tms_tms_utime, "tms", "tms_utime");
-        MEMBER_OFFSET_INIT(tms_tms_stime, "tms", "tms_stime");
-	MEMBER_OFFSET_INIT(task_struct_utime, "task_struct", "utime");
-	MEMBER_OFFSET_INIT(task_struct_stime, "task_struct", "stime");
 
 	STRUCT_SIZE_INIT(cputime_t, "cputime_t");
 
@@ -466,15 +378,6 @@ task_init(void)
 		gdb_set_crash_scope(0, NULL);
 	}
 
-	if (VALID_MEMBER(runqueue_arrays)) 
-		MEMBER_OFFSET_INIT(task_struct_run_list, "task_struct",
-			"run_list");
-
-	MEMBER_OFFSET_INIT(task_struct_rss_stat, "task_struct",
-		"rss_stat");
-	MEMBER_OFFSET_INIT(task_rss_stat_count, "task_rss_stat",
-		"count");
-
         if ((tt->task_struct = (char *)malloc(SIZE(task_struct))) == NULL)
         	error(FATAL, "cannot malloc task_struct space.");
 
@@ -505,9 +408,6 @@ task_init(void)
 		}
 	}
 
-	MEMBER_OFFSET_INIT(pid_namespace_idr, "pid_namespace", "idr");
-	MEMBER_OFFSET_INIT(idr_idr_rt, "idr", "idr_rt");
-
 	if (symbol_exists("height_to_maxindex") ||
 	    symbol_exists("height_to_maxnodes")) {
 		int newver = symbol_exists("height_to_maxnodes");
@@ -529,23 +429,10 @@ task_init(void)
 		}
 		STRUCT_SIZE_INIT(radix_tree_root, "radix_tree_root");
 		STRUCT_SIZE_INIT(radix_tree_node, "radix_tree_node");
-		MEMBER_OFFSET_INIT(radix_tree_root_height,
-			"radix_tree_root","height");
-		MEMBER_OFFSET_INIT(radix_tree_root_rnode,
-			"radix_tree_root","rnode");
-		MEMBER_OFFSET_INIT(radix_tree_node_slots,
-			"radix_tree_node","slots");
-		MEMBER_OFFSET_INIT(radix_tree_node_height,
-			"radix_tree_node","height");
-		MEMBER_OFFSET_INIT(radix_tree_node_shift,
-			"radix_tree_node","shift");
 	}
 
 	STRUCT_SIZE_INIT(xarray, "xarray");
 	STRUCT_SIZE_INIT(xa_node, "xa_node");
-	MEMBER_OFFSET_INIT(xarray_xa_head, "xarray","xa_head");
-	MEMBER_OFFSET_INIT(xa_node_slots, "xa_node","slots");
-	MEMBER_OFFSET_INIT(xa_node_shift, "xa_node","shift");
 
 	if (symbol_exists("pidhash") && symbol_exists("pid_hash") &&
 	    !symbol_exists("pidhash_shift"))
@@ -4246,13 +4133,6 @@ show_task_args(struct task_context *tc)
         if (!task_mm(tc->task, TRUE))
                 return;
 
-	if (INVALID_MEMBER_LAZY(mm_struct_arg_start)) {
-		MEMBER_OFFSET_INIT(mm_struct_arg_start, "mm_struct", "arg_start");
-		MEMBER_OFFSET_INIT(mm_struct_arg_end, "mm_struct", "arg_end");
-		MEMBER_OFFSET_INIT(mm_struct_env_start, "mm_struct", "env_start");
-		MEMBER_OFFSET_INIT(mm_struct_env_end, "mm_struct", "env_end");
-	}
-	
 	arg_start = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_arg_start));
 	arg_end = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_arg_end));
 	env_start = ULONG(tt->mm_struct + LAZY_OFFSET(mm_struct_env_start));
@@ -4347,8 +4227,6 @@ show_task_rlimit(struct task_context *tc)
 	rlimit_index = 0;
 
 	if (!VALID_MEMBER_LAZY(task_struct_rlim) && !VALID_MEMBER_LAZY(signal_struct_rlim)) {
-		MEMBER_OFFSET_INIT(task_struct_rlim, "task_struct", "rlim");
-		MEMBER_OFFSET_INIT(signal_struct_rlim, "signal_struct", "rlim");
 		STRUCT_SIZE_INIT(rlimit, "rlimit");
 		if (!VALID_MEMBER_LAZY(task_struct_rlim) && 
 	  	    !VALID_MEMBER_LAZY(signal_struct_rlim))
@@ -9668,11 +9546,7 @@ dump_on_rq_tasks(void)
 	ulong *cpus;
 
 	if (!VALID_MEMBER_LAZY(task_struct_on_rq)) {
-		MEMBER_OFFSET_INIT(task_struct_se, "task_struct", "se");
 		STRUCT_SIZE_INIT(sched_entity, "sched_entity");
-		MEMBER_OFFSET_INIT(sched_entity_on_rq, "sched_entity", "on_rq");
-		MEMBER_OFFSET_INIT(task_struct_on_rq, "task_struct", "on_rq");
-                MEMBER_OFFSET_INIT(task_struct_prio, "task_struct", "prio");
 		if (INVALID_MEMBER_LAZY(task_struct_on_rq)) {
 			if (INVALID_MEMBER_LAZY(task_struct_se) ||
 			    INVALID_SIZE(sched_entity))
@@ -9732,39 +9606,12 @@ cfs_rq_offset_init(void)
 	if (!VALID_STRUCT(cfs_rq)) {
 		STRUCT_SIZE_INIT(cfs_rq, "cfs_rq");
 		STRUCT_SIZE_INIT(rt_rq, "rt_rq");
-		MEMBER_OFFSET_INIT(rq_rt, "rq", "rt");
-		MEMBER_OFFSET_INIT(rq_nr_running, "rq", "nr_running");
-		MEMBER_OFFSET_INIT(task_struct_se, "task_struct", "se");
 		STRUCT_SIZE_INIT(sched_entity, "sched_entity");
-		MEMBER_OFFSET_INIT(sched_entity_run_node, "sched_entity", 
-			"run_node");
-		MEMBER_OFFSET_INIT(sched_entity_cfs_rq, "sched_entity", 
-			"cfs_rq");
-		MEMBER_OFFSET_INIT(sched_entity_my_q, "sched_entity", 
-			"my_q");
-		MEMBER_OFFSET_INIT(sched_rt_entity_my_q, "sched_rt_entity",
-			"my_q");
-		MEMBER_OFFSET_INIT(sched_entity_on_rq, "sched_entity", "on_rq");
-		MEMBER_OFFSET_INIT(cfs_rq_tasks_timeline, "cfs_rq", 
-			"tasks_timeline");
-		MEMBER_OFFSET_INIT(cfs_rq_rb_leftmost, "cfs_rq", "rb_leftmost");
 		if (INVALID_MEMBER_LAZY(cfs_rq_rb_leftmost) && 
 		    VALID_MEMBER_LAZY(cfs_rq_tasks_timeline) &&
 		    MEMBER_EXISTS("rb_root_cached", "rb_leftmost"))
 			ASSIGN_OFFSET(cfs_rq_rb_leftmost) = LAZY_OFFSET(cfs_rq_tasks_timeline) + 
 				MEMBER_OFFSET("rb_root_cached", "rb_leftmost");
-		MEMBER_OFFSET_INIT(cfs_rq_nr_running, "cfs_rq", "nr_running");
-		MEMBER_OFFSET_INIT(cfs_rq_curr, "cfs_rq", "curr");
-		MEMBER_OFFSET_INIT(rt_rq_active, "rt_rq", "active");
-                MEMBER_OFFSET_INIT(task_struct_run_list, "task_struct",
-                        "run_list");
-		MEMBER_OFFSET_INIT(task_struct_on_rq, "task_struct", "on_rq");
-                MEMBER_OFFSET_INIT(task_struct_prio, "task_struct",
-                        "prio");
-		MEMBER_OFFSET_INIT(task_struct_rt, "task_struct", "rt");
-		MEMBER_OFFSET_INIT(sched_rt_entity_run_list, "sched_rt_entity", 
-			"run_list");
-		MEMBER_OFFSET_INIT(rt_prio_array_queue, "rt_prio_array", "queue");
 	}
 }
 
@@ -9773,31 +9620,6 @@ task_group_offset_init(void)
 {
 	if (!VALID_STRUCT(task_group)) {
 		STRUCT_SIZE_INIT(task_group, "task_group");
-		MEMBER_OFFSET_INIT(rt_rq_rt_nr_running, "rt_rq", "rt_nr_running");
-		MEMBER_OFFSET_INIT(cfs_rq_tg, "cfs_rq", "tg");
-		MEMBER_OFFSET_INIT(rt_rq_tg, "rt_rq", "tg");
-		MEMBER_OFFSET_INIT(rt_rq_highest_prio, "rt_rq", "highest_prio");
-		MEMBER_OFFSET_INIT(task_group_css, "task_group", "css");
-		MEMBER_OFFSET_INIT(cgroup_subsys_state_cgroup,
-			"cgroup_subsys_state", "cgroup");
-
-		MEMBER_OFFSET_INIT(cgroup_dentry, "cgroup", "dentry");
-		MEMBER_OFFSET_INIT(cgroup_kn, "cgroup", "kn");
-		MEMBER_OFFSET_INIT(kernfs_node_name, "kernfs_node", "name");
-		MEMBER_OFFSET_INIT(kernfs_node_parent, "kernfs_node", "parent");
-
-		MEMBER_OFFSET_INIT(task_group_siblings, "task_group", "siblings");
-		MEMBER_OFFSET_INIT(task_group_children, "task_group", "children");
-
-		MEMBER_OFFSET_INIT(task_group_cfs_bandwidth,
-			"task_group", "cfs_bandwidth");
-		MEMBER_OFFSET_INIT(cfs_rq_throttled, "cfs_rq",
-			"throttled");
-
-		MEMBER_OFFSET_INIT(task_group_rt_bandwidth,
-			"task_group", "rt_bandwidth");
-		MEMBER_OFFSET_INIT(rt_rq_rt_throttled, "rt_rq",
-			"rt_throttled");
 	}
 }
 
@@ -10752,15 +10574,6 @@ dump_signal_data(struct task_context *tc, ulong flags)
 
 	sigpending = sigqueue = 0;
 	sighand_struct = signal_struct = 0;
-
-        if (VALID_STRUCT(sigqueue) && !VALID_MEMBER_LAZY(sigqueue_next)) {
-                MEMBER_OFFSET_INIT(sigqueue_next, "sigqueue", "next");
-                MEMBER_OFFSET_INIT(sigqueue_list, "sigqueue", "list");
-                MEMBER_OFFSET_INIT(sigqueue_info, "sigqueue", "info");
-        } else if (!VALID_MEMBER_LAZY(signal_queue_next)) {
-                MEMBER_OFFSET_INIT(signal_queue_next, "signal_queue", "next");
-                MEMBER_OFFSET_INIT(signal_queue_info, "signal_queue", "info");
-        }
 
 	sigset = task_signal(tc->task, 0);
 	if (!tt->last_task_read)

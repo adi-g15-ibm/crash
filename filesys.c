@@ -1989,81 +1989,15 @@ create_dentry_array_percpu(ulong percpu_list_addr, int *count)
 void
 vfs_init(void)
 { 
-        MEMBER_OFFSET_INIT(nlm_file_f_file, "nlm_file", "f_file");
-	MEMBER_OFFSET_INIT(task_struct_files, "task_struct", "files");
-	MEMBER_OFFSET_INIT(task_struct_fs, "task_struct", "fs");
-	MEMBER_OFFSET_INIT(fs_struct_root, "fs_struct", "root");
-	MEMBER_OFFSET_INIT(fs_struct_pwd, "fs_struct", "pwd");
-	MEMBER_OFFSET_INIT(fs_struct_rootmnt, "fs_struct", "rootmnt");
-	MEMBER_OFFSET_INIT(fs_struct_pwdmnt, "fs_struct", "pwdmnt");
-	MEMBER_OFFSET_INIT(files_struct_open_fds_init,  
-		"files_struct", "open_fds_init");
-	MEMBER_OFFSET_INIT(files_struct_fdt, "files_struct", "fdt");
-	if (VALID_MEMBER_LAZY(files_struct_fdt)) {
-		MEMBER_OFFSET_INIT(fdtable_max_fds, "fdtable", "max_fds");
-		MEMBER_OFFSET_INIT(fdtable_max_fdset, "fdtable", "max_fdset");
-		MEMBER_OFFSET_INIT(fdtable_open_fds, "fdtable", "open_fds");
-		MEMBER_OFFSET_INIT(fdtable_fd, "fdtable", "fd");
-	} else {
-		MEMBER_OFFSET_INIT(files_struct_max_fds, "files_struct", "max_fds");
-		MEMBER_OFFSET_INIT(files_struct_max_fdset, "files_struct", "max_fdset");
-		MEMBER_OFFSET_INIT(files_struct_open_fds, "files_struct", "open_fds");
-		MEMBER_OFFSET_INIT(files_struct_fd, "files_struct", "fd");
-	}
-	MEMBER_OFFSET_INIT(file_f_dentry, "file", "f_dentry");
-	MEMBER_OFFSET_INIT(file_f_vfsmnt, "file", "f_vfsmnt");
-	MEMBER_OFFSET_INIT(file_f_count, "file", "f_count");
-	MEMBER_OFFSET_INIT(path_mnt, "path", "mnt");
-	MEMBER_OFFSET_INIT(path_dentry, "path", "dentry");
 	if (INVALID_MEMBER_LAZY(file_f_dentry)) {
-		MEMBER_OFFSET_INIT(file_f_path, "file", "f_path");
 		ASSIGN_OFFSET(file_f_dentry) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_dentry);
 		ASSIGN_OFFSET(file_f_vfsmnt) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_mnt);
 	}
-	MEMBER_OFFSET_INIT(dentry_d_inode, "dentry", "d_inode");
-	MEMBER_OFFSET_INIT(dentry_d_parent, "dentry", "d_parent");
-	MEMBER_OFFSET_INIT(dentry_d_covers, "dentry", "d_covers");
-	MEMBER_OFFSET_INIT(dentry_d_name, "dentry", "d_name");
-	MEMBER_OFFSET_INIT(dentry_d_iname, "dentry", "d_iname");
-	MEMBER_OFFSET_INIT(dentry_d_sb, "dentry", "d_sb");
-	MEMBER_OFFSET_INIT(inode_i_mode, "inode", "i_mode");
-	MEMBER_OFFSET_INIT(inode_i_op, "inode", "i_op");
-	MEMBER_OFFSET_INIT(inode_i_sb, "inode", "i_sb");
-	MEMBER_OFFSET_INIT(inode_u, "inode", "u");
-	MEMBER_OFFSET_INIT(qstr_name, "qstr", "name");
 	MEMBER_OFFSET_INIT(qstr_len, "qstr", "len");
 	if (INVALID_MEMBER(qstr_len))
 		ANON_MEMBER_OFFSET_INIT(qstr_len, "qstr", "len");
 
-	MEMBER_OFFSET_INIT(vfsmount_mnt_next, "vfsmount", "mnt_next");
-        MEMBER_OFFSET_INIT(vfsmount_mnt_devname, "vfsmount", "mnt_devname");
-	if (INVALID_MEMBER_LAZY(vfsmount_mnt_devname))
-		MEMBER_OFFSET_INIT(mount_mnt_devname, "mount", "mnt_devname");
-        MEMBER_OFFSET_INIT(vfsmount_mnt_dirname, "vfsmount", "mnt_dirname");
-        MEMBER_OFFSET_INIT(vfsmount_mnt_sb, "vfsmount", "mnt_sb");
-        MEMBER_OFFSET_INIT(vfsmount_mnt_list, "vfsmount", "mnt_list");
-	if (INVALID_MEMBER_LAZY(vfsmount_mnt_devname))
-		MEMBER_OFFSET_INIT(mount_mnt_list, "mount", "mnt_list");
-        MEMBER_OFFSET_INIT(vfsmount_mnt_parent, "vfsmount", "mnt_parent");
-	if (INVALID_MEMBER_LAZY(vfsmount_mnt_devname))
-		MEMBER_OFFSET_INIT(mount_mnt_parent, "mount", "mnt_parent");
-        MEMBER_OFFSET_INIT(vfsmount_mnt_mountpoint, 
-		"vfsmount", "mnt_mountpoint");
-	if (INVALID_MEMBER_LAZY(vfsmount_mnt_devname))
-		MEMBER_OFFSET_INIT(mount_mnt_mountpoint,
-			"mount", "mnt_mountpoint");
-	MEMBER_OFFSET_INIT(mount_mnt, "mount", "mnt");
-	MEMBER_OFFSET_INIT(namespace_root, "namespace", "root");
-	MEMBER_OFFSET_INIT(task_struct_nsproxy, "task_struct", "nsproxy");
-	if (VALID_MEMBER_LAZY(namespace_root)) {
-		MEMBER_OFFSET_INIT(namespace_list, "namespace", "list");
-		MEMBER_OFFSET_INIT(task_struct_namespace, 
-			"task_struct", "namespace");
-	} else if (VALID_MEMBER_LAZY(task_struct_nsproxy)) {
-		MEMBER_OFFSET_INIT(nsproxy_mnt_ns, "nsproxy", "mnt_ns");
-        	MEMBER_OFFSET_INIT(mnt_namespace_root, "mnt_namespace", "root");
-        	MEMBER_OFFSET_INIT(mnt_namespace_list, "mnt_namespace", "list");
-	} else if (THIS_KERNEL_VERSION >= LINUX(2,4,20)) {
+	if (THIS_KERNEL_VERSION >= LINUX(2,4,20)) {
 		if (CRASHDEBUG(2))
 			fprintf(fp, "hardwiring namespace stuff\n");
 		ASSIGN_OFFSET(task_struct_namespace) = LAZY_OFFSET(task_struct_files) +
@@ -2071,16 +2005,6 @@ vfs_init(void)
 		ASSIGN_OFFSET(namespace_root) = sizeof(void *);
 		ASSIGN_OFFSET(namespace_list) = sizeof(void *) * 2;
 	}
-
-        MEMBER_OFFSET_INIT(super_block_s_dirty, "super_block", "s_dirty");
-        MEMBER_OFFSET_INIT(super_block_s_type, "super_block", "s_type");
-        MEMBER_OFFSET_INIT(file_system_type_name, "file_system_type", "name");
-	MEMBER_OFFSET_INIT(super_block_s_files, "super_block", "s_files");
-        MEMBER_OFFSET_INIT(inode_i_flock, "inode", "i_flock");
-        MEMBER_OFFSET_INIT(file_lock_fl_owner, "file_lock", "fl_owner");
-        MEMBER_OFFSET_INIT(nlm_host_h_exportent, "nlm_host", "h_exportent");
-        MEMBER_OFFSET_INIT(svc_client_cl_ident, "svc_client", "cl_ident");
-	MEMBER_OFFSET_INIT(inode_i_fop, "inode","i_fop");
 
 	STRUCT_SIZE_INIT(umode_t, "umode_t");
 	STRUCT_SIZE_INIT(dentry, "dentry");
@@ -2101,12 +2025,6 @@ vfs_init(void)
 	if (!(ft->inode_cache = (char *)malloc(SIZE(inode)*INODE_CACHE)))
 		error(FATAL, "cannot malloc inode cache\n");
 
-	MEMBER_OFFSET_INIT(rb_root_rb_node, 
-		"rb_root","rb_node");
-	MEMBER_OFFSET_INIT(rb_node_rb_left, 
-		"rb_node","rb_left");
-	MEMBER_OFFSET_INIT(rb_node_rb_right, 
-		"rb_node","rb_right");
 }
 
 void

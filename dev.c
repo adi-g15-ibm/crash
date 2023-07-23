@@ -51,49 +51,12 @@ struct dev_table *dt = &dev_table;
 void
 dev_init(void)
 {
-        MEMBER_OFFSET_INIT(pci_dev_global_list, "pci_dev", "global_list");
-        MEMBER_OFFSET_INIT(pci_dev_next, "pci_dev", "next");
-        MEMBER_OFFSET_INIT(pci_dev_bus, "pci_dev", "bus");
-	MEMBER_OFFSET_INIT(pci_dev_dev, "pci_dev", "dev");
-        MEMBER_OFFSET_INIT(pci_dev_devfn, "pci_dev", "devfn");
-        MEMBER_OFFSET_INIT(pci_dev_class, "pci_dev", "class");
-        MEMBER_OFFSET_INIT(pci_dev_device, "pci_dev", "device");
-	MEMBER_OFFSET_INIT(pci_dev_hdr_type, "pci_dev", "hdr_type");
-	MEMBER_OFFSET_INIT(pci_dev_pcie_flags_reg, "pci_dev", "pcie_flags_reg");
-        MEMBER_OFFSET_INIT(pci_dev_vendor, "pci_dev", "vendor");
-	MEMBER_OFFSET_INIT(pci_bus_number, "pci_bus", "number");
-	MEMBER_OFFSET_INIT(pci_bus_node, "pci_bus", "node");
-	MEMBER_OFFSET_INIT(pci_bus_devices, "pci_bus", "devices");
-	MEMBER_OFFSET_INIT(pci_bus_dev, "pci_bus", "dev");
-	MEMBER_OFFSET_INIT(pci_bus_children, "pci_bus", "children");
-	MEMBER_OFFSET_INIT(pci_bus_parent, "pci_bus", "parent");
-	MEMBER_OFFSET_INIT(pci_bus_self, "pci_bus", "self");
-
-	MEMBER_OFFSET_INIT(device_kobj, "device", "kobj");
-	MEMBER_OFFSET_INIT(kobject_name, "kobject", "name");
-
         STRUCT_SIZE_INIT(resource, "resource");
-	if ((VALID_STRUCT(resource) && symbol_exists("do_resource_list")) ||
+	if (!((VALID_STRUCT(resource) && symbol_exists("do_resource_list")) ||
 	    (VALID_STRUCT(resource) &&
              symbol_exists("iomem_resource") &&
-             symbol_exists("ioport_resource"))) {
-        	MEMBER_OFFSET_INIT(resource_name, "resource", "name");
-        	MEMBER_OFFSET_INIT(resource_start, "resource", "start");
-        	MEMBER_OFFSET_INIT(resource_end, "resource", "end");
-        	MEMBER_OFFSET_INIT(resource_sibling, "resource", "sibling");
-        	MEMBER_OFFSET_INIT(resource_child, "resource", "child");
-	} else {
+             symbol_exists("ioport_resource")))) {
 		STRUCT_SIZE_INIT(resource_entry_t, "resource_entry_t");
-		if (VALID_SIZE(resource_entry_t)) {
-			MEMBER_OFFSET_INIT(resource_entry_t_from, 
-				"resource_entry_t", "from");
-			MEMBER_OFFSET_INIT(resource_entry_t_num, 
-				"resource_entry_t", "num");
-			MEMBER_OFFSET_INIT(resource_entry_t_name, 
-				"resource_entry_t", "name");
-			MEMBER_OFFSET_INIT(resource_entry_t_next, 
-				"resource_entry_t", "next");
-		}
 	}
 
 	dt->flags |= DEV_INIT;
@@ -4829,91 +4792,22 @@ void diskio_init(void)
 	MEMBER_OFFSET_INIT(class_devices, "class", "class_devices");
 	if (INVALID_MEMBER(class_devices))
 		MEMBER_OFFSET_INIT(class_devices, "class", "devices");
-	MEMBER_OFFSET_INIT(class_p, "class", "p");
-	if (INVALID_MEMBER_LAZY(class_p)) {
-		MEMBER_OFFSET_INIT(kset_list, "kset", "list");
-		MEMBER_OFFSET_INIT(kset_kobj, "kset", "kobj");
-		MEMBER_OFFSET_INIT(kobject_name, "kobject", "name");
-		MEMBER_OFFSET_INIT(kobject_entry, "kobject", "entry");
-		MEMBER_OFFSET_INIT(subsys_private_subsys, "subsys_private", "subsys");
-	}
-	MEMBER_OFFSET_INIT(class_private_devices, "class_private",
-		"class_devices");
-	MEMBER_OFFSET_INIT(device_knode_class, "device", "knode_class");
-	MEMBER_OFFSET_INIT(device_node, "device", "node");
-	MEMBER_OFFSET_INIT(device_type, "device", "type");
-	MEMBER_OFFSET_INIT(device_private_device, "device_private", "device");
-	MEMBER_OFFSET_INIT(device_private_knode_class, "device_private",
-		"knode_class");
 	MEMBER_OFFSET_INIT(gendisk_dev, "gendisk", "dev");
 	if (INVALID_MEMBER(gendisk_dev))
 		MEMBER_OFFSET_INIT(gendisk_dev, "gendisk", "__dev");
-	MEMBER_OFFSET_INIT(gendisk_kobj, "gendisk", "kobj");
-	MEMBER_OFFSET_INIT(gendisk_part0, "gendisk", "part0");
-	MEMBER_OFFSET_INIT(gendisk_queue, "gendisk", "queue");
-	MEMBER_OFFSET_INIT(hd_struct_dev, "hd_struct", "__dev");
-	MEMBER_OFFSET_INIT(hd_struct_dkstats, "hd_struct", "dkstats");
-	MEMBER_OFFSET_INIT(block_device_bd_device, "block_device", "bd_device");
-	MEMBER_OFFSET_INIT(block_device_bd_stats, "block_device", "bd_stats");
-	MEMBER_OFFSET_INIT(klist_k_list, "klist", "k_list");
-	MEMBER_OFFSET_INIT(klist_node_n_klist, "klist_node", "n_klist");
-	MEMBER_OFFSET_INIT(klist_node_n_node, "klist_node", "n_node");
-	MEMBER_OFFSET_INIT(kobject_entry, "kobject", "entry");
-	MEMBER_OFFSET_INIT(kset_list, "kset", "list");
-	MEMBER_OFFSET_INIT(request_list_count, "request_list", "count");
-	MEMBER_OFFSET_INIT(request_cmd_flags, "request", "cmd_flags");
-	MEMBER_OFFSET_INIT(request_q, "request", "q");
-	MEMBER_OFFSET_INIT(request_state, "request", "state");
-	MEMBER_OFFSET_INIT(request_queue_in_flight, "request_queue",
-		"in_flight");
-	if (MEMBER_EXISTS("request_queue", "rq"))
-		MEMBER_OFFSET_INIT(request_queue_rq, "request_queue", "rq");
-	else
-		MEMBER_OFFSET_INIT(request_queue_rq, "request_queue", "root_rl");
 	if (MEMBER_EXISTS("request_queue", "mq_ops")) {
-		MEMBER_OFFSET_INIT(request_queue_mq_ops, "request_queue",
-			"mq_ops");
 		ANON_MEMBER_OFFSET_INIT(request_queue_queue_ctx,
 			"request_queue", "queue_ctx");
-		MEMBER_OFFSET_INIT(request_queue_queue_hw_ctx,
-			"request_queue", "queue_hw_ctx");
-		MEMBER_OFFSET_INIT(request_queue_nr_hw_queues,
-			"request_queue", "nr_hw_queues");
-		MEMBER_OFFSET_INIT(request_queue_hctx_table,
-			"request_queue", "hctx_table");
-		MEMBER_OFFSET_INIT(blk_mq_ctx_rq_dispatched, "blk_mq_ctx",
-			"rq_dispatched");
-		MEMBER_OFFSET_INIT(blk_mq_ctx_rq_completed, "blk_mq_ctx",
-			"rq_completed");
-		MEMBER_OFFSET_INIT(blk_mq_hw_ctx_tags, "blk_mq_hw_ctx", "tags");
-		MEMBER_OFFSET_INIT(blk_mq_tags_bitmap_tags, "blk_mq_tags",
-			"bitmap_tags");
-		MEMBER_OFFSET_INIT(blk_mq_tags_breserved_tags, "blk_mq_tags",
-			"breserved_tags");
-		MEMBER_OFFSET_INIT(blk_mq_tags_nr_reserved_tags, "blk_mq_tags",
-			"nr_reserved_tags");
-		MEMBER_OFFSET_INIT(blk_mq_tags_rqs, "blk_mq_tags", "rqs");
 		STRUCT_SIZE_INIT(blk_mq_tags, "blk_mq_tags");
 		STRUCT_SIZE_INIT(sbitmap, "sbitmap");
 		STRUCT_SIZE_INIT(sbitmap_word, "sbitmap_word");
-		MEMBER_OFFSET_INIT(sbitmap_word_word, "sbitmap_word", "word");
-		MEMBER_OFFSET_INIT(sbitmap_word_cleared, "sbitmap_word", "cleared");
-		MEMBER_OFFSET_INIT(sbitmap_depth, "sbitmap", "depth");
-		MEMBER_OFFSET_INIT(sbitmap_shift, "sbitmap", "shift");
-		MEMBER_OFFSET_INIT(sbitmap_map_nr, "sbitmap", "map_nr");
-		MEMBER_OFFSET_INIT(sbitmap_map, "sbitmap", "map");
-		MEMBER_OFFSET_INIT(sbitmap_queue_sb, "sbitmap_queue", "sb");
 
 	}
-	MEMBER_OFFSET_INIT(subsys_private_klist_devices, "subsys_private",
-		"klist_devices");
-	MEMBER_OFFSET_INIT(subsystem_kset, "subsystem", "kset");
 	STRUCT_SIZE_INIT(subsystem, "subsystem");
 	STRUCT_SIZE_INIT(class_private, "class_private");
 	MEMBER_SIZE_INIT(rq_in_flight, "request_queue", "in_flight");
 	MEMBER_SIZE_INIT(class_private_devices, "class_private",
 		"class_devices");
-	MEMBER_OFFSET_INIT(disk_stats_in_flight, "disk_stats", "in_flight");
 
 	dt->flags |= DISKIO_INIT;
 }

@@ -223,8 +223,6 @@ kernel_init()
 	    (sp2->value > sp1->value))
 		kt->flags |= SMP|PER_CPU_OFF;
 	
-	MEMBER_OFFSET_INIT(timekeeper_xtime, "timekeeper", "xtime");
-	MEMBER_OFFSET_INIT(timekeeper_xtime_sec, "timekeeper", "xtime_sec");
 	get_xtime(&kt->date);
 	if (CRASHDEBUG(1))
 		fprintf(fp, "xtime timespec.tv_sec: %lx: %s\n", 
@@ -234,7 +232,6 @@ kernel_init()
 		clean_exit(0);
 	}
 
-	MEMBER_OFFSET_INIT(uts_namespace_name, "uts_namespace", "name");
 	if (symbol_exists("system_utsname"))
         	readmem(symbol_value("system_utsname"), KVADDR, &kt->utsname,
                 	sizeof(struct new_utsname), "system_utsname", 
@@ -315,8 +312,6 @@ kernel_init()
                 kt->flags |= PER_CPU_OFF;
 	}
 
-	MEMBER_OFFSET_INIT(percpu_counter_count, "percpu_counter", "count");
-	MEMBER_OFFSET_INIT(percpu_counter_counters, "percpu_counter", "counters");
 	STRUCT_SIZE_INIT(percpu_counter, "percpu_counter");
 
 	if (STRUCT_EXISTS("runqueue")) {
@@ -341,8 +336,6 @@ kernel_init()
 	 */
 	if (VALID_MEMBER(runqueue_cpu) &&
 	    (get_array_length("runqueue.cpu", NULL, 0) > 0)) {
-		MEMBER_OFFSET_INIT(cpu_s_curr, "cpu_s", "curr");
-		MEMBER_OFFSET_INIT(cpu_s_idle, "cpu_s", "idle");
 	 	STRUCT_SIZE_INIT(cpu_s, "cpu_s"); 
 		kt->runq_siblings = get_array_length("runqueue.cpu", 
 			NULL, 0);
@@ -377,15 +370,8 @@ kernel_init()
 	MEMBER_OFFSET_INIT(runqueue_expired, rqstruct, "expired");
 	MEMBER_OFFSET_INIT(runqueue_arrays, rqstruct, "arrays");
 	MEMBER_OFFSET_INIT(rq_timestamp, rqstruct, rq_timestamp_name);
-	MEMBER_OFFSET_INIT(prio_array_queue, "prio_array", "queue");
-        MEMBER_OFFSET_INIT(prio_array_nr_active, "prio_array", "nr_active");
 	STRUCT_SIZE_INIT(runqueue, rqstruct); 
 	STRUCT_SIZE_INIT(prio_array, "prio_array"); 
-
-	MEMBER_OFFSET_INIT(rq_cfs, "rq", "cfs");
-	MEMBER_OFFSET_INIT(task_group_cfs_rq, "task_group", "cfs_rq");
-	MEMBER_OFFSET_INIT(task_group_rt_rq, "task_group", "rt_rq");
-	MEMBER_OFFSET_INIT(task_group_parent, "task_group", "parent");
 
        /*
         *  In 2.4, smp_send_stop() sets smp_num_cpus back to 1
@@ -438,21 +424,12 @@ kernel_init()
 	STRUCT_SIZE_INIT(spinlock_t, "spinlock_t");
 	verify_spinlock();
 
-	if (STRUCT_EXISTS("atomic_t"))
-		if (MEMBER_EXISTS("atomic_t", "counter"))
-			MEMBER_OFFSET_INIT(atomic_t_counter,
-					"atomic_t", "counter");
-
 	STRUCT_SIZE_INIT(list_head, "list_head"); 
-	MEMBER_OFFSET_INIT(list_head_next, "list_head", "next"); 
-	MEMBER_OFFSET_INIT(list_head_prev, "list_head", "prev"); 
 	if (LAZY_OFFSET(list_head_next) != 0)
 	    	error(WARNING, 
 		    "list_head.next offset: %ld: list command may fail\n",
 			LAZY_OFFSET(list_head_next));
 
-        MEMBER_OFFSET_INIT(hlist_node_next, "hlist_node", "next");
-        MEMBER_OFFSET_INIT(hlist_node_pprev, "hlist_node", "pprev");
 	STRUCT_SIZE_INIT(hlist_head, "hlist_head"); 
 	STRUCT_SIZE_INIT(hlist_node, "hlist_node"); 
 
@@ -478,68 +455,6 @@ kernel_init()
 	MEMBER_OFFSET_INIT(irq_desc_t_depth, irq_desc_type_name, "depth");
 
 	STRUCT_SIZE_INIT(kernel_stat, "kernel_stat");
-	MEMBER_OFFSET_INIT(kernel_stat_irqs, "kernel_stat", "irqs");
-
-	if (STRUCT_EXISTS("hw_interrupt_type")) {
-		MEMBER_OFFSET_INIT(hw_interrupt_type_typename,
-			"hw_interrupt_type", "typename");
-		MEMBER_OFFSET_INIT(hw_interrupt_type_startup,
-			"hw_interrupt_type", "startup");
-		MEMBER_OFFSET_INIT(hw_interrupt_type_shutdown,
-			"hw_interrupt_type", "shutdown");
-		MEMBER_OFFSET_INIT(hw_interrupt_type_handle,
-        	        "hw_interrupt_type", "handle");
-		MEMBER_OFFSET_INIT(hw_interrupt_type_enable,
-			"hw_interrupt_type", "enable");
-		MEMBER_OFFSET_INIT(hw_interrupt_type_disable,
-			"hw_interrupt_type", "disable");
-		MEMBER_OFFSET_INIT(hw_interrupt_type_ack,
-			"hw_interrupt_type", "ack");
-		MEMBER_OFFSET_INIT(hw_interrupt_type_end,
-			"hw_interrupt_type", "end");
-		MEMBER_OFFSET_INIT(hw_interrupt_type_set_affinity,
-			"hw_interrupt_type", "set_affinity");
-	} else { /*
-		  * On later kernels where hw_interrupt_type was replaced
-		  * by irq_chip
-		  */
-		MEMBER_OFFSET_INIT(irq_chip_typename,
-			"irq_chip", "name");
-		MEMBER_OFFSET_INIT(irq_chip_startup,
-			"irq_chip", "startup");
-		MEMBER_OFFSET_INIT(irq_chip_shutdown,
-			"irq_chip", "shutdown");
-		MEMBER_OFFSET_INIT(irq_chip_enable,
-			"irq_chip", "enable");
-		MEMBER_OFFSET_INIT(irq_chip_disable,
-			"irq_chip", "disable");
-		MEMBER_OFFSET_INIT(irq_chip_ack,
-			"irq_chip", "ack");
-		MEMBER_OFFSET_INIT(irq_chip_mask,
-			"irq_chip", "mask");
-		MEMBER_OFFSET_INIT(irq_chip_mask_ack,
-			"irq_chip", "mask_ack");
-		MEMBER_OFFSET_INIT(irq_chip_unmask,
-			"irq_chip", "unmask");
-		MEMBER_OFFSET_INIT(irq_chip_eoi,
-			"irq_chip", "eoi");
-		MEMBER_OFFSET_INIT(irq_chip_end,
-			"irq_chip", "end");
-		MEMBER_OFFSET_INIT(irq_chip_set_affinity,
-			"irq_chip", "set_affinity");
-		MEMBER_OFFSET_INIT(irq_chip_retrigger,
-			"irq_chip", "retrigger");
-		MEMBER_OFFSET_INIT(irq_chip_set_type,
-			"irq_chip", "set_type");
-		MEMBER_OFFSET_INIT(irq_chip_set_wake,
-			"irq_chip", "set_wake");
-	}
-	MEMBER_OFFSET_INIT(irqaction_handler, "irqaction", "handler");
-	MEMBER_OFFSET_INIT(irqaction_flags, "irqaction", "flags");
-	MEMBER_OFFSET_INIT(irqaction_mask, "irqaction", "mask");
-	MEMBER_OFFSET_INIT(irqaction_name, "irqaction", "name");
-	MEMBER_OFFSET_INIT(irqaction_dev_id, "irqaction", "dev_id");
-	MEMBER_OFFSET_INIT(irqaction_next, "irqaction", "next");
 
 	/* 6.5 and later: CONFIG_SPARSE_IRQ */
 	if (kernel_symbol_exists("sparse_irqs"))
@@ -558,36 +473,15 @@ kernel_init()
 	STRUCT_SIZE_INIT(irq_data, "irq_data");
 	if (VALID_STRUCT(irq_data)) {
 		MEMBER_OFFSET_INIT(irq_data_irq, "irq_data", "irq");
-		MEMBER_OFFSET_INIT(irq_data_chip, "irq_data", "chip");
-		MEMBER_OFFSET_INIT(irq_data_affinity, "irq_data", "affinity");
-		MEMBER_OFFSET_INIT(irq_desc_irq_data, "irq_desc", "irq_data");
 	}
 
 	STRUCT_SIZE_INIT(irq_common_data, "irq_common_data");
-	if (VALID_STRUCT(irq_common_data)) {
-		MEMBER_OFFSET_INIT(irq_common_data_affinity, "irq_common_data", "affinity");
-		MEMBER_OFFSET_INIT(irq_desc_irq_common_data, "irq_desc", "irq_common_data");
-	}
 
         STRUCT_SIZE_INIT(irq_cpustat_t, "irq_cpustat_t");
-        MEMBER_OFFSET_INIT(irq_cpustat_t___softirq_active, 
-                "irq_cpustat_t", "__softirq_active");
-        MEMBER_OFFSET_INIT(irq_cpustat_t___softirq_mask, 
-                "irq_cpustat_t", "__softirq_mask");
 
         STRUCT_SIZE_INIT(timer_list, "timer_list");
-        MEMBER_OFFSET_INIT(timer_list_list, "timer_list", "list");
-        MEMBER_OFFSET_INIT(timer_list_next, "timer_list", "next");
-        MEMBER_OFFSET_INIT(timer_list_entry, "timer_list", "entry");
-        MEMBER_OFFSET_INIT(timer_list_expires, "timer_list", "expires");
-        MEMBER_OFFSET_INIT(timer_list_function, "timer_list", "function");
         STRUCT_SIZE_INIT(timer_vec_root, "timer_vec_root");
-	if (VALID_STRUCT(timer_vec_root))
-               	MEMBER_OFFSET_INIT(timer_vec_root_vec, 
-			"timer_vec_root", "vec");
         STRUCT_SIZE_INIT(timer_vec, "timer_vec");
-	if (VALID_STRUCT(timer_vec))
-               	MEMBER_OFFSET_INIT(timer_vec_vec, "timer_vec", "vec");
 
 	STRUCT_SIZE_INIT(tvec_root_s, "tvec_root_s");
         if (VALID_STRUCT(tvec_root_s)) {
@@ -613,7 +507,6 @@ kernel_init()
 
 	if (per_cpu_symbol_search("timer_bases")) {
 		kt->flags2 |= TIMER_BASES;
-		MEMBER_OFFSET_INIT(timer_base_vectors, "timer_base", "vectors");
 		STRUCT_SIZE_INIT(timer_base, "timer_base");
 	} else if (per_cpu_symbol_search("per_cpu__tvec_bases")) {
 		if (MEMBER_EXISTS("tvec_base", "migration_enabled"))
@@ -625,31 +518,16 @@ kernel_init()
 
         STRUCT_SIZE_INIT(__wait_queue, "__wait_queue");
 	STRUCT_SIZE_INIT(wait_queue_entry, "wait_queue_entry");
-	if (VALID_STRUCT(wait_queue_entry)) {
-		MEMBER_OFFSET_INIT(wait_queue_entry_private,
-			"wait_queue_entry", "private");
-		MEMBER_OFFSET_INIT(wait_queue_head_head,
-			"wait_queue_head", "head");
-		MEMBER_OFFSET_INIT(wait_queue_entry_entry,
-			"wait_queue_entry", "entry");
-	} else if (VALID_STRUCT(__wait_queue)) {
-		if (MEMBER_EXISTS("__wait_queue", "task"))
-			MEMBER_OFFSET_INIT(__wait_queue_task,
-				"__wait_queue", "task");
-		else
-			MEMBER_OFFSET_INIT(__wait_queue_task,
-				"__wait_queue", "private");
-                MEMBER_OFFSET_INIT(__wait_queue_head_task_list,
-                        "__wait_queue_head", "task_list");
-                MEMBER_OFFSET_INIT(__wait_queue_task_list,
-                        "__wait_queue", "task_list");
+	if (! VALID_STRUCT(wait_queue_entry)) {
+		if (VALID_STRUCT(__wait_queue)) {
+			if (MEMBER_EXISTS("__wait_queue", "task"))
+				MEMBER_OFFSET_INIT(__wait_queue_task,
+					"__wait_queue", "task");
+			else
+				MEMBER_OFFSET_INIT(__wait_queue_task,
+					"__wait_queue", "private");
         } else {
                	STRUCT_SIZE_INIT(wait_queue, "wait_queue");
-		if (VALID_STRUCT(wait_queue)) {
-               		MEMBER_OFFSET_INIT(wait_queue_task, 
-				"wait_queue", "task");
-               		MEMBER_OFFSET_INIT(wait_queue_next, 
-				"wait_queue", "next");
 		}
 	}
 
@@ -659,65 +537,17 @@ kernel_init()
 	STRUCT_SIZE_INIT(desc_struct, "desc_struct");
 
 	STRUCT_SIZE_INIT(char_device_struct, "char_device_struct");
-	if (VALID_STRUCT(char_device_struct)) {
-		MEMBER_OFFSET_INIT(char_device_struct_next,
-			"char_device_struct", "next");
-		MEMBER_OFFSET_INIT(char_device_struct_name,
-			"char_device_struct", "name");
-		MEMBER_OFFSET_INIT(char_device_struct_fops,
-			"char_device_struct", "fops");
-		MEMBER_OFFSET_INIT(char_device_struct_major,
-			"char_device_struct", "major");
-		MEMBER_OFFSET_INIT(char_device_struct_baseminor,
-			"char_device_struct", "baseminor");
-		MEMBER_OFFSET_INIT(char_device_struct_cdev,
-			"char_device_struct", "cdev");
-	}
 
 	STRUCT_SIZE_INIT(cdev, "cdev");
-	if (VALID_STRUCT(cdev)) 
-		MEMBER_OFFSET_INIT(cdev_ops, "cdev", "ops");
 
 	STRUCT_SIZE_INIT(probe, "probe");
-	if (VALID_STRUCT(probe)) {
-		MEMBER_OFFSET_INIT(probe_next, "probe", "next");
-		MEMBER_OFFSET_INIT(probe_dev, "probe", "dev");
-		MEMBER_OFFSET_INIT(probe_data, "probe", "data");
-	}
 
 	STRUCT_SIZE_INIT(kobj_map, "kobj_map");
-	if (VALID_STRUCT(kobj_map)) 
-		MEMBER_OFFSET_INIT(kobj_map_probes, "kobj_map", "probes");
-
-	MEMBER_OFFSET_INIT(module_kallsyms_start, "module", 
-		"kallsyms_start");
 
 	STRUCT_SIZE_INIT(kallsyms_header, "kallsyms_header");
 
 	if (VALID_MEMBER_LAZY(module_kallsyms_start) &&
 	    VALID_SIZE(kallsyms_header)) {
-        	MEMBER_OFFSET_INIT(kallsyms_header_sections,
-			"kallsyms_header", "sections");
-        	MEMBER_OFFSET_INIT(kallsyms_header_section_off,
-			"kallsyms_header", "section_off");
-        	MEMBER_OFFSET_INIT(kallsyms_header_symbols,
-			"kallsyms_header", "symbols");
-        	MEMBER_OFFSET_INIT(kallsyms_header_symbol_off,
-			"kallsyms_header", "symbol_off");
-        	MEMBER_OFFSET_INIT(kallsyms_header_string_off,
-			"kallsyms_header", "string_off");
-        	MEMBER_OFFSET_INIT(kallsyms_symbol_section_off,
-			"kallsyms_symbol", "section_off");
-        	MEMBER_OFFSET_INIT(kallsyms_symbol_symbol_addr,
-			"kallsyms_symbol", "symbol_addr");
-        	MEMBER_OFFSET_INIT(kallsyms_symbol_name_off,
-			"kallsyms_symbol", "name_off");
-        	MEMBER_OFFSET_INIT(kallsyms_section_start,
-			"kallsyms_section", "start");
-        	MEMBER_OFFSET_INIT(kallsyms_section_size,
-			"kallsyms_section", "size");
-        	MEMBER_OFFSET_INIT(kallsyms_section_name_off,
-			"kallsyms_section", "name_off");
 		STRUCT_SIZE_INIT(kallsyms_symbol, "kallsyms_symbol");
 		STRUCT_SIZE_INIT(kallsyms_section, "kallsyms_section");
 			
@@ -725,12 +555,7 @@ kernel_init()
 			kt->flags |= KALLSYMS_V1;
 	}
 
-	MEMBER_OFFSET_INIT(module_num_symtab, "module", "num_symtab");
-
 	if (VALID_MEMBER_LAZY(module_num_symtab)) {
-		MEMBER_OFFSET_INIT(module_symtab, "module", "symtab");
-		MEMBER_OFFSET_INIT(module_strtab, "module", "strtab");
-			
 		if (!(kt->flags & NO_KALLSYMS))
 			kt->flags |= KALLSYMS_V2;
 	}
@@ -759,9 +584,6 @@ kernel_init()
 	 */
 	if (kernel_symbol_exists("pcpu_info") && 
 	    STRUCT_EXISTS("pcpu_info") && STRUCT_EXISTS("vcpu_struct")) {
-		MEMBER_OFFSET_INIT(pcpu_info_vcpu, "pcpu_info", "vcpu");
-		MEMBER_OFFSET_INIT(pcpu_info_idle, "pcpu_info", "idle");
-		MEMBER_OFFSET_INIT(vcpu_struct_rq, "vcpu_struct", "rq");
 		STRUCT_SIZE_INIT(pcpu_info, "pcpu_info");
 		STRUCT_SIZE_INIT(vcpu_struct, "vcpu_struct");
 		kt->flags |= ARCH_OPENVZ;
@@ -775,51 +597,12 @@ kernel_init()
 	 *  for hrtimer
 	 */
 	STRUCT_SIZE_INIT(hrtimer_clock_base, "hrtimer_clock_base");
-	if (VALID_STRUCT(hrtimer_clock_base)) {
-		MEMBER_OFFSET_INIT(hrtimer_clock_base_offset, 
-			"hrtimer_clock_base", "offset");
-		MEMBER_OFFSET_INIT(hrtimer_clock_base_active, 
-			"hrtimer_clock_base", "active");
-		MEMBER_OFFSET_INIT(hrtimer_clock_base_first, 
-			"hrtimer_clock_base", "first");
-		MEMBER_OFFSET_INIT(hrtimer_clock_base_get_time, 
-			"hrtimer_clock_base", "get_time");
-	}
 
 	STRUCT_SIZE_INIT(hrtimer_base, "hrtimer_base");
-	if (VALID_STRUCT(hrtimer_base)) {
-		MEMBER_OFFSET_INIT(hrtimer_base_first, 
-			"hrtimer_base", "first");
-		MEMBER_OFFSET_INIT(hrtimer_base_pending, 
-			"hrtimer_base", "pending");
-		MEMBER_OFFSET_INIT(hrtimer_base_get_time, 
-			"hrtimer_base", "get_time");
-	}
 
-	MEMBER_OFFSET_INIT(hrtimer_cpu_base_clock_base, "hrtimer_cpu_base",
-		"clock_base");
-
-	MEMBER_OFFSET_INIT(hrtimer_node, "hrtimer", "node");
-	MEMBER_OFFSET_INIT(hrtimer_list, "hrtimer", "list");
 	MEMBER_OFFSET_INIT(hrtimer_expires, "hrtimer", "expires");
 	if (INVALID_MEMBER(hrtimer_expires))
 		MEMBER_OFFSET_INIT(hrtimer_expires, "hrtimer", "_expires");
-	if (INVALID_MEMBER(hrtimer_expires)) {
-		MEMBER_OFFSET_INIT(timerqueue_head_next, 
-			"timerqueue_head", "next");
-		MEMBER_OFFSET_INIT(timerqueue_node_expires, 
-			"timerqueue_node", "expires");
-		MEMBER_OFFSET_INIT(timerqueue_node_node, 
-			"timerqueue_node", "node");
-		if (INVALID_MEMBER_LAZY(timerqueue_head_next)) {
-			MEMBER_OFFSET_INIT(timerqueue_head_rb_root,
-				"timerqueue_head", "rb_root");
-			MEMBER_OFFSET_INIT(rb_root_cached_rb_leftmost,
-				"rb_root_cached", "rb_leftmost");
-		}
-	}
-	MEMBER_OFFSET_INIT(hrtimer_softexpires, "hrtimer", "_softexpires");
-	MEMBER_OFFSET_INIT(hrtimer_function, "hrtimer", "function");
 
 	MEMBER_OFFSET_INIT(ktime_t_tv64, "ktime", "tv64");
 	if (INVALID_MEMBER(ktime_t_tv64))
@@ -3550,31 +3333,16 @@ module_init(void)
         }
 
 	STRUCT_SIZE_INIT(module, "module");
-        MEMBER_OFFSET_INIT(module_name, "module", "name");
-        MEMBER_OFFSET_INIT(module_syms, "module", "syms");
 	mod_next = nsyms = 0;
 
 	switch (kt->flags & (KMOD_V1|KMOD_V2))
 	{
 	case KMOD_V1:
-        	MEMBER_OFFSET_INIT(module_size_of_struct, "module", 
-			"size_of_struct");
-        	MEMBER_OFFSET_INIT(module_next, "module", "next");
-        	MEMBER_OFFSET_INIT(module_nsyms, "module", "nsyms");
-        	MEMBER_OFFSET_INIT(module_size, "module", "size");
-        	MEMBER_OFFSET_INIT(module_flags, "module", "flags");
-
         	get_symbol_data("module_list", sizeof(ulong), &kt->module_list);
         	kt->kernel_module = symbol_value("kernel_module");
 		break;	
 
 	case KMOD_V2: 
-		MEMBER_OFFSET_INIT(module_num_syms, "module", "num_syms");
-		MEMBER_OFFSET_INIT(module_list, "module", "list");
-        	MEMBER_OFFSET_INIT(module_gpl_syms, "module", "gpl_syms");
-        	MEMBER_OFFSET_INIT(module_num_gpl_syms, "module", 
-			"num_gpl_syms");
-
 		if (MEMBER_EXISTS("module", "mem")) {	/* 6.4 and later */
 			kt->flags2 |= KMOD_MEMORY;	/* MODULE_MEMORY() can be used. */
 
@@ -3589,45 +3357,11 @@ module_init(void)
 			if (get_array_length("module.mem", NULL, 0) != MOD_MEM_NUM_TYPES)
 				error(WARNING, "module memory types have changed!\n");
 
-		} else if (MEMBER_EXISTS("module", "module_core")) {
-			MEMBER_OFFSET_INIT(module_core_size, "module",
-					   "core_size");
-			MEMBER_OFFSET_INIT(module_init_size, "module",
-					   "init_size");
-
-			MEMBER_OFFSET_INIT(module_core_text_size, "module",
-					   "core_text_size");
-			MEMBER_OFFSET_INIT(module_init_text_size, "module",
-					   "init_text_size");
-
-			MEMBER_OFFSET_INIT(module_module_core, "module",
-					   "module_core");
-			MEMBER_OFFSET_INIT(module_module_init, "module",
-					   "module_init");
 		} else if (MEMBER_EXISTS("module", "module_core_rx")) {
 			if (CRASHDEBUG(1))
 				error(INFO, "PaX module layout detected.\n");
 			kt->flags2 |= KMOD_PAX;
 
-			MEMBER_OFFSET_INIT(module_core_size_rw, "module",
-					   "core_size_rw");
-			MEMBER_OFFSET_INIT(module_core_size_rx, "module",
-					   "core_size_rx");
-
-			MEMBER_OFFSET_INIT(module_init_size_rw, "module",
-					   "init_size_rw");
-			MEMBER_OFFSET_INIT(module_init_size_rx, "module",
-					   "init_size_rx");
-
-			MEMBER_OFFSET_INIT(module_module_core_rw, "module",
-					   "module_core_rw");
-			MEMBER_OFFSET_INIT(module_module_core_rx, "module",
-					   "module_core_rx");
-
-			MEMBER_OFFSET_INIT(module_module_init_rw, "module",
-					   "module_init_rw");
-			MEMBER_OFFSET_INIT(module_module_init_rx, "module",
-					   "module_init_rx");
 		} else if (MEMBER_EXISTS("module_layout", "base_rx")) {
 			if (CRASHDEBUG(1))
 				error(INFO, "PaX module layout detected.\n");
@@ -3682,8 +3416,6 @@ module_init(void)
 				MEMBER_OFFSET("module", "init_layout") +
 				MEMBER_OFFSET("module_layout", "base");
 		}
-
-		MEMBER_OFFSET_INIT(module_percpu, "module", "percpu");
 
 		/*
 		 *  Make sure to pick the kernel "modules" list_head symbol,
@@ -4303,12 +4035,10 @@ show_module_taint_4_10(void)
 	char *modbuf;
 
 	if (INVALID_MEMBER_LAZY(module_taints)) {
-		MEMBER_OFFSET_INIT(module_taints, "module", "taints");
 		STRUCT_SIZE_INIT(taint_flag, "taint_flag");
 		MEMBER_OFFSET_INIT(tnt_true, "taint_flag", "true");
 		if (INVALID_MEMBER(tnt_true))
 			MEMBER_OFFSET_INIT(tnt_true, "taint_flag", "c_true");
-		MEMBER_OFFSET_INIT(tnt_mod, "taint_flag", "module");
 	}
 
 	modbuf = GETBUF(SIZE(module));
@@ -4413,12 +4143,7 @@ show_module_taint(void)
 
 	if (INVALID_MEMBER_LAZY(module_taints) &&
 	    INVALID_MEMBER_LAZY(module_license_gplok)) {
-		MEMBER_OFFSET_INIT(module_taints, "module", "taints");
-		MEMBER_OFFSET_INIT(module_license_gplok, 
-			"module", "license_gplok");
-		MEMBER_OFFSET_INIT(module_gpgsig_ok, "module", "gpgsig_ok");
 		STRUCT_SIZE_INIT(tnt, "tnt");
-		MEMBER_OFFSET_INIT(tnt_bit, "tnt", "bit");
 		MEMBER_OFFSET_INIT(tnt_true, "tnt", "true");
 		MEMBER_OFFSET_INIT(tnt_false, "tnt", "false");
 	}
@@ -11380,7 +11105,6 @@ show_kernel_taints(char *buf, int verbose)
 	    (kernel_symbol_exists("tnts") && STRUCT_EXISTS("tnt"))) {
 		if (!VALID_STRUCT(tnt)) {
 			STRUCT_SIZE_INIT(tnt, "tnt");
-			MEMBER_OFFSET_INIT(tnt_bit, "tnt", "bit");
 			MEMBER_OFFSET_INIT(tnt_true, "tnt", "true");
 			MEMBER_OFFSET_INIT(tnt_false, "tnt", "false");
 		}
@@ -11540,14 +11264,8 @@ dump_audit_skb_queue(ulong audit_skb_queue)
 
 	if (INVALID_SIZE(nlmsghdr)) {
 		STRUCT_SIZE_INIT(nlmsghdr, "nlmsghdr");
-		MEMBER_OFFSET_INIT(nlmsghdr_nlmsg_type, "nlmsghdr", "nlmsg_type");
 		MEMBER_SIZE_INIT(nlmsghdr_nlmsg_type, "nlmsghdr", "nlmsg_type");
-		MEMBER_OFFSET_INIT(sk_buff_head_next, "sk_buff_head", "next");
-		MEMBER_OFFSET_INIT(sk_buff_head_qlen, "sk_buff_head", "qlen");
 		MEMBER_SIZE_INIT(sk_buff_head_qlen, "sk_buff_head", "qlen");
-		MEMBER_OFFSET_INIT(sk_buff_data, "sk_buff", "data");
-		MEMBER_OFFSET_INIT(sk_buff_len, "sk_buff", "len");
-		MEMBER_OFFSET_INIT(sk_buff_next, "sk_buff", "next");
 		MEMBER_SIZE_INIT(sk_buff_len, "sk_buff", "len");
 	}
 
@@ -11781,13 +11499,6 @@ dump_printk_safe_seq_buf(int msg_flags)
 		return;
 
 	if (INVALID_SIZE(printk_safe_seq_buf_buffer)) {
-		MEMBER_OFFSET_INIT(printk_safe_seq_buf_len,
-			"printk_safe_seq_buf", "len");
-		MEMBER_OFFSET_INIT(printk_safe_seq_buf_message_lost,
-			"printk_safe_seq_buf", "message_lost");
-		MEMBER_OFFSET_INIT(printk_safe_seq_buf_buffer,
-			"printk_safe_seq_buf", "buffer");
-
 		if (!INVALID_MEMBER_LAZY(printk_safe_seq_buf_buffer)) {
 			MEMBER_SIZE_INIT(printk_safe_seq_buf_buffer,
 				"printk_safe_seq_buf", "buffer");

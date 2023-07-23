@@ -226,22 +226,6 @@ ia64_init(int when)
         case POST_GDB:
 		STRUCT_SIZE_INIT(cpuinfo_ia64, "cpuinfo_ia64");
 		STRUCT_SIZE_INIT(switch_stack, "switch_stack");
-		MEMBER_OFFSET_INIT(thread_struct_fph, "thread_struct", "fph");
-		MEMBER_OFFSET_INIT(switch_stack_b0, "switch_stack", "b0");
-		MEMBER_OFFSET_INIT(switch_stack_ar_bspstore,  
-			"switch_stack", "ar_bspstore");
-		MEMBER_OFFSET_INIT(switch_stack_ar_pfs,  
-			"switch_stack", "ar_pfs");
-		MEMBER_OFFSET_INIT(switch_stack_ar_rnat, 
-			"switch_stack", "ar_rnat");
-		MEMBER_OFFSET_INIT(switch_stack_pr, 
-			"switch_stack", "pr");
-        	MEMBER_OFFSET_INIT(cpuinfo_ia64_proc_freq, 
-			"cpuinfo_ia64", "proc_freq");
-        	MEMBER_OFFSET_INIT(cpuinfo_ia64_unimpl_va_mask,
-			"cpuinfo_ia64", "unimpl_va_mask");
-        	MEMBER_OFFSET_INIT(cpuinfo_ia64_unimpl_pa_mask, 
-			"cpuinfo_ia64", "unimpl_pa_mask");
 		if (kernel_symbol_exists("nr_irqs"))
 			get_symbol_data("nr_irqs", sizeof(unsigned int),
 				&machdep->nr_irqs);
@@ -4419,16 +4403,6 @@ ia64_init_hyper(int when)
 
         case POST_GDB:
 		STRUCT_SIZE_INIT(switch_stack, "switch_stack");
-		MEMBER_OFFSET_INIT(thread_struct_fph, "thread_struct", "fph");
-		MEMBER_OFFSET_INIT(switch_stack_b0, "switch_stack", "b0");
-		MEMBER_OFFSET_INIT(switch_stack_ar_bspstore,  
-			"switch_stack", "ar_bspstore");
-		MEMBER_OFFSET_INIT(switch_stack_ar_pfs,  
-			"switch_stack", "ar_pfs");
-		MEMBER_OFFSET_INIT(switch_stack_ar_rnat, 
-			"switch_stack", "ar_rnat");
-		MEMBER_OFFSET_INIT(switch_stack_pr, 
-			"switch_stack", "pr");
 
 		XEN_HYPER_STRUCT_SIZE_INIT(cpuinfo_ia64, "cpuinfo_ia64");
 		XEN_HYPER_MEMBER_OFFSET_INIT(cpuinfo_ia64_proc_freq, "cpuinfo_ia64", "proc_freq");

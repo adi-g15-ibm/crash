@@ -627,8 +627,6 @@ ppc64_init(int when)
 
 		ppc64_init_cpu_info();
 		machdep->vmalloc_start = ppc64_vmalloc_start;
-		MEMBER_OFFSET_INIT(thread_struct_pg_tables,
-			"thread_struct", "pg_tables");
 
 		STRUCT_SIZE_INIT(irqdesc, "irqdesc");
 		STRUCT_SIZE_INIT(irq_desc_t, "irq_desc_t");
@@ -639,25 +637,8 @@ ppc64_init(int when)
 			machdep->dump_irq = generic_dump_irq;
 		else {
 			machdep->dump_irq = ppc64_dump_irq;
-			MEMBER_OFFSET_INIT(irqdesc_action, "irqdesc", "action");
-			MEMBER_OFFSET_INIT(irqdesc_ctl, "irqdesc", "ctl");
-			MEMBER_OFFSET_INIT(irqdesc_level, "irqdesc", "level");
 		}
 
-		MEMBER_OFFSET_INIT(device_node_type, "device_node", "type");
-		MEMBER_OFFSET_INIT(device_node_allnext,
-			"device_node", "allnext");
-		MEMBER_OFFSET_INIT(device_node_properties,
-			"device_node", "properties");
-		MEMBER_OFFSET_INIT(property_name, "property", "name");
-		MEMBER_OFFSET_INIT(property_value, "property", "value");
-		MEMBER_OFFSET_INIT(property_next, "property", "next");
-		MEMBER_OFFSET_INIT(machdep_calls_setup_residual,
-			"machdep_calls", "setup_residual");
-		MEMBER_OFFSET_INIT(RESIDUAL_VitalProductData,
-			"RESIDUAL", "VitalProductData");
-		MEMBER_OFFSET_INIT(VPD_ProcessorHz, "VPD", "ProcessorHz");
-		MEMBER_OFFSET_INIT(bd_info_bi_intfreq, "bd_info", "bi_intfreq");
 		if (symbol_exists("irq_desc"))
 			ARRAY_LENGTH_INIT(machdep->nr_irqs, irq_desc,
 				"irq_desc", NULL, 0);

@@ -577,25 +577,6 @@ void maple_init(void)
 	STRUCT_SIZE_INIT(maple_tree, "maple_tree");
 	STRUCT_SIZE_INIT(maple_node, "maple_node");
 
-	MEMBER_OFFSET_INIT(maple_tree_ma_root, "maple_tree", "ma_root");
-	MEMBER_OFFSET_INIT(maple_tree_ma_flags, "maple_tree", "ma_flags");
-
-	MEMBER_OFFSET_INIT(maple_node_parent, "maple_node", "parent");
-	MEMBER_OFFSET_INIT(maple_node_ma64, "maple_node", "ma64");
-	MEMBER_OFFSET_INIT(maple_node_mr64, "maple_node", "mr64");
-	MEMBER_OFFSET_INIT(maple_node_slot, "maple_node", "slot");
-
-	MEMBER_OFFSET_INIT(maple_arange_64_pivot, "maple_arange_64", "pivot");
-	MEMBER_OFFSET_INIT(maple_arange_64_slot, "maple_arange_64", "slot");
-	MEMBER_OFFSET_INIT(maple_arange_64_gap, "maple_arange_64", "gap");
-	MEMBER_OFFSET_INIT(maple_arange_64_meta, "maple_arange_64", "meta");
-
-	MEMBER_OFFSET_INIT(maple_range_64_pivot, "maple_range_64", "pivot");
-	MEMBER_OFFSET_INIT(maple_range_64_slot, "maple_range_64", "slot");
-
-	MEMBER_OFFSET_INIT(maple_metadata_end, "maple_metadata", "end");
-	MEMBER_OFFSET_INIT(maple_metadata_gap, "maple_metadata", "gap");
-
 	array_len = get_array_length("mt_slots", NULL, sizeof(char));
 	mt_slots = calloc(array_len, sizeof(char));
 	readmem(symbol_value("mt_slots"), KVADDR, mt_slots,

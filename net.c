@@ -104,25 +104,7 @@ net_init(void)
 
 	if (VALID_STRUCT(net_device)) {
 		net->netdevice = "net_device";
-		net->dev_next = MEMBER_OFFSET_INIT(net_device_next,
-			"net_device", "next");
-		net->dev_name = MEMBER_OFFSET_INIT(net_device_name, 
-			"net_device", "name");
-		net->dev_type = MEMBER_OFFSET_INIT(net_device_type,
-			"net_device", "type");
-                net->dev_addr_len = MEMBER_OFFSET_INIT(net_device_addr_len,
-			"net_device", "addr_len");
-		net->dev_ip_ptr = MEMBER_OFFSET_INIT(net_device_ip_ptr,
-			"net_device", "ip_ptr");
-		MEMBER_OFFSET_INIT(net_device_dev_list, "net_device", "dev_list");
-		MEMBER_OFFSET_INIT(net_device_ip6_ptr, "net_device", "ip6_ptr");
-		MEMBER_OFFSET_INIT(inet6_dev_addr_list, "inet6_dev", "addr_list");
-		MEMBER_OFFSET_INIT(inet6_ifaddr_addr, "inet6_ifaddr", "addr");
-		MEMBER_OFFSET_INIT(inet6_ifaddr_if_list, "inet6_ifaddr", "if_list");
-		MEMBER_OFFSET_INIT(inet6_ifaddr_if_next, "inet6_ifaddr", "if_next");
-		MEMBER_OFFSET_INIT(in6_addr_in6_u, "in6_addr", "in6_u");
 
-		MEMBER_OFFSET_INIT(net_dev_base_head, "net", "dev_base_head");
 		ARRAY_LENGTH_INIT(net->net_device_name_index,
 			net_device_name, "net_device.name", NULL, sizeof(char));
 		net->flags |= (NETDEV_INIT|STRUCT_NET_DEVICE);
@@ -130,43 +112,25 @@ net_init(void)
 		STRUCT_SIZE_INIT(device, "device");
 		if (VALID_STRUCT(device)) {
 			net->netdevice = "device";
-			net->dev_next = MEMBER_OFFSET_INIT(device_next, 
-				"device", "next");
-			net->dev_name = MEMBER_OFFSET_INIT(device_name, 
-				"device", "name");
-	                net->dev_type = MEMBER_OFFSET_INIT(device_type, 
-				"device", "type");
-			net->dev_ip_ptr = MEMBER_OFFSET_INIT(device_ip_ptr, 
-				"device", "ip_ptr");
-	                net->dev_addr_len = MEMBER_OFFSET_INIT(device_addr_len, 
-				"device", "addr_len");
+			net->dev_next = LAZY_OFFSET(device_next);
+			net->dev_name = LAZY_OFFSET(device_name); 
+	                net->dev_type = LAZY_OFFSET(device_type,);
+			net->dev_ip_ptr = LAZY_OFFSET(device_ip_ptr);
+	                net->dev_addr_len = LAZY_OFFSET(device_addr_len);
 			net->flags |= (NETDEV_INIT|STRUCT_DEVICE);
 		} else 
 			error(WARNING, 
 				"net_init: unknown device type for net device");
 	}
-	if (VALID_MEMBER_LAZY(task_struct_nsproxy))
-		MEMBER_OFFSET_INIT(nsproxy_net_ns, "nsproxy", "net_ns");
 
 	if (net->flags & NETDEV_INIT) {
 		MK_TYPE_T(net->dev_name_t, net->netdevice, "name");
 		MK_TYPE_T(net->dev_type_t, net->netdevice, "type");
 		MK_TYPE_T(net->dev_addr_t, net->netdevice, "addr_len");
 
-		MEMBER_OFFSET_INIT(socket_sk, "socket", "sk");
-		MEMBER_OFFSET_INIT(neighbour_next, "neighbour", "next");
-        	MEMBER_OFFSET_INIT(neighbour_primary_key,  
-			"neighbour", "primary_key");
-        	MEMBER_OFFSET_INIT(neighbour_ha, "neighbour", "ha");
-        	MEMBER_OFFSET_INIT(neighbour_dev, "neighbour", "dev");
-        	MEMBER_OFFSET_INIT(neighbour_nud_state,  
-			"neighbour", "nud_state");
-		MEMBER_OFFSET_INIT(neigh_table_nht_ptr, "neigh_table", "nht");
 		if (VALID_MEMBER_LAZY(neigh_table_nht_ptr)) {
 			MEMBER_OFFSET_INIT(neigh_table_hash_mask,
 				"neigh_hash_table", "hash_mask");
-			MEMBER_OFFSET_INIT(neigh_table_hash_shift,
-				"neigh_hash_table", "hash_shift");
 			MEMBER_OFFSET_INIT(neigh_table_hash_buckets,
 				"neigh_hash_table", "hash_buckets");
 		} else {
@@ -175,41 +139,13 @@ net_init(void)
 			MEMBER_OFFSET_INIT(neigh_table_hash_mask,
 				"neigh_table", "hash_mask");
 		}
-		MEMBER_OFFSET_INIT(neigh_table_key_len,
-			"neigh_table", "key_len");
-
-        	MEMBER_OFFSET_INIT(in_device_ifa_list,  
-			"in_device", "ifa_list");
-        	MEMBER_OFFSET_INIT(in_ifaddr_ifa_next,  
-			"in_ifaddr", "ifa_next");
-        	MEMBER_OFFSET_INIT(in_ifaddr_ifa_address, 
-			"in_ifaddr", "ifa_address");
 
 		STRUCT_SIZE_INIT(sock, "sock");
 
-                MEMBER_OFFSET_INIT(sock_family, "sock", "family");
 		if (VALID_MEMBER_LAZY(sock_family)) {
-                	MEMBER_OFFSET_INIT(sock_daddr, "sock", "daddr");
-                	MEMBER_OFFSET_INIT(sock_rcv_saddr, "sock", "rcv_saddr");
-                	MEMBER_OFFSET_INIT(sock_dport, "sock", "dport");
-                	MEMBER_OFFSET_INIT(sock_sport, "sock", "sport");
-                	MEMBER_OFFSET_INIT(sock_num, "sock", "num");
-                	MEMBER_OFFSET_INIT(sock_type, "sock", "type");
 			net->flags |= SOCK_V1;
 
 		} else {
-			/*
-			 * struct sock {
-        		 *	struct sock_common      __sk_common;
-			 * #define sk_family __sk_common.skc_family
-			 *      ...
-			 */
-			MEMBER_OFFSET_INIT(sock_common_skc_family,
-				"sock_common", "skc_family");
-			MEMBER_OFFSET_INIT(sock_sk_type, "sock", "sk_type");
-			MEMBER_OFFSET_INIT(sock_sk_common, "sock", "__sk_common");
-			MEMBER_OFFSET_INIT(sock_common_skc_v6_daddr, "sock_common", "skc_v6_daddr");
-			MEMBER_OFFSET_INIT(sock_common_skc_v6_rcv_saddr, "sock_common", "skc_v6_rcv_saddr");
 			/*
 			 *  struct inet_sock {
         		 *	struct sock       sk;
@@ -221,7 +157,6 @@ net_init(void)
 			STRUCT_SIZE_INIT(socket, "socket");
 
 			if (STRUCT_EXISTS("inet_opt")) {
-				MEMBER_OFFSET_INIT(inet_sock_inet, "inet_sock", "inet");
 				MEMBER_OFFSET_INIT(inet_opt_daddr, "inet_opt", "daddr");
 				MEMBER_OFFSET_INIT(inet_opt_rcv_saddr, "inet_opt", "rcv_saddr");
 				MEMBER_OFFSET_INIT(inet_opt_dport, "inet_opt", "dport");
@@ -310,10 +245,7 @@ net_init(void)
 				}
 			}
 
-			MEMBER_OFFSET_INIT(ipv6_pinfo_rcv_saddr, "ipv6_pinfo", "rcv_saddr");
-			MEMBER_OFFSET_INIT(ipv6_pinfo_daddr, "ipv6_pinfo", "daddr");
 			STRUCT_SIZE_INIT(in6_addr, "in6_addr");
-			MEMBER_OFFSET_INIT(socket_alloc_vfs_inode, "socket_alloc", "vfs_inode");
 
 			net->flags |= SOCK_V2;
 		}
