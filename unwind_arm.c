@@ -135,16 +135,8 @@ init_unwind_tables(void)
 	 * several tables per module (one per code section).
 	 */
 	STRUCT_SIZE_INIT(unwind_table, "unwind_table");
-	MEMBER_OFFSET_INIT(unwind_table_list, "unwind_table", "list");
-	MEMBER_OFFSET_INIT(unwind_table_start, "unwind_table", "start");
-	MEMBER_OFFSET_INIT(unwind_table_stop, "unwind_table", "stop");
-	MEMBER_OFFSET_INIT(unwind_table_begin_addr, "unwind_table",
-			   "begin_addr");
-	MEMBER_OFFSET_INIT(unwind_table_end_addr, "unwind_table", "end_addr");
 
 	STRUCT_SIZE_INIT(unwind_idx, "unwind_idx");
-	MEMBER_OFFSET_INIT(unwind_idx_addr, "unwind_idx", "addr");
-	MEMBER_OFFSET_INIT(unwind_idx_insn, "unwind_idx", "insn");
 
 	if (!init_module_unwind_tables()) {
 		error(WARNING,

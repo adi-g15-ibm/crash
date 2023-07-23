@@ -2748,8 +2748,6 @@ diskdump_device_dump_info(FILE *ofp)
 static void
 zram_init(void)
 {
-	MEMBER_OFFSET_INIT(zram_mempoll, "zram", "mem_pool");
-	MEMBER_OFFSET_INIT(zram_compressor, "zram", "compressor");
 	MEMBER_OFFSET_INIT(zram_table_flag, "zram_table_entry", "flags");
 	if (INVALID_MEMBER(zram_table_flag))
 		MEMBER_OFFSET_INIT(zram_table_flag, "zram_table_entry", "value");

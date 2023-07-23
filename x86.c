@@ -1843,12 +1843,6 @@ x86_init(int when)
 		else
 			MEMBER_OFFSET_INIT(user_regs_struct_ebp,
 				"user_regs_struct", "bp");
-		if (MEMBER_EXISTS("user_regs_struct", "esp"))
-			MEMBER_OFFSET_INIT(user_regs_struct_esp,
-				"user_regs_struct", "esp");
-		else
-			MEMBER_OFFSET_INIT(user_regs_struct_esp,
-				"user_regs_struct", "sp");
 		if (MEMBER_EXISTS("user_regs_struct", "eip"))
 			MEMBER_OFFSET_INIT(user_regs_struct_eip,
 				"user_regs_struct", "eip");
@@ -1879,12 +1873,6 @@ x86_init(int when)
 		else
 			MEMBER_OFFSET_INIT(user_regs_struct_edx,
 				"user_regs_struct", "dx");
-		if (MEMBER_EXISTS("user_regs_struct", "esi"))
-			MEMBER_OFFSET_INIT(user_regs_struct_esi,
-				"user_regs_struct", "esi");
-		else
-			MEMBER_OFFSET_INIT(user_regs_struct_esi,
-				"user_regs_struct", "si");
 		if (MEMBER_EXISTS("user_regs_struct", "edi"))
 			MEMBER_OFFSET_INIT(user_regs_struct_edi,
 				"user_regs_struct", "edi");
@@ -1897,18 +1885,6 @@ x86_init(int when)
 		else
 			MEMBER_OFFSET_INIT(user_regs_struct_eflags,
 				"user_regs_struct", "flags");
-		MEMBER_OFFSET_INIT(user_regs_struct_cs,
-			"user_regs_struct", "cs");
-		MEMBER_OFFSET_INIT(user_regs_struct_ds,
-			"user_regs_struct", "ds");
-		MEMBER_OFFSET_INIT(user_regs_struct_es,
-			"user_regs_struct", "es");
-		MEMBER_OFFSET_INIT(user_regs_struct_fs,
-			"user_regs_struct", "fs");
-		MEMBER_OFFSET_INIT(user_regs_struct_gs,
-			"user_regs_struct", "gs");
-		MEMBER_OFFSET_INIT(user_regs_struct_ss,
-			"user_regs_struct", "ss");
 		if (!VALID_STRUCT(user_regs_struct)) {
 			/*  Use this hardwired version -- sometimes the 
 			 *  debuginfo doesn't pick this up even though
@@ -1958,7 +1934,6 @@ x86_init(int when)
 			ASSIGN_OFFSET(user_regs_struct_ss) =
 				offsetof(struct x86_user_regs_struct, ss);
 		}
-		MEMBER_OFFSET_INIT(thread_struct_cr3, "thread_struct", "cr3");
 		STRUCT_SIZE_INIT(cpuinfo_x86, "cpuinfo_x86");
 		STRUCT_SIZE_INIT(irq_ctx, "irq_ctx");
 		if (STRUCT_EXISTS("e820map")) {
@@ -2017,15 +1992,6 @@ x86_init(int when)
                         	machdep->uvtop = x86_uvtop_xen_wpt;
 		} 
 
-		if (XEN()) {
-			MEMBER_OFFSET_INIT(vcpu_guest_context_user_regs,
-				"vcpu_guest_context", "user_regs");
-			MEMBER_OFFSET_INIT(cpu_user_regs_esp,
-				"cpu_user_regs", "esp");
-			MEMBER_OFFSET_INIT(cpu_user_regs_eip,
-				"cpu_user_regs", "eip");
-		}
-
 		if (THIS_KERNEL_VERSION < LINUX(2,6,24))
 			machdep->line_number_hooks = x86_line_number_hooks;
 
@@ -2038,15 +2004,11 @@ x86_init(int when)
 
 		STRUCT_SIZE_INIT(note_buf, "note_buf_t");
 		STRUCT_SIZE_INIT(elf_prstatus, "elf_prstatus");
-		MEMBER_OFFSET_INIT(elf_prstatus_pr_reg, "elf_prstatus",
-				   "pr_reg");
 		STRUCT_SIZE_INIT(percpu_data, "percpu_data");
 
 		if (!remap_init())
 			machdep->machspec->max_numnodes = -1;
 
-		MEMBER_OFFSET_INIT(inactive_task_frame_ret_addr, 
-			"inactive_task_frame", "ret_addr");
 		break;
 
 	case POST_INIT:

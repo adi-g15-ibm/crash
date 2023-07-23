@@ -301,16 +301,6 @@ arm_init(int when)
 		 * thread_info.cpu_context.
 		 */
 		STRUCT_SIZE_INIT(cpu_context_save, "cpu_context_save");
-		MEMBER_OFFSET_INIT(cpu_context_save_r7,
-			"cpu_context_save", "r7");
-		MEMBER_OFFSET_INIT(cpu_context_save_fp,
-			"cpu_context_save", "fp");
-		MEMBER_OFFSET_INIT(cpu_context_save_sp,
-			"cpu_context_save", "sp");
-		MEMBER_OFFSET_INIT(cpu_context_save_pc,
-			"cpu_context_save", "pc");
-		MEMBER_OFFSET_INIT(thread_info_cpu_context,
-			"thread_info", "cpu_context");
 
 		/*
 		 * We need to have information about note_buf_t which is used to
@@ -320,10 +310,6 @@ arm_init(int when)
 		STRUCT_SIZE_INIT(note_buf, "note_buf_t");
 
 		STRUCT_SIZE_INIT(elf_prstatus, "elf_prstatus");
-		MEMBER_OFFSET_INIT(elf_prstatus_pr_pid, "elf_prstatus",
-				   "pr_pid");
-		MEMBER_OFFSET_INIT(elf_prstatus_pr_reg, "elf_prstatus",
-				   "pr_reg");
 	
 		if (!machdep->hz)
 			machdep->hz = 100;

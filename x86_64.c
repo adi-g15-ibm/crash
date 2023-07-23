@@ -501,7 +501,6 @@ x86_64_init(int when)
 		if (INVALID_MEMBER(thread_struct_rsp0))
 			MEMBER_OFFSET_INIT(thread_struct_rsp0, "thread_struct", "sp0");
 		STRUCT_SIZE_INIT(tss_struct, "tss_struct");
-		MEMBER_OFFSET_INIT(tss_struct_ist, "tss_struct", "ist");
 		if (INVALID_MEMBER_LAZY(tss_struct_ist)) {
 			long x86_tss_offset, ist_offset;
 			x86_tss_offset = MEMBER_OFFSET("tss_struct", "x86_tss");
@@ -526,10 +525,6 @@ x86_64_init(int when)
 		if (INVALID_MEMBER(user_regs_struct_eflags))
 			MEMBER_OFFSET_INIT(user_regs_struct_eflags,
 				"user_regs_struct", "flags");
-		MEMBER_OFFSET_INIT(user_regs_struct_cs,
-			"user_regs_struct", "cs");
-		MEMBER_OFFSET_INIT(user_regs_struct_ss,
-			"user_regs_struct", "ss");
 		MEMBER_OFFSET_INIT(user_regs_struct_rax,
 			"user_regs_struct", "rax");
 		if (INVALID_MEMBER(user_regs_struct_rax))
@@ -565,22 +560,6 @@ x86_64_init(int when)
 		if (INVALID_MEMBER(user_regs_struct_rbp))
 			MEMBER_OFFSET_INIT(user_regs_struct_rbp,
 				"user_regs_struct", "bp");
-		MEMBER_OFFSET_INIT(user_regs_struct_r8,
-			"user_regs_struct", "r8");
-		MEMBER_OFFSET_INIT(user_regs_struct_r9,
-			"user_regs_struct", "r9");
-		MEMBER_OFFSET_INIT(user_regs_struct_r10,
-			"user_regs_struct", "r10");
-		MEMBER_OFFSET_INIT(user_regs_struct_r11,
-			"user_regs_struct", "r11");
-		MEMBER_OFFSET_INIT(user_regs_struct_r12,
-			"user_regs_struct", "r12");
-		MEMBER_OFFSET_INIT(user_regs_struct_r13,
-			"user_regs_struct", "r13");
-		MEMBER_OFFSET_INIT(user_regs_struct_r14,
-			"user_regs_struct", "r14");
-		MEMBER_OFFSET_INIT(user_regs_struct_r15,
-			"user_regs_struct", "r15");
 		STRUCT_SIZE_INIT(user_regs_struct, "user_regs_struct");
 		if (!VALID_STRUCT(user_regs_struct)) {
 			/*  Use this hardwired version -- sometimes the
@@ -716,8 +695,6 @@ x86_64_init(int when)
 			} else {
 				machdep->uvtop = x86_64_uvtop_level4;
 			}
-                        MEMBER_OFFSET_INIT(vcpu_guest_context_user_regs,
-                                "vcpu_guest_context", "user_regs");
 			ASSIGN_OFFSET(cpu_user_regs_rsp) = 
 				MEMBER_OFFSET("cpu_user_regs", "ss") - sizeof(ulong);
 			ASSIGN_OFFSET(cpu_user_regs_rip) = 
@@ -738,8 +715,6 @@ x86_64_init(int when)
 
 		STRUCT_SIZE_INIT(note_buf, "note_buf_t");
 		STRUCT_SIZE_INIT(elf_prstatus, "elf_prstatus");
-		MEMBER_OFFSET_INIT(elf_prstatus_pr_reg, "elf_prstatus",
-				   "pr_reg");
 		STRUCT_SIZE_INIT(percpu_data, "percpu_data");
 
 		GART_init();
@@ -1153,14 +1128,6 @@ x86_64_cpu_pda_init(void)
 	level4_pgt = 0;
 
 	STRUCT_SIZE_INIT(x8664_pda, "x8664_pda");
-	MEMBER_OFFSET_INIT(x8664_pda_pcurrent, "x8664_pda", "pcurrent");
-	MEMBER_OFFSET_INIT(x8664_pda_data_offset, "x8664_pda", "data_offset");
-	MEMBER_OFFSET_INIT(x8664_pda_kernelstack, "x8664_pda", "kernelstack");
-	MEMBER_OFFSET_INIT(x8664_pda_irqrsp, "x8664_pda", "irqrsp");
-	MEMBER_OFFSET_INIT(x8664_pda_irqstackptr, "x8664_pda", "irqstackptr");
-	MEMBER_OFFSET_INIT(x8664_pda_level4_pgt, "x8664_pda", "level4_pgt");
-	MEMBER_OFFSET_INIT(x8664_pda_cpunumber, "x8664_pda", "cpunumber");
-	MEMBER_OFFSET_INIT(x8664_pda_me, "x8664_pda", "me");
 
 	cpu_pda_buf = GETBUF(SIZE(x8664_pda));
 
@@ -6419,10 +6386,6 @@ x86_64_ORC_init(void)
 
 	orc = &machdep->machspec->orc;
 
-	MEMBER_OFFSET_INIT(module_arch, "module", "arch");
-	MEMBER_OFFSET_INIT(mod_arch_specific_num_orcs, "mod_arch_specific", "num_orcs");
-	MEMBER_OFFSET_INIT(mod_arch_specific_orc_unwind_ip, "mod_arch_specific", "orc_unwind_ip");
-	MEMBER_OFFSET_INIT(mod_arch_specific_orc_unwind, "mod_arch_specific", "orc_unwind");
 	/*
 	 *  Nice to have, but not required. 
 	 */
@@ -6447,9 +6410,6 @@ x86_64_ORC_init(void)
 	orc->__start_orc_unwind = symbol_value("__start_orc_unwind");
 	orc->__stop_orc_unwind = symbol_value("__stop_orc_unwind");
 	orc->orc_lookup = symbol_value("orc_lookup");
-
-	MEMBER_OFFSET_INIT(inactive_task_frame_bp, "inactive_task_frame", "bp");
-	MEMBER_OFFSET_INIT(inactive_task_frame_ret_addr, "inactive_task_frame", "ret_addr");
 
 	orc->has_signal = MEMBER_EXISTS("orc_entry", "signal");	/* added at 6.3 */
 	orc->has_end = MEMBER_EXISTS("orc_entry", "end");	/* removed at 6.4 */
@@ -9089,8 +9049,6 @@ GART_init(void)
 		return;
 
 	STRUCT_SIZE_INIT(resource, "resource");
-	MEMBER_OFFSET_INIT(resource_start, "resource", "start");
-	MEMBER_OFFSET_INIT(resource_end, "resource", "end");
 
 	if (VALID_STRUCT(resource) && 
 	    VALID_MEMBER_LAZY(resource_start) && 

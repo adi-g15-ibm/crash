@@ -217,17 +217,6 @@ bpf_init(struct bpf_info *bpf)
 		STRUCT_SIZE_INIT(bpf_prog_aux, "bpf_prog_aux");
 		STRUCT_SIZE_INIT(bpf_map, "bpf_map");
 		STRUCT_SIZE_INIT(bpf_insn, "bpf_insn");
-		MEMBER_OFFSET_INIT(bpf_prog_aux, "bpf_prog", "aux");
-		MEMBER_OFFSET_INIT(bpf_prog_type, "bpf_prog", "type");
-		MEMBER_OFFSET_INIT(bpf_prog_tag, "bpf_prog", "tag");
-		MEMBER_OFFSET_INIT(bpf_prog_jited_len, "bpf_prog", "jited_len");
-		MEMBER_OFFSET_INIT(bpf_prog_bpf_func, "bpf_prog", "bpf_func");
-		MEMBER_OFFSET_INIT(bpf_prog_len, "bpf_prog", "len");
-		MEMBER_OFFSET_INIT(bpf_prog_insnsi, "bpf_prog", "insnsi");
-		MEMBER_OFFSET_INIT(bpf_map_map_type, "bpf_map", "map_type");
-		MEMBER_OFFSET_INIT(bpf_map_map_flags, "bpf_map", "map_flags");
-		MEMBER_OFFSET_INIT(bpf_prog_aux_used_maps, "bpf_prog_aux", "used_maps");
-		MEMBER_OFFSET_INIT(bpf_prog_aux_used_map_cnt, "bpf_prog_aux", "used_map_cnt");
 		if (!VALID_STRUCT(bpf_prog) || 
 		    !VALID_STRUCT(bpf_prog_aux) ||
 		    !VALID_STRUCT(bpf_map) ||
@@ -246,27 +235,6 @@ bpf_init(struct bpf_info *bpf)
 			bpf->status = FALSE;
 			command_not_supported();
 		}	
-		/*
-		 *  Not required for basic functionality
-		 */
-		MEMBER_OFFSET_INIT(bpf_prog_pages, "bpf_prog", "pages");
-		MEMBER_OFFSET_INIT(bpf_prog_aux_load_time, "bpf_prog_aux", "load_time");
-		MEMBER_OFFSET_INIT(bpf_prog_aux_user, "bpf_prog_aux", "user");
-		MEMBER_OFFSET_INIT(bpf_prog_aux_name, "bpf_prog_aux", "name");
-		MEMBER_OFFSET_INIT(bpf_map_key_size, "bpf_map", "key_size");
-		MEMBER_OFFSET_INIT(bpf_map_value_size, "bpf_map", "value_size");
-		MEMBER_OFFSET_INIT(bpf_map_max_entries, "bpf_map", "max_entries");
-		MEMBER_OFFSET_INIT(bpf_map_pages, "bpf_map", "pages");
-		MEMBER_OFFSET_INIT(bpf_map_name, "bpf_map", "name");
-		MEMBER_OFFSET_INIT(bpf_map_user, "bpf_map", "user");
-		MEMBER_OFFSET_INIT(user_struct_uid, "user_struct", "uid");
-
-		/* Linux 5.3 */
-		MEMBER_OFFSET_INIT(bpf_map_memory, "bpf_map", "memory");
-		if (VALID_MEMBER_LAZY(bpf_map_memory)) {
-			MEMBER_OFFSET_INIT(bpf_map_memory_pages, "bpf_map_memory", "pages");
-			MEMBER_OFFSET_INIT(bpf_map_memory_user, "bpf_map_memory", "user");
-		}
 
 		if (!bpf_type_size_init()) {
 			bpf->status = FALSE;

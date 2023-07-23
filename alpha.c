@@ -162,22 +162,6 @@ alpha_init(int when)
 		break;
 
 	case POST_GDB:
-		MEMBER_OFFSET_INIT(thread_struct_ptbr, 
-			"thread_struct", "ptbr");
-		MEMBER_OFFSET_INIT(hwrpb_struct_cycle_freq, 
-			"hwrpb_struct", "cycle_freq");
-		MEMBER_OFFSET_INIT(hwrpb_struct_processor_offset,
-			"hwrpb_struct", "processor_offset");
-		MEMBER_OFFSET_INIT(hwrpb_struct_processor_size,
-			"hwrpb_struct", "processor_size");
-		MEMBER_OFFSET_INIT(percpu_struct_halt_PC,
-			"percpu_struct", "halt_PC");
-		MEMBER_OFFSET_INIT(percpu_struct_halt_ra, 
-			"percpu_struct", "halt_ra");
-                MEMBER_OFFSET_INIT(percpu_struct_halt_pv,
-                        "percpu_struct", "halt_pv");
-		MEMBER_OFFSET_INIT(switch_stack_r26,
-			"switch_stack", "r26");
         	if (symbol_exists("irq_action"))
 			ARRAY_LENGTH_INIT(machdep->nr_irqs, irq_action, 
 				"irq_action", NULL, 0);

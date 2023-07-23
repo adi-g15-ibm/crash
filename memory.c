@@ -385,47 +385,14 @@ vm_init(void)
 	ulong value1, value2;
 	char *kmem_cache_node_struct, *nodelists_field;
 
-        MEMBER_OFFSET_INIT(task_struct_mm, "task_struct", "mm");
-        MEMBER_OFFSET_INIT(mm_struct_mmap, "mm_struct", "mmap");
-	MEMBER_OFFSET_INIT(mm_struct_mm_mt, "mm_struct", "mm_mt");
 	if (VALID_MEMBER_LAZY(mm_struct_mm_mt)) {
 		maple_init();
 	}
-        MEMBER_OFFSET_INIT(mm_struct_pgd, "mm_struct", "pgd");
 	MEMBER_OFFSET_INIT(mm_struct_rss, "mm_struct", "rss");
 	if (!VALID_MEMBER(mm_struct_rss))
 		MEMBER_OFFSET_INIT(mm_struct_rss, "mm_struct", "_rss");
-	MEMBER_OFFSET_INIT(mm_struct_anon_rss, "mm_struct", "_anon_rss");
-	MEMBER_OFFSET_INIT(mm_struct_file_rss, "mm_struct", "_file_rss");
-	if (!VALID_MEMBER_LAZY(mm_struct_anon_rss)) {
-		MEMBER_OFFSET_INIT(mm_struct_rss_stat, "mm_struct", "rss_stat");
-		MEMBER_OFFSET_INIT(mm_rss_stat_count, "mm_rss_stat", "count");
-	}
-	MEMBER_OFFSET_INIT(mm_struct_total_vm, "mm_struct", "total_vm");
-	MEMBER_OFFSET_INIT(mm_struct_start_code, "mm_struct", "start_code");
-	MEMBER_OFFSET_INIT(mm_struct_mm_count, "mm_struct", "mm_count");
-        MEMBER_OFFSET_INIT(vm_area_struct_vm_mm, "vm_area_struct", "vm_mm");
-        MEMBER_OFFSET_INIT(vm_area_struct_vm_next, "vm_area_struct", "vm_next");
-        MEMBER_OFFSET_INIT(vm_area_struct_vm_end, "vm_area_struct", "vm_end");
-        MEMBER_OFFSET_INIT(vm_area_struct_vm_start, 
-		"vm_area_struct", "vm_start");
-        MEMBER_OFFSET_INIT(vm_area_struct_vm_flags, 
-                "vm_area_struct", "vm_flags");
-        MEMBER_OFFSET_INIT(vm_area_struct_vm_file, "vm_area_struct", "vm_file");
-        MEMBER_OFFSET_INIT(vm_area_struct_vm_offset, 
-                "vm_area_struct", "vm_offset");
-        MEMBER_OFFSET_INIT(vm_area_struct_vm_pgoff, 
-                "vm_area_struct", "vm_pgoff");
         MEMBER_SIZE_INIT(vm_area_struct_vm_flags, "vm_area_struct", "vm_flags");
 
-	MEMBER_OFFSET_INIT(vm_struct_addr, "vm_struct", "addr");
-	MEMBER_OFFSET_INIT(vm_struct_size, "vm_struct", "size");
-	MEMBER_OFFSET_INIT(vm_struct_next, "vm_struct", "next");
-
-	MEMBER_OFFSET_INIT(vmap_area_va_start, "vmap_area", "va_start");
-	MEMBER_OFFSET_INIT(vmap_area_va_end, "vmap_area", "va_end");
-	MEMBER_OFFSET_INIT(vmap_area_list, "vmap_area", "list");
-	MEMBER_OFFSET_INIT(vmap_area_flags, "vmap_area", "flags");
 	MEMBER_OFFSET_INIT(vmap_area_vm, "vmap_area", "vm");
 	if (INVALID_MEMBER(vmap_area_vm))
 		MEMBER_OFFSET_INIT(vmap_area_vm, "vmap_area", "private");
@@ -440,21 +407,14 @@ vm_init(void)
 
 	if (kernel_symbol_exists("hstates")) {
 		STRUCT_SIZE_INIT(hstate, "hstate");
-		MEMBER_OFFSET_INIT(hstate_order, "hstate", "order");
-		MEMBER_OFFSET_INIT(hstate_nr_huge_pages, "hstate", "nr_huge_pages");
-		MEMBER_OFFSET_INIT(hstate_free_huge_pages, "hstate", "free_huge_pages");
-		MEMBER_OFFSET_INIT(hstate_name, "hstate", "name");
 	}
 
 	MEMBER_OFFSET_INIT(page_next, "page", "next");
-	if (VALID_MEMBER(page_next)) 
-		MEMBER_OFFSET_INIT(page_prev, "page", "prev");
 	if (INVALID_MEMBER(page_next))
 		ANON_MEMBER_OFFSET_INIT(page_next, "page", "next");
 	if (INVALID_MEMBER(page_next))
 		MEMBER_OFFSET_INIT(page_next, "slab", "next");
 
-	MEMBER_OFFSET_INIT(page_list, "page", "list");
 	if (VALID_MEMBER_LAZY(page_list)) {
 		ASSIGN_OFFSET(page_list_next) = LAZY_OFFSET(page_list) +
 			LAZY_OFFSET(list_head_next);
@@ -462,8 +422,6 @@ vm_init(void)
 			LAZY_OFFSET(list_head_prev);
 	}
 
-	MEMBER_OFFSET_INIT(page_next_hash, "page", "next_hash");
-	MEMBER_OFFSET_INIT(page_inode, "page", "inode");
 	MEMBER_OFFSET_INIT(page_offset, "page", "offset");
 	MEMBER_OFFSET_INIT(page_count, "page", "count");
 	if (INVALID_MEMBER(page_count)) {
@@ -475,7 +433,6 @@ vm_init(void)
 		if (INVALID_MEMBER(page_count))
 			ANON_MEMBER_OFFSET_INIT(page_count, "page", "_refcount");
 	}
-	MEMBER_OFFSET_INIT(page_flags, "page", "flags");
 	MEMBER_SIZE_INIT(page_flags, "page", "flags");
         MEMBER_OFFSET_INIT(page_mapping, "page", "mapping");
 	if (INVALID_MEMBER(page_mapping))
@@ -488,45 +445,14 @@ vm_init(void)
         MEMBER_OFFSET_INIT(page_index, "page", "index");
 	if (INVALID_MEMBER(page_index))
 		ANON_MEMBER_OFFSET_INIT(page_index, "page", "index");
-        MEMBER_OFFSET_INIT(page_buffers, "page", "buffers");
 	MEMBER_OFFSET_INIT(page_lru, "page", "lru");
 	if (INVALID_MEMBER(page_lru))
 		ANON_MEMBER_OFFSET_INIT(page_lru, "page", "lru");
-	MEMBER_OFFSET_INIT(page_pte, "page", "pte");
         MEMBER_OFFSET_INIT(page_compound_head, "page", "compound_head");
 	if (INVALID_MEMBER(page_compound_head))
 		ANON_MEMBER_OFFSET_INIT(page_compound_head, "page", "compound_head");
-	MEMBER_OFFSET_INIT(page_private, "page", "private");
 	MEMBER_OFFSET_INIT(page_freelist, "page", "freelist");
 
-	MEMBER_OFFSET_INIT(mm_struct_pgd, "mm_struct", "pgd");
-
-	MEMBER_OFFSET_INIT(swap_info_struct_swap_file,
-        	"swap_info_struct", "swap_file");
-	MEMBER_OFFSET_INIT(swap_info_struct_swap_vfsmnt, 
-        	"swap_info_struct", "swap_vfsmnt");
-	MEMBER_OFFSET_INIT(swap_info_struct_flags,
-        	"swap_info_struct", "flags");	
-	MEMBER_OFFSET_INIT(swap_info_struct_swap_map, 
-        	"swap_info_struct", "swap_map");
-	MEMBER_OFFSET_INIT(swap_info_struct_swap_device, 
-        	"swap_info_struct", "swap_device");
-	MEMBER_OFFSET_INIT(swap_info_struct_prio, "swap_info_struct", "prio");
-	MEMBER_OFFSET_INIT(swap_info_struct_max, "swap_info_struct", "max");
-	MEMBER_OFFSET_INIT(swap_info_struct_pages, "swap_info_struct", "pages");
-	MEMBER_OFFSET_INIT(swap_info_struct_inuse_pages, "swap_info_struct", 
-		"inuse_pages");
-	MEMBER_OFFSET_INIT(swap_info_struct_old_block_size, 
-        	"swap_info_struct", "old_block_size");
-	MEMBER_OFFSET_INIT(swap_info_struct_bdev, "swap_info_struct", "bdev");
-
-	MEMBER_OFFSET_INIT(zspoll_size_class, "zs_pool", "size_class");
-	MEMBER_OFFSET_INIT(size_class_size, "size_class", "size");
-
-	MEMBER_OFFSET_INIT(block_device_bd_inode, "block_device", "bd_inode");
-	MEMBER_OFFSET_INIT(block_device_bd_list, "block_device", "bd_list");
-	MEMBER_OFFSET_INIT(block_device_bd_disk, "block_device", "bd_disk");
-	MEMBER_OFFSET_INIT(inode_i_mapping, "inode", "i_mapping");
 	MEMBER_OFFSET_INIT(address_space_page_tree, "address_space", "page_tree");
 	if (INVALID_MEMBER(address_space_page_tree))
 		MEMBER_OFFSET_INIT(address_space_page_tree, "address_space", "i_pages");
@@ -534,27 +460,11 @@ vm_init(void)
 	if (INVALID_MEMBER(address_space_nrpages))
 		MEMBER_OFFSET_INIT(address_space_nrpages, "address_space", "__nrpages");
 
-	MEMBER_OFFSET_INIT(super_block_s_inodes, "super_block", "s_inodes");
-	MEMBER_OFFSET_INIT(inode_i_sb_list, "inode", "i_sb_list");
-
-	MEMBER_OFFSET_INIT(gendisk_major, "gendisk", "major");
-	MEMBER_OFFSET_INIT(gendisk_fops, "gendisk", "fops");
-	MEMBER_OFFSET_INIT(gendisk_disk_name, "gendisk", "disk_name");
-	MEMBER_OFFSET_INIT(gendisk_private_data, "gendisk", "private_data");
-
 	STRUCT_SIZE_INIT(block_device, "block_device");
 	STRUCT_SIZE_INIT(address_space, "address_space");
 	STRUCT_SIZE_INIT(gendisk, "gendisk");
 
 	STRUCT_SIZE_INIT(blk_major_name, "blk_major_name");
-	if (VALID_STRUCT(blk_major_name)) {
-		MEMBER_OFFSET_INIT(blk_major_name_next, "blk_major_name", 
-			"next");
-		MEMBER_OFFSET_INIT(blk_major_name_name, "blk_major_name", 
-			"name");
-		MEMBER_OFFSET_INIT(blk_major_name_major, "blk_major_name", 
-			"major");
-	}
 
 	STRUCT_SIZE_INIT(kmem_slab_s, "kmem_slab_s");
 	STRUCT_SIZE_INIT(slab_s, "slab_s");
@@ -584,7 +494,6 @@ vm_init(void)
 		if (INVALID_MEMBER(page_active))
 			MEMBER_OFFSET_INIT(page_active, "slab", "active");
 
-		MEMBER_OFFSET_INIT(slab_slab_list, "slab", "slab_list");
 	}
 
         if (!VALID_STRUCT(kmem_slab_s) && VALID_STRUCT(slab_s)) {
@@ -597,27 +506,9 @@ vm_init(void)
 		MEMBER_OFFSET_INIT(kmem_cache_s_flags, "kmem_cache_s", "flags");
 		MEMBER_OFFSET_INIT(kmem_cache_s_gfporder,  
 			"kmem_cache_s", "gfporder");
-		MEMBER_OFFSET_INIT(kmem_cache_s_slabs,  
-			"kmem_cache_s", "slabs");
-                MEMBER_OFFSET_INIT(kmem_cache_s_slabs_full,
-			"kmem_cache_s", "slabs_full");
-                MEMBER_OFFSET_INIT(kmem_cache_s_slabs_partial, 
-			"kmem_cache_s", "slabs_partial");
-                MEMBER_OFFSET_INIT(kmem_cache_s_slabs_free,  
-			"kmem_cache_s", "slabs_free");
-		MEMBER_OFFSET_INIT(kmem_cache_s_cpudata, 
-			"kmem_cache_s", "cpudata");
                 ARRAY_LENGTH_INIT(len, NULL, "kmem_cache_s.cpudata", NULL, 0);
 		MEMBER_OFFSET_INIT(kmem_cache_s_colour_off, 
 			"kmem_cache_s", "colour_off");
-
-		MEMBER_OFFSET_INIT(slab_s_list, "slab_s", "list");
-		MEMBER_OFFSET_INIT(slab_s_s_mem, "slab_s", "s_mem");
-		MEMBER_OFFSET_INIT(slab_s_inuse, "slab_s", "inuse");
-		MEMBER_OFFSET_INIT(slab_s_free, "slab_s", "free");
-
-		MEMBER_OFFSET_INIT(cpucache_s_avail, "cpucache_s", "avail");
-		MEMBER_OFFSET_INIT(cpucache_s_limit, "cpucache_s", "limit");
 
 		STRUCT_SIZE_INIT(cpucache_s, "cpucache_s");
 
@@ -651,9 +542,6 @@ vm_init(void)
 				 * slab/slub unification starting in Linux 3.6.
 				 */
 				MEMBER_OFFSET_INIT(kmem_cache_s_next, "kmem_cache", "list");
-				MEMBER_OFFSET_INIT(kmem_cache_list, "kmem_cache", "list");
-				MEMBER_OFFSET_INIT(kmem_cache_name, "kmem_cache", "name");
-				MEMBER_OFFSET_INIT(kmem_cache_size, "kmem_cache", "size");
 				STRUCT_SIZE_INIT(kmem_cache, "kmem_cache");
 			}
 			MEMBER_OFFSET_INIT(kmem_cache_s_name, "kmem_cache", "name");
@@ -671,8 +559,6 @@ vm_init(void)
 			MEMBER_OFFSET_INIT(kmem_cache_s_flags, "kmem_cache", "flags");
 			MEMBER_OFFSET_INIT(kmem_cache_s_gfporder,  
 				"kmem_cache", "gfporder");
-
-			MEMBER_OFFSET_INIT(kmem_cache_cpu_cache, "kmem_cache", "cpu_cache");
 
 			if (MEMBER_EXISTS("kmem_cache", "lists"))
 				MEMBER_OFFSET_INIT(kmem_cache_s_lists, "kmem_cache", "lists");
@@ -699,7 +585,6 @@ vm_init(void)
 					 * mm/slab: use percpu allocator for cpu cache
 					 */
 					vt->flags |= SLAB_CPU_CACHE;
-					MEMBER_OFFSET_INIT(kmem_cache_node, "kmem_cache", "node");
 					if (kernel_symbol_exists("nr_node_ids")) {
 						get_symbol_data("nr_node_ids", sizeof(int),
 							&nr_node_ids);
@@ -737,8 +622,6 @@ vm_init(void)
 				ANON_MEMBER_OFFSET_INIT(slab_free, "slab", "free");
 		}
 
-		MEMBER_OFFSET_INIT(array_cache_avail, "array_cache", "avail");
-		MEMBER_OFFSET_INIT(array_cache_limit, "array_cache", "limit");
 		STRUCT_SIZE_INIT(array_cache, "array_cache");
 
 		/* 
@@ -773,32 +656,15 @@ vm_init(void)
 		vt->flags |= KMALLOC_SLUB;
 
 		STRUCT_SIZE_INIT(kmem_cache, "kmem_cache");
-		MEMBER_OFFSET_INIT(kmem_cache_size, "kmem_cache", "size");
 		MEMBER_OFFSET_INIT(kmem_cache_objsize, "kmem_cache", "objsize");
 		if (INVALID_MEMBER(kmem_cache_objsize))
 			MEMBER_OFFSET_INIT(kmem_cache_objsize, "kmem_cache", 
 				"object_size");
-		MEMBER_OFFSET_INIT(kmem_cache_offset, "kmem_cache", "offset");
-		MEMBER_OFFSET_INIT(kmem_cache_order, "kmem_cache", "order");
-		MEMBER_OFFSET_INIT(kmem_cache_local_node, "kmem_cache", "local_node");
-		MEMBER_OFFSET_INIT(kmem_cache_objects, "kmem_cache", "objects");
-		MEMBER_OFFSET_INIT(kmem_cache_inuse, "kmem_cache", "inuse");
-		MEMBER_OFFSET_INIT(kmem_cache_align, "kmem_cache", "align");
-		MEMBER_OFFSET_INIT(kmem_cache_node, "kmem_cache", "node");
-		MEMBER_OFFSET_INIT(kmem_cache_cpu_slab, "kmem_cache", "cpu_slab");
-		MEMBER_OFFSET_INIT(kmem_cache_list, "kmem_cache", "list");
-		MEMBER_OFFSET_INIT(kmem_cache_red_left_pad, "kmem_cache", "red_left_pad");
-		MEMBER_OFFSET_INIT(kmem_cache_name, "kmem_cache", "name");
-		MEMBER_OFFSET_INIT(kmem_cache_flags, "kmem_cache", "flags");
-		MEMBER_OFFSET_INIT(kmem_cache_random, "kmem_cache", "random");
 		if (VALID_MEMBER_LAZY(kmem_cache_random))
 			freelist_ptr_init();
-		MEMBER_OFFSET_INIT(kmem_cache_cpu_freelist, "kmem_cache_cpu", "freelist");
 		MEMBER_OFFSET_INIT(kmem_cache_cpu_page, "kmem_cache_cpu", "page");
 		if (INVALID_MEMBER(kmem_cache_cpu_page))
 			MEMBER_OFFSET_INIT(kmem_cache_cpu_page, "kmem_cache_cpu", "slab");
-		MEMBER_OFFSET_INIT(kmem_cache_cpu_node, "kmem_cache_cpu", "node");
-		MEMBER_OFFSET_INIT(kmem_cache_cpu_partial, "kmem_cache_cpu", "partial");
 		MEMBER_OFFSET_INIT(page_inuse, "page", "inuse");
 		if (INVALID_MEMBER(page_inuse))
 			ANON_MEMBER_OFFSET_INIT(page_inuse, "page", "inuse");
@@ -818,8 +684,6 @@ vm_init(void)
 		if (INVALID_MEMBER(page_slab))
 			MEMBER_OFFSET_INIT(page_slab, "slab", "slab_cache");
 
-		MEMBER_OFFSET_INIT(slab_slab_list, "slab", "slab_list");
-
 		MEMBER_OFFSET_INIT(page_slab_page, "page", "slab_page");
 		if (INVALID_MEMBER(page_slab_page))
 			ANON_MEMBER_OFFSET_INIT(page_slab_page, "page", "slab_page");
@@ -832,7 +696,6 @@ vm_init(void)
 		if (INVALID_MEMBER(page_freelist))
 			MEMBER_OFFSET_INIT(page_freelist, "slab", "freelist");
 		if (INVALID_MEMBER_LAZY(kmem_cache_objects)) {
-			MEMBER_OFFSET_INIT(kmem_cache_oo, "kmem_cache", "oo");
 			/* NOTE: returns offset of containing bitfield */
 			ANON_MEMBER_OFFSET_INIT(page_objects, "page", "objects");
 			if (INVALID_MEMBER(page_objects))
@@ -846,64 +709,9 @@ vm_init(void)
 
 		STRUCT_SIZE_INIT(kmem_cache_node, "kmem_cache_node");
 		STRUCT_SIZE_INIT(kmem_cache_cpu, "kmem_cache_cpu");
-		MEMBER_OFFSET_INIT(kmem_cache_node_nr_partial, 
-			"kmem_cache_node", "nr_partial");
-		MEMBER_OFFSET_INIT(kmem_cache_node_nr_slabs, 
-			"kmem_cache_node", "nr_slabs");
-		MEMBER_OFFSET_INIT(kmem_cache_node_total_objects,
-			"kmem_cache_node", "total_objects");
-		MEMBER_OFFSET_INIT(kmem_cache_node_partial, 
-			"kmem_cache_node", "partial");
-		MEMBER_OFFSET_INIT(kmem_cache_node_full, 
-			"kmem_cache_node", "full");
-	} else {
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_nextp,  
-			"kmem_cache_s", "c_nextp");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_name,   
-			"kmem_cache_s", "c_name");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_num,   
-			"kmem_cache_s", "c_num");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_org_size,   
-			"kmem_cache_s", "c_org_size");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_flags,   
-			"kmem_cache_s", "c_flags");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_offset,   
-			"kmem_cache_s", "c_offset");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_firstp,   
-			"kmem_cache_s", "c_firstp");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_gfporder,  
-			"kmem_cache_s", "c_gfporder");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_magic,  
-			"kmem_cache_s", "c_magic");
-		MEMBER_OFFSET_INIT(kmem_cache_s_c_align,  
-			"kmem_cache_s", "c_align");
-	
-		MEMBER_OFFSET_INIT(kmem_slab_s_s_nextp,   
-			"kmem_slab_s", "s_nextp");
-		MEMBER_OFFSET_INIT(kmem_slab_s_s_freep,   
-			"kmem_slab_s", "s_freep");
-		MEMBER_OFFSET_INIT(kmem_slab_s_s_inuse,   
-			"kmem_slab_s", "s_inuse");
-		MEMBER_OFFSET_INIT(kmem_slab_s_s_mem,   
-			"kmem_slab_s", "s_mem");
-		MEMBER_OFFSET_INIT(kmem_slab_s_s_index,   
-			"kmem_slab_s", "s_index");
-		MEMBER_OFFSET_INIT(kmem_slab_s_s_offset,   
-			"kmem_slab_s", "s_offset");
-		MEMBER_OFFSET_INIT(kmem_slab_s_s_magic,   
-			"kmem_slab_s", "s_magic");
 	}
 
 	if (kernel_symbol_exists("slab_root_caches")) {
-		MEMBER_OFFSET_INIT(kmem_cache_memcg_params,
-			"kmem_cache", "memcg_params");
-		MEMBER_OFFSET_INIT(memcg_cache_params___root_caches_node,
-			"memcg_cache_params", "__root_caches_node");
-		MEMBER_OFFSET_INIT(memcg_cache_params_children,
-			"memcg_cache_params", "children");
-		MEMBER_OFFSET_INIT(memcg_cache_params_children_node,
-			"memcg_cache_params", "children_node");
-
 		if (VALID_MEMBER_LAZY(kmem_cache_memcg_params)
 		    && VALID_MEMBER_LAZY(memcg_cache_params___root_caches_node)
 		    && VALID_MEMBER_LAZY(memcg_cache_params_children)
@@ -1078,80 +886,19 @@ vm_init(void)
 		if (get_nodes_online())
 			vt->flags |= NODES_ONLINE;
 
-		MEMBER_OFFSET_INIT(pglist_data_node_zones, 
-			"pglist_data", "node_zones");
-		MEMBER_OFFSET_INIT(pglist_data_node_mem_map, 
-			"pglist_data", "node_mem_map");
-		MEMBER_OFFSET_INIT(pglist_data_node_start_paddr, 
-			"pglist_data", "node_start_paddr");
-		MEMBER_OFFSET_INIT(pglist_data_node_start_mapnr, 
-			"pglist_data", "node_start_mapnr");
-		MEMBER_OFFSET_INIT(pglist_data_node_size, 
-			"pglist_data", "node_size");
-		MEMBER_OFFSET_INIT(pglist_data_node_id, 
-			"pglist_data", "node_id");
-		MEMBER_OFFSET_INIT(pglist_data_node_next, 
-			"pglist_data", "node_next");
-		MEMBER_OFFSET_INIT(pglist_data_bdata, "pglist_data", "bdata");
-		MEMBER_OFFSET_INIT(pglist_data_nr_zones, "pglist_data", 
-			"nr_zones");
-		MEMBER_OFFSET_INIT(pglist_data_node_start_pfn, "pglist_data", 
-			"node_start_pfn");
-		MEMBER_OFFSET_INIT(pglist_data_pgdat_next, "pglist_data", 
-			"pgdat_next");
-		MEMBER_OFFSET_INIT(pglist_data_node_present_pages, 
-			"pglist_data", "node_present_pages");
-		MEMBER_OFFSET_INIT(pglist_data_node_spanned_pages, 
-			"pglist_data", "node_spanned_pages");
 		ARRAY_LENGTH_INIT(vt->nr_zones, pglist_data_node_zones,
 			"pglist_data.node_zones", NULL, 
 			SIZE_OPTION(zone_struct, zone));
 		vt->ZONE_HIGHMEM = vt->nr_zones - 1;
 
 		if (VALID_STRUCT(zone_struct)) {
-	                MEMBER_OFFSET_INIT(zone_struct_free_pages, 
-	                        "zone_struct", "free_pages");
-	                MEMBER_OFFSET_INIT(zone_struct_free_area, 
-	                        "zone_struct", "free_area");
-	                MEMBER_OFFSET_INIT(zone_struct_zone_pgdat, 
-	                        "zone_struct", "zone_pgdat");
-	                MEMBER_OFFSET_INIT(zone_struct_name, "zone_struct", 
-				"name");
-	                MEMBER_OFFSET_INIT(zone_struct_size, "zone_struct", 
-				"size");
 			if (INVALID_MEMBER_LAZY(zone_struct_size))
-	                	MEMBER_OFFSET_INIT(zone_struct_memsize, 
-					"zone_struct", "memsize");
-			MEMBER_OFFSET_INIT(zone_struct_zone_start_pfn,
-				"zone_struct", "zone_start_pfn");
-	                MEMBER_OFFSET_INIT(zone_struct_zone_start_paddr,  
-	                        "zone_struct", "zone_start_paddr");
-	                MEMBER_OFFSET_INIT(zone_struct_zone_start_mapnr, 
-	                        "zone_struct", "zone_start_mapnr");
-	                MEMBER_OFFSET_INIT(zone_struct_zone_mem_map, 
-	                        "zone_struct", "zone_mem_map");
-	                MEMBER_OFFSET_INIT(zone_struct_inactive_clean_pages, 
-	                        "zone_struct", "inactive_clean_pages");
-	                MEMBER_OFFSET_INIT(zone_struct_inactive_clean_list, 
-	                        "zone_struct", "inactive_clean_list");
 	        	ARRAY_LENGTH_INIT(vt->nr_free_areas, 
 				zone_struct_free_area, "zone_struct.free_area",
 				NULL, SIZE(free_area_struct));
-	                MEMBER_OFFSET_INIT(zone_struct_inactive_dirty_pages,
-	                        "zone_struct", "inactive_dirty_pages");
-	                MEMBER_OFFSET_INIT(zone_struct_active_pages,
-	                        "zone_struct", "active_pages");
-	                MEMBER_OFFSET_INIT(zone_struct_pages_min,
-	                        "zone_struct", "pages_min");
-	                MEMBER_OFFSET_INIT(zone_struct_pages_low,
-	                        "zone_struct", "pages_low");
-	                MEMBER_OFFSET_INIT(zone_struct_pages_high,
-	                        "zone_struct", "pages_high");
                 	vt->dump_free_pages = dump_free_pages_zones_v1;
 
 		} else if (VALID_STRUCT(zone)) {
-			MEMBER_OFFSET_INIT(zone_vm_stat, "zone", "vm_stat");
-			MEMBER_OFFSET_INIT(zone_free_pages, "zone", "free_pages");
 			if (INVALID_MEMBER_LAZY(zone_free_pages) && 
 			    VALID_MEMBER_LAZY(zone_vm_stat)) {
 				long nr_free_pages = 0;
@@ -1161,39 +908,11 @@ vm_init(void)
 				ASSIGN_OFFSET(zone_free_pages) = LAZY_OFFSET(zone_vm_stat) + 
 					(nr_free_pages * sizeof(long));
 			}
-                        MEMBER_OFFSET_INIT(zone_free_area,
-                                "zone", "free_area");
-                        MEMBER_OFFSET_INIT(zone_zone_pgdat,
-                                "zone", "zone_pgdat");
-                        MEMBER_OFFSET_INIT(zone_name, "zone",
-                                "name");
-	                MEMBER_OFFSET_INIT(zone_zone_mem_map, 
-	                        "zone", "zone_mem_map");
-                        MEMBER_OFFSET_INIT(zone_zone_start_pfn,
-                                "zone", "zone_start_pfn");
-                        MEMBER_OFFSET_INIT(zone_spanned_pages,
-                                "zone", "spanned_pages");
-                        MEMBER_OFFSET_INIT(zone_present_pages,
-                                "zone", "present_pages");
-                        MEMBER_OFFSET_INIT(zone_pages_min,
-                                "zone", "pages_min");
-                        MEMBER_OFFSET_INIT(zone_pages_low,
-                                "zone", "pages_low");
-                        MEMBER_OFFSET_INIT(zone_pages_high,
-                                "zone", "pages_high");
                         MEMBER_OFFSET_INIT(zone_watermark,
                                 "zone", "watermark");
                         if (INVALID_MEMBER(zone_watermark))
                                 MEMBER_OFFSET_INIT(zone_watermark,
                                         "zone", "_watermark");
-                        MEMBER_OFFSET_INIT(zone_nr_active,
-                                "zone", "nr_active");
-                        MEMBER_OFFSET_INIT(zone_nr_inactive,
-                                "zone", "nr_inactive");
-                        MEMBER_OFFSET_INIT(zone_all_unreclaimable,
-                                "zone", "all_unreclaimable");
-                        MEMBER_OFFSET_INIT(zone_flags, "zone", "flags");
-                        MEMBER_OFFSET_INIT(zone_pages_scanned, "zone", 
 				"pages_scanned");
 	        	ARRAY_LENGTH_INIT(vt->nr_free_areas, zone_free_area,
 				"zone.free_area", NULL, SIZE(free_area));
@@ -1261,14 +980,13 @@ vm_init(void)
                	vt->page_hash_table_len = len;
 		 
 		STRUCT_SIZE_INIT(page_cache_bucket, "page_cache_bucket");
-		if (VALID_STRUCT(page_cache_bucket))
-			MEMBER_OFFSET_INIT(page_cache_bucket_chain, 
-				"page_cache_bucket", "chain");
-        } else if (symbol_exists("page_hash_table")) {
+		if (! VALID_STRUCT(page_cache_bucket)) {
+			if (symbol_exists("page_hash_table")) {
                 vt->page_hash_table = symbol_value("page_hash_table");
                 vt->page_hash_table_len = 0;
-        } else if (CRASHDEBUG(1))
-		error(NOTE, "page_hash_table does not exist in this kernel\n");
+			} else if (CRASHDEBUG(1))
+				error(NOTE, "page_hash_table does not exist in this kernel\n");
+		}
 
 	kmem_cache_init();
 
@@ -6675,8 +6393,6 @@ page_flags_init_from_pageflag_names(void)
 	ulong mask;
 	void *name;
 
-	MEMBER_OFFSET_INIT(trace_print_flags_mask, "trace_print_flags", "mask");
-	MEMBER_OFFSET_INIT(trace_print_flags_name, "trace_print_flags", "name");
 	STRUCT_SIZE_INIT(trace_print_flags, "trace_print_flags");
 
 	if (INVALID_SIZE(trace_print_flags) ||
@@ -17443,9 +17159,6 @@ sparse_mem_init(void)
 	if (!IS_SPARSEMEM())
 		return;
 
-	MEMBER_OFFSET_INIT(mem_section_section_mem_map, "mem_section",
-		"section_mem_map");
-
 	if (!MAX_PHYSMEM_BITS())
 		error(FATAL, 
 		    "CONFIG_SPARSEMEM kernels not supported for this architecture\n");
@@ -17880,36 +17593,6 @@ print_memory_block(ulong memory_block)
 }
 
 static void
-init_memory_block_offset(void)
-{
-	MEMBER_OFFSET_INIT(bus_type_p, "bus_type", "p");
-	if (INVALID_MEMBER_LAZY(bus_type_p)) {
-		MEMBER_OFFSET_INIT(kset_list, "kset", "list");
-		MEMBER_OFFSET_INIT(kset_kobj, "kset", "kobj");
-		MEMBER_OFFSET_INIT(kobject_name, "kobject", "name");
-		MEMBER_OFFSET_INIT(kobject_entry, "kobject", "entry");
-		MEMBER_OFFSET_INIT(subsys_private_subsys, "subsys_private", "subsys");
-	}
-	MEMBER_OFFSET_INIT(subsys_private_klist_devices,
-				"subsys_private", "klist_devices");
-	MEMBER_OFFSET_INIT(klist_k_list, "klist", "k_list");
-	MEMBER_OFFSET_INIT(klist_node_n_node, "klist_node", "n_node");
-	MEMBER_OFFSET_INIT(device_kobj, "device", "kobj");
-	MEMBER_OFFSET_INIT(kobject_name, "kobject", "name");
-	MEMBER_OFFSET_INIT(device_private_knode_bus,
-				"device_private", "knode_bus");
-	MEMBER_OFFSET_INIT(device_private_device, "device_private", "device");
-	MEMBER_OFFSET_INIT(memory_block_dev, "memory_block", "dev");
-	MEMBER_OFFSET_INIT(memory_block_start_section_nr,
-				"memory_block", "start_section_nr");
-	MEMBER_OFFSET_INIT(memory_block_end_section_nr,
-				"memory_block", "end_section_nr");
-	MEMBER_OFFSET_INIT(memory_block_state, "memory_block", "state");
-	if (MEMBER_EXISTS("memory_block", "nid"))
-		MEMBER_OFFSET_INIT(memory_block_nid, "memory_block", "nid");
-}
-
-static void
 init_memory_block(int *klistcnt, ulong **klistbuf)
 {
 	ulong private, klist, start;
@@ -17917,8 +17600,6 @@ init_memory_block(int *klistcnt, ulong **klistbuf)
 
 	ld = &list_data;
 	private = 0;
-
-	init_memory_block_offset();
 
 	/*
 	 * v6.3-rc1

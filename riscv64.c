@@ -1407,9 +1407,6 @@ riscv64_init(int when)
 			get_symbol_data("nr_irqs", sizeof(unsigned int),
 					&machdep->nr_irqs);
 
-		MEMBER_OFFSET_INIT(elf_prstatus_pr_reg, "elf_prstatus",
-				   "pr_reg");
-
 		STRUCT_SIZE_INIT(note_buf, "note_buf_t");
 		break;
 

@@ -113,56 +113,11 @@ ipcs_init(void)
 
 	ipcs_table.init_flags |= IPCS_INIT;
 
-	MEMBER_OFFSET_INIT(file_f_op, "file", "f_op");
-	MEMBER_OFFSET_INIT(file_private_data, "file", "private_data");
-	MEMBER_OFFSET_INIT(hstate_order, "hstate", "order");
-	MEMBER_OFFSET_INIT(hugetlbfs_sb_info_hstate, "hugetlbfs_sb_info",
-			"hstate");
-	MEMBER_OFFSET_INIT(idr_layers, "idr", "layers");
-	MEMBER_OFFSET_INIT(idr_layer_layer, "idr_layer", "layer");
-	MEMBER_OFFSET_INIT(idr_layer_ary, "idr_layer", "ary");
-	MEMBER_OFFSET_INIT(idr_top, "idr", "top");
-	MEMBER_OFFSET_INIT(idr_cur, "idr", "cur");
-	MEMBER_OFFSET_INIT(ipc_id_ary_p, "ipc_id_ary", "p");
-	MEMBER_OFFSET_INIT(ipc_ids_entries, "ipc_ids", "entries");
-	MEMBER_OFFSET_INIT(ipc_ids_max_id, "ipc_ids", "max_id");
-	MEMBER_OFFSET_INIT(ipc_ids_in_use, "ipc_ids", "in_use");
-	MEMBER_OFFSET_INIT(ipc_ids_ipcs_idr, "ipc_ids", "ipcs_idr");
-	MEMBER_OFFSET_INIT(ipc_namespace_ids, "ipc_namespace", "ids");
-	MEMBER_OFFSET_INIT(kern_ipc_perm_key, "kern_ipc_perm", "key");
-	MEMBER_OFFSET_INIT(kern_ipc_perm_id, "kern_ipc_perm", "id");
-	MEMBER_OFFSET_INIT(kern_ipc_perm_uid, "kern_ipc_perm", "uid");
-	MEMBER_OFFSET_INIT(kern_ipc_perm_mode, "kern_ipc_perm", "mode");
-	MEMBER_OFFSET_INIT(kern_ipc_perm_deleted, "kern_ipc_perm",
-			"deleted");
-	MEMBER_OFFSET_INIT(kern_ipc_perm_seq, "kern_ipc_perm", "seq");
-	MEMBER_OFFSET_INIT(nsproxy_ipc_ns, "nsproxy", "ipc_ns");
-	MEMBER_OFFSET_INIT(shmem_inode_info_vfs_inode, "shmem_inode_info",
-			"vfs_inode");
 	MEMBER_OFFSET_INIT(shmem_inode_info_swapped, "shmem_inode_info",
 			"swapped");
 	if (INVALID_MEMBER(shmem_inode_info_swapped))
 		ANON_MEMBER_OFFSET_INIT(shmem_inode_info_swapped,
 				"shmem_inode_info", "swapped");
-	MEMBER_OFFSET_INIT(shm_file_data_file, "shm_file_data", "file");
-	MEMBER_OFFSET_INIT(shmid_kernel_shm_perm, "shmid_kernel",
-			"shm_perm");
-	MEMBER_OFFSET_INIT(shmid_kernel_shm_segsz, "shmid_kernel",
-			"shm_segsz");
-	MEMBER_OFFSET_INIT(shmid_kernel_shm_nattch, "shmid_kernel",
-			"shm_nattch");
-	MEMBER_OFFSET_INIT(shmid_kernel_shm_file, "shmid_kernel",
-			"shm_file");
-	MEMBER_OFFSET_INIT(shmid_kernel_id, "shmid_kernel", "id");
-	MEMBER_OFFSET_INIT(sem_array_sem_perm, "sem_array", "sem_perm");
-	MEMBER_OFFSET_INIT(sem_array_sem_id, "sem_array", "sem_id");
-	MEMBER_OFFSET_INIT(sem_array_sem_nsems, "sem_array", "sem_nsems");
-	MEMBER_OFFSET_INIT(msg_queue_q_perm, "msg_queue", "q_perm");
-	MEMBER_OFFSET_INIT(msg_queue_q_id, "msg_queue", "q_id");
-	MEMBER_OFFSET_INIT(msg_queue_q_cbytes, "msg_queue", "q_cbytes");
-	MEMBER_OFFSET_INIT(msg_queue_q_qnum, "msg_queue", "q_qnum");
-	MEMBER_OFFSET_INIT(super_block_s_fs_info, "super_block",
-			"s_fs_info");
 
 	/*
 	 * struct size

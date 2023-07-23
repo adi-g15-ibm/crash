@@ -2238,8 +2238,6 @@ arm64_stackframe_init(void)
 
 	STRUCT_SIZE_INIT(note_buf, "note_buf_t");
 	STRUCT_SIZE_INIT(elf_prstatus, "elf_prstatus");
-	MEMBER_OFFSET_INIT(elf_prstatus_pr_pid, "elf_prstatus", "pr_pid");
-	MEMBER_OFFSET_INIT(elf_prstatus_pr_reg, "elf_prstatus", "pr_reg");
 
 	if (MEMBER_EXISTS("pt_regs", "stackframe")) {
 		machdep->machspec->user_eframe_offset = SIZE(pt_regs);
