@@ -189,12 +189,12 @@ task_init(void)
 	        tt->max_tasks = (tt->task_end-tt->task_start) / sizeof(void *);
 		allocate_task_space(tt->max_tasks);
 
-		tss_offset = LAZY_OFFSET(task_struct_tss);
+		tss_offset = get_lazy_offset(task_struct_tss);
 		eip_offset = MEMBER_OFFSET_INIT(thread_struct_eip, 
 			"thread_struct", "eip");
 		esp_offset = MEMBER_OFFSET_INIT(thread_struct_esp,
 			"thread_struct", "esp");
-		ksp_offset = LAZY_OFFSET(thread_struct_ksp);
+		ksp_offset = get_lazy_offset(thread_struct_ksp);
 	        ASSIGN_OFFSET(task_struct_tss_eip) = 
 			(eip_offset == INVALID_OFFSET) ? 
 			INVALID_OFFSET : tss_offset + eip_offset;
@@ -220,7 +220,7 @@ task_init(void)
 		tt->max_tasks = tt->nr_threads + NR_CPUS + TASK_SLUSH; 
 		allocate_task_space(tt->max_tasks);
 	
-		thread_offset = LAZY_OFFSET(task_struct_thread);
+		thread_offset = get_lazy_offset(task_struct_thread);
 		eip_offset = MEMBER_OFFSET_INIT(thread_struct_eip,
 			"thread_struct", "eip");
 		esp_offset = MEMBER_OFFSET_INIT(thread_struct_esp,
@@ -234,7 +234,7 @@ task_init(void)
 		if (esp_offset == INVALID_OFFSET)
 			esp_offset = MEMBER_OFFSET_INIT(thread_struct_esp,
 				"thread_struct", "sp");
-		ksp_offset = LAZY_OFFSET(thread_struct_ksp);
+		ksp_offset = get_lazy_offset(thread_struct_ksp);
 	        ASSIGN_OFFSET(task_struct_thread_eip) = 
 		    (eip_offset == INVALID_OFFSET) ? 
 			INVALID_OFFSET : thread_offset + eip_offset;

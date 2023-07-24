@@ -2524,6 +2524,7 @@ struct array_table {
 #define ARRAY_LENGTH_INIT_ALT(A, B, C, D, E) ((A) = get_array_length_alt(B, C, D, E))
 #define MEMBER_SIZE_INIT(X, Y, Z) (ASSIGN_SIZE(X) = MEMBER_SIZE(Y, Z))
 #define ANON_MEMBER_OFFSET_INIT(X, Y, Z) (ASSIGN_OFFSET(X) = ANON_MEMBER_OFFSET(Y, Z))
+#define LAZY_INITINFO(OFFSET, STRUCT, MEMBER) lazy_offset_initinfo[OFFSET][0] = STRUCT; lazy_offset_initinfo[OFFSET][1] = MEMBER;
 
 /*
  *  For use with non-debug kernels.
@@ -5295,7 +5296,8 @@ extern char *args[MAXARGS];
 extern int argcnt;            
 extern int argerrs;
 extern struct offset_table offset_table;
-extern long _lazy_offset_cache[NUM_LAZY_OFFSETS];
+extern long lazy_offset_cache[NUM_LAZY_OFFSETS];
+extern char* lazy_offset_initinfo[NUM_LAZY_OFFSETS][2];
 extern struct size_table size_table;
 extern struct array_table array_table;
 extern struct vm_table vm_table, *vt;
@@ -5731,6 +5733,7 @@ struct syment *symbol_complete_match(const char *, struct syment *);
  */
 void mem_init(void);
 void vm_init(void);
+void lazy_offset_init(void);
 int readmem(ulonglong, int, void *, long, char *, ulong);
 int writemem(ulonglong, int, void *, long, char *, ulong);
 int generic_verify_paddr(uint64_t);
