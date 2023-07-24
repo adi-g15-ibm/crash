@@ -14394,6 +14394,10 @@ SIZE_option(long size1, long size2, char *func, char *file, int line,
 long
 get_lazy_offset(enum lazy_offset off)
 {
+	if (off == upid_ns) {
+		printf("\nNow inside this\n");
+		fflush(stdout);
+	}
     if (lazy_offset_cache[off] != UNINITIALISED_OFFSET) {
         return lazy_offset_cache[off];
     }
