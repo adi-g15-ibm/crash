@@ -777,6 +777,7 @@ main_loop(void)
         		error(FATAL, XEN_HYPERVISOR_NOT_SUPPORTED);
 #endif
 		} else if (!(pc->flags & MINIMAL_MODE)) {
+			lazy_offset_init();
 			read_in_kernel_config(IKCFG_INIT);
 			kernel_init();
 			machdep_init(POST_GDB);

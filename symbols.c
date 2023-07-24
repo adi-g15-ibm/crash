@@ -14389,6 +14389,24 @@ SIZE_option(long size1, long size2, char *func, char *file, int line,
 }
 
 /*
+ * Lazy init the offset if UNINITIALIZED, and return it from the cache
+ */
+long
+get_lazy_offset(enum lazy_offset off)
+{
+    if (lazy_offset_cache[off] != UNINITIALISED_OFFSET) {
+        return lazy_offset_cache[off];
+    }
+
+	lazy_offset_cache[off] = MEMBER_OFFSET(
+			lazy_offset_initinfo[off][0] /*struct*/,
+			lazy_offset_initinfo[off][1] /*member*/
+			);
+
+    return lazy_offset_cache[off];
+}
+
+/*
  *  Do the work of the former OFFSET() and SIZE() macros.  
  *
  *  For now verification that the offset is legitimate is only done
