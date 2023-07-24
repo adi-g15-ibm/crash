@@ -871,7 +871,7 @@ get_shm_info(struct shm_info *shm_info, ulong shp, int id)
 	shm_info->nattch = ULONG(buf + LAZY_OFFSET(shmid_kernel_shm_nattch));
 
 	filep = ULONG(buf + LAZY_OFFSET(shmid_kernel_shm_file));
-	readmem(filep + LAZY_OFFSET(file_f_dentry), KVADDR, &dentryp, sizeof(ulong),
+	readmem(filep + OFFSET(file_f_dentry), KVADDR, &dentryp, sizeof(ulong),
 		"file.f_dentry", FAULT_ON_ERROR);
 	readmem(dentryp + LAZY_OFFSET(dentry_d_inode), KVADDR, &inodep,
 		sizeof(ulong), "dentry.d_inode", FAULT_ON_ERROR);

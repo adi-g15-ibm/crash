@@ -1639,16 +1639,19 @@ get_mount_list(int *cntptr, struct task_context *namespace_context)
 			RETURN_ON_ERROR|QUIET))
 			error(FATAL, "cannot determine mount list location!\n");
 
-		ld->start = root + OFFSET_OPTION(vfsmount_mnt_list, mount_mnt_list);
+		ld->start = root + OFFSET_OPTION_DIRECT(
+				get_lazy_offset(vfsmount_mnt_list),
+				get_lazy_offset(mount_mnt_list)
+				);
         	ld->end = mnt_ns + LAZY_OFFSET(mnt_namespace_list);
 
-	} else if (VALID_MEMBER_LAZY(namespace_root)) {
+	} else if (VALID_MEMBER(namespace_root)) {
  		tc = namespace_context;
 
-        	readmem(tc->task + LAZY_OFFSET(task_struct_namespace), KVADDR, 
+        	readmem(tc->task + OFFSET(task_struct_namespace), KVADDR, 
 			&namespace, sizeof(void *), "task namespace", 
 			FAULT_ON_ERROR);
-        	if (!readmem(namespace + LAZY_OFFSET(namespace_root), KVADDR, 
+        	if (!readmem(namespace + OFFSET(namespace_root), KVADDR, 
 			&root, sizeof(void *), "namespace root", 
 			RETURN_ON_ERROR|QUIET))
 			error(FATAL, "cannot determine mount list location!\n");
@@ -1657,8 +1660,11 @@ get_mount_list(int *cntptr, struct task_context *namespace_context)
 			console("namespace: %lx => root: %lx\n", 
 				namespace, root);
 
-		ld->start = root + OFFSET_OPTION(vfsmount_mnt_list, mount_mnt_list);
-        	ld->end = namespace + LAZY_OFFSET(namespace_list);
+		ld->start = root + OFFSET_OPTION_DIRECT(
+				get_lazy_offset(vfsmount_mnt_list),
+				get_lazy_offset(mount_mnt_list)
+				);
+        	ld->end = namespace + OFFSET(namespace_list);
 	} else
 		error(FATAL, "cannot determine mount list location!\n");
 	
@@ -1714,7 +1720,7 @@ display_dentry_info(ulong dentry)
 	if (!superblock)
 		goto nopath;
 
-        if (VALID_MEMBER_LAZY(file_f_vfsmnt)) {
+        if (VALID_MEMBER(file_f_vfsmnt)) {
 		mntlist = get_mount_list(&mount_cnt, pid_to_context(1));
 		if (VALID_STRUCT(mount)) {
 			mount_buf = GETBUF(SIZE(mount));
@@ -1909,7 +1915,7 @@ create_dentry_array(ulong list_addr, int *count)
 		if (!f_count)
 			continue;
 
-		dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
+		dentry = ULONG(file_buf + OFFSET(file_f_dentry));
 		if (!dentry)
 			continue;
 
@@ -1989,7 +1995,7 @@ create_dentry_array_percpu(ulong percpu_list_addr, int *count)
 void
 vfs_init(void)
 { 
-	if (INVALID_MEMBER_LAZY(file_f_dentry)) {
+	if (INVALID_MEMBER(file_f_dentry)) {
 		ASSIGN_OFFSET(file_f_dentry) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_dentry);
 		ASSIGN_OFFSET(file_f_vfsmnt) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_mnt);
 	}
@@ -2744,7 +2750,7 @@ nlm_files_dump(void)
 		hq_close();
 		for (j=0, file = files_list; j<cnt; j++, file++) {
 			readmem(*file + LAZY_OFFSET(nlm_file_f_file) + 
-				LAZY_OFFSET(file_f_dentry), KVADDR, &dentry,
+				OFFSET(file_f_dentry), KVADDR, &dentry,
 				sizeof(void *), "nlm_file dentry", 
 				FAULT_ON_ERROR);
 			if (!dentry)
@@ -2810,7 +2816,7 @@ file_dump(ulong file, ulong dentry, ulong inode, int fd, int flags)
 
 	if (!dentry && file) {
 		file_buf = fill_file_cache(file);		
-		dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
+		dentry = ULONG(file_buf + OFFSET(file_f_dentry));
 	}
 
 	if (!dentry) {
@@ -2871,7 +2877,7 @@ file_dump(ulong file, ulong dentry, ulong inode, int fd, int flags)
 	inode_buf = fill_inode_cache(inode);
 
 	if (flags & DUMP_FULL_NAME) {
-		if (VALID_MEMBER_LAZY(file_f_vfsmnt)) {
+		if (VALID_MEMBER(file_f_vfsmnt)) {
 			vfsmnt = get_root_vfsmount(file_buf);
 			get_pathname(dentry, pathname, BUFSIZE, 1, vfsmnt);
 			if (STRNEQ(pathname, "/pts/") &&
@@ -2971,7 +2977,7 @@ file_to_dentry(ulong file)
 	ulong dentry;
 
         file_buf = fill_file_cache(file);
-        dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
+        dentry = ULONG(file_buf + OFFSET(file_f_dentry));
         return dentry;
 }
 
@@ -2985,7 +2991,7 @@ file_to_vfsmnt(ulong file)
 	ulong vfsmnt;
 
 	file_buf = fill_file_cache(file);
-	vfsmnt = ULONG(file_buf + LAZY_OFFSET(file_f_vfsmnt));
+	vfsmnt = ULONG(file_buf + OFFSET(file_f_vfsmnt));
 	return vfsmnt;
 }
 
@@ -4292,7 +4298,7 @@ get_root_vfsmount(char *file_buf)
 	ulong vfsmnt;
 	ulong mnt_parent;
 
-	vfsmnt = ULONG(file_buf + LAZY_OFFSET(file_f_vfsmnt));
+	vfsmnt = ULONG(file_buf + OFFSET(file_f_vfsmnt));
 
 	if (!strlen(vfsmount_devname(vfsmnt, buf1, BUFSIZE)))
 		return vfsmnt;

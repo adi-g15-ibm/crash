@@ -114,7 +114,7 @@ net_init(void)
 			net->netdevice = "device";
 			net->dev_next = LAZY_OFFSET(device_next);
 			net->dev_name = LAZY_OFFSET(device_name); 
-	                net->dev_type = LAZY_OFFSET(device_type,);
+	                net->dev_type = LAZY_OFFSET(device_type);
 			net->dev_ip_ptr = LAZY_OFFSET(device_ip_ptr);
 	                net->dev_addr_len = LAZY_OFFSET(device_addr_len);
 			net->flags |= (NETDEV_INIT|STRUCT_DEVICE);
@@ -206,7 +206,7 @@ net_init(void)
 			}	
 
 			if (VALID_STRUCT(inet_sock) && 
-			    INVALID_MEMBER_LAZY(inet_sock_inet)) {
+			    INVALID_MEMBER(inet_sock_inet)) {
 				/*
 				 *  gdb can't seem to figure out the inet_sock
 				 *  in later 2.6 kernels, returning this:
@@ -1001,15 +1001,15 @@ get_sock_info(ulong sock, char *buf)
 	        readmem(sock, KVADDR, inet_sockbuf, SIZE(inet_sock), 
 			"inet_sock buffer", FAULT_ON_ERROR);
 
-		daddr = UINT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
+		daddr = UINT(inet_sockbuf + OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_daddr));
-		rcv_saddr = UINT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
+		rcv_saddr = UINT(inet_sockbuf + OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_rcv_saddr));
-		dport = USHORT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
+		dport = USHORT(inet_sockbuf + OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_dport));
-		sport = USHORT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
+		sport = USHORT(inet_sockbuf + OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_sport));
-		num = USHORT(inet_sockbuf + LAZY_OFFSET(inet_sock_inet) +
+		num = USHORT(inet_sockbuf + OFFSET(inet_sock_inet) +
 			OFFSET(inet_opt_num));
 		family = USHORT(inet_sockbuf + LAZY_OFFSET(sock_common_skc_family));
 		type = USHORT(inet_sockbuf + LAZY_OFFSET(sock_sk_type));
@@ -1587,7 +1587,7 @@ sym_socket_dump(ulong file,
 	unsigned int radix;
 
 	file_buf = fill_file_cache(file);
-	dentry = ULONG(file_buf + LAZY_OFFSET(file_f_dentry));
+	dentry = ULONG(file_buf + OFFSET(file_f_dentry));
 
 	if (flag & d_FLAG)
 		radix = 10;

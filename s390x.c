@@ -1202,7 +1202,7 @@ s390x_cpu_of_task(unsigned long task)
                         "thread info addr", FAULT_ON_ERROR);
 		readmem(thread_info_addr,KVADDR,thread_info,sizeof(thread_info),
 			"thread info", FAULT_ON_ERROR);
-		cpu = *((int*) &thread_info[LAZY_OFFSET(thread_info_cpu)]);
+		cpu = *((int*) &thread_info[OFFSET(thread_info_cpu)]);
 	}
 	return cpu;
 }
