@@ -1279,7 +1279,6 @@ enum lazy_offset {
 	cdev_ops,
 	cfs_rq_curr,
 	cfs_rq_nr_running,
-	cfs_rq_rb_leftmost,
 	cfs_rq_tasks_timeline,
 	cfs_rq_tg,
 	cfs_rq_throttled,
@@ -1335,10 +1334,8 @@ enum lazy_offset {
 	fdtable_max_fdset,
 	fdtable_open_fds,
 	file_f_count,
-	file_f_dentry,
 	file_f_op,
 	file_f_path,
-	file_f_vfsmnt,
 	file_lock_fl_owner,
 	file_private_data,
 	file_system_type_name,
@@ -1408,7 +1405,6 @@ enum lazy_offset {
 	inet6_ifaddr_addr,
 	inet6_ifaddr_if_list,
 	inet6_ifaddr_if_next,
-	inet_sock_inet,
 	inode_i_flock,
 	inode_i_fop,
 	inode_i_mapping,
@@ -1579,32 +1575,17 @@ enum lazy_offset {
 	mod_arch_specific_orc_unwind_ip,
 	module_arch,
 	module_attribute_attr,
-	module_core_size,
-	module_core_size_rw,
-	module_core_size_rx,
-	module_core_text_size,
 	module_flags,
 	module_gpgsig_ok,
 	module_gpl_syms,
-	module_init_size,
-	module_init_size_rw,
-	module_init_size_rx,
-	module_init_text_size,
 	module_kallsyms_start,
 	module_license_gplok,
 	module_list,
-	module_module_core,
-	module_module_core_rw,
-	module_module_core_rx,
-	module_module_init,
-	module_module_init_rw,
-	module_module_init_rx,
 	module_name,
 	module_next,
 	module_nsyms,
 	module_num_gpl_syms,
 	module_num_syms,
-	module_num_symtab,
 	module_percpu,
 	module_sect_attr_address,
 	module_sect_attr_attr,
@@ -1616,9 +1597,7 @@ enum lazy_offset {
 	module_sections_attrs,
 	module_size,
 	module_size_of_struct,
-	module_strtab,
 	module_syms,
-	module_symtab,
 	module_taints,
 	mount_mnt,
 	mount_mnt_devname,
@@ -1629,8 +1608,6 @@ enum lazy_offset {
 	msg_queue_q_id,
 	msg_queue_q_perm,
 	msg_queue_q_qnum,
-	namespace_list,
-	namespace_root,
 	neigh_table_hash_shift,
 	neigh_table_key_len,
 	neigh_table_nht_ptr,
@@ -1883,7 +1860,6 @@ enum lazy_offset {
 	task_struct_has_cpu,
 	task_struct_last_run,
 	task_struct_mm,
-	task_struct_namespace,
 	task_struct_next_run,
 	task_struct_next_task,
 	task_struct_nsproxy,
@@ -1918,11 +1894,8 @@ enum lazy_offset {
 	task_struct_timestamp,
 	task_struct_tss,
 	task_struct_utime,
-	thread_info_cpu,
 	thread_info_cpu_context,
 	thread_info_flags,
-	thread_info_previous_esp,
-	thread_info_task,
 	thread_struct_cr3,
 	thread_struct_fph,
 	thread_struct_ksp,
@@ -1948,7 +1921,6 @@ enum lazy_offset {
 	tnt_mod,
 	trace_print_flags_mask,
 	trace_print_flags_name,
-	tss_struct_ist,
 	unwind_idx_addr,
 	unwind_idx_insn,
 	unwind_table_address,
@@ -1965,20 +1937,6 @@ enum lazy_offset {
 	upid_nr,
 	upid_ns,
 	upid_pid_chain,
-	user_regs_struct_cs,
-	user_regs_struct_ds,
-	user_regs_struct_es,
-	user_regs_struct_fs,
-	user_regs_struct_gs,
-	user_regs_struct_r10,
-	user_regs_struct_r11,
-	user_regs_struct_r12,
-	user_regs_struct_r13,
-	user_regs_struct_r14,
-	user_regs_struct_r15,
-	user_regs_struct_r8,
-	user_regs_struct_r9,
-	user_regs_struct_ss,
 	user_struct_uid,
 	uts_namespace_name,
 	vcpu_guest_context_user_regs,
@@ -2024,7 +1982,6 @@ enum lazy_offset {
 	zone_all_unreclaimable,
 	zone_flags,
 	zone_free_area,
-	zone_free_pages,
 	zone_name,
 	zone_nr_active,
 	zone_nr_inactive,
@@ -2074,6 +2031,18 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long page_mapping;
 	long page_index;
 	long page_lru;
+	long address_space_nrpages;
+	long address_space_page_tree;
+	long cfs_rq_rb_leftmost;
+	long class_devices;
+	long cpu_user_regs_rsp;
+	long cpu_user_regs_rip;
+	long e820map_nr_map;
+	long e820entry_addr;
+	long e820entry_size;
+	long e820entry_type;
+	long file_f_dentry;
+	long file_f_vfsmnt;
         long qstr_len;
         long slab_list;
         long slab_s_mem;
@@ -2084,6 +2053,7 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long inet_opt_dport;
 	long inet_opt_sport;
 	long inet_opt_num;
+	long inet_sock_inet;
 	long __wait_queue_task;
 	long page_inuse;
 /*	long page_offset;  use "old" page->offset */
@@ -2101,6 +2071,8 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long task_struct_thread_context_fp;
 	long task_struct_thread_context_sp;
 	long task_struct_thread_context_pc;
+	long task_struct_thread_reg29;
+	long task_struct_thread_reg31;
 	long page_slab_page;
 	long page_s_mem;
 	long page_active;
@@ -2113,17 +2085,155 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long runqueue_idle;
 	long s390_lowcore_psw_save_area;
 	long s390_stack_frame_back_chain;
+	long s390_stack_frame_r14;
 	long request_queue_rq;
+	long request_queue_queue_ctx;
 	long rq_timestamp;
 	long zram_table_entry;
 	long dev_printk_info_subsystem;
 	long dev_printk_info_device;
 	long atomic_long_t_counter;
 	long vmap_area_purge_list;
+	long vmap_area_vm;
+	long mem_section_pageblock_flags;
+	long mm_struct_rss;
 	long module_mem;
+	long module_core_size;
+	long module_core_size_rw;
+	long module_core_size_rx;
+	long module_core_text_size;
+	long module_module_core;
+	long module_module_core_rw;
+	long module_module_core_rx;
+	long module_module_init;
+	long module_module_init_rw;
+	long module_module_init_rx;
+	long module_init_size;
+	long module_init_size_rw;
+	long module_init_size_rx;
+	long module_init_text_size;
 	long module_memory_base;
 	long module_memory_size;
+	long module_num_symtab;
+	long module_strtab;
+	long module_symtab;
+	long namespace_list;
+	long namespace_root;
+	long gendisk_dev;
+	long hrtimer_expires;
 	long irq_data_irq;
+	long irq_desc_t_affinity;
+	long irq_desc_t_action;
+	long irq_desc_t_depth;
+	long irq_desc_t_status;
+	long irq_desc_t_handler;
+	long irq_desc_t_chip;
+	long irq_desc_t_kstat_irqs;
+	long irq_desc_t_name;
+	long irq_desc_t_irq_data;
+	long kernel_symbol_value;
+	long kmem_cache_cpu_page;
+	long kmem_cache_objsize;
+	long kmem_cache_s_array;
+	long kmem_cache_s_colour_off;
+	long kmem_cache_s_flags;
+	long kmem_cache_s_gfporder;
+	long kmem_cache_s_lists;
+	long kmem_cache_s_name;
+	long kmem_cache_s_next;
+	long kmem_cache_s_num;
+	long kmem_cache_s_objsize;
+	long kmem_list3_free_objects;
+	long kmem_list3_slabs_partial;
+	long kmem_list3_slabs_full;
+	long kmem_list3_slabs_free;
+	long kmem_list3_shared;
+	long ktime_t_nsec;
+	long ktime_t_sec;
+	long ktime_t_tv64;
+	long neigh_table_hash_mask;
+	long neigh_table_hash_buckets;
+	long prb_data_blk_lpos_begin;
+	long prb_data_blk_lpos_next;
+	long prb_data_ring_data;
+	long prb_data_ring_size_bits;
+	long prb_desc_ring;
+	long prb_desc_ring_count_bits;
+	long prb_desc_ring_descs;
+	long prb_desc_ring_head_id;
+	long prb_desc_ring_infos;
+	long prb_desc_ring_tail_id;
+	long prb_desc_state_var;
+	long prb_desc_text_blk_lpos;
+	long prb_text_data_ring;
+	long printk_info_seq;
+	long printk_info_ts_nsec;
+	long printk_info_text_len;
+	long printk_info_level;
+	long printk_info_caller_id;
+	long printk_info_dev_info;
+	long task_struct_namespace;
+	long task_struct_parent;
+	long task_struct_state;
+	long task_struct_thread_eip;
+	long task_struct_thread_esp;
+	long task_struct_thread_info;
+	long task_struct_tss_eip;
+	long task_struct_tss_esp;
+	long task_struct_tss_ksp;
+	long task_struct_thread_ksp;
+	long thread_struct_eflags;
+	long thread_struct_eip;
+	long thread_struct_esp;
+	long thread_struct_rip;
+	long thread_struct_rsp;
+	long thread_struct_rsp0;
+	long thread_info_task;
+	long thread_info_cpu;
+	long thread_info_previous_esp;
+	long tnt_false;
+	long tnt_true;
+	long tvec_s_vec;
+	long tvec_root_s_vec;
+	long tvec_t_base_s_tv1;
+    long tss_struct_ist;
+    long user_regs_struct_cs;
+    long user_regs_struct_ds;
+    long user_regs_struct_es;
+    long user_regs_struct_fs;
+    long user_regs_struct_gs;
+    long user_regs_struct_r10;
+    long user_regs_struct_r11;
+    long user_regs_struct_r12;
+    long user_regs_struct_r13;
+    long user_regs_struct_r14;
+    long user_regs_struct_r15;
+    long user_regs_struct_r8;
+    long user_regs_struct_r9;
+    long user_regs_struct_ss;
+	long user_regs_struct_eflags;
+	long user_regs_struct_eax;
+	long user_regs_struct_ebp;
+	long user_regs_struct_ebx;
+	long user_regs_struct_ecx;
+	long user_regs_struct_edi;
+	long user_regs_struct_edx;
+	long user_regs_struct_eip;
+	long user_regs_struct_esi;
+	long user_regs_struct_esp;
+	long user_regs_struct_rax;
+	long user_regs_struct_rbp;
+	long user_regs_struct_rbx;
+	long user_regs_struct_rcx;
+	long user_regs_struct_rdi;
+	long user_regs_struct_rdx;
+	long user_regs_struct_rip;
+	long user_regs_struct_rsi;
+	long user_regs_struct_rsp;
+	long zone_watermark;
+	long zone_free_pages;
+	long zram_table_flag;
+	
 };
 
 struct size_table {         /* stash of commonly-used sizes */
@@ -2146,8 +2256,6 @@ struct size_table {         /* stash of commonly-used sizes */
 	long page_cache_bucket;
 	long pt_regs;
 	long task_struct;
-	long task_struct_parent;
-	long task_struct_state;
 	long thread_info;
 	long softirq_state;
 	long desc_struct;
@@ -2172,9 +2280,6 @@ struct size_table {         /* stash of commonly-used sizes */
 	long timer_vec_root;
 	long timer_vec;
 	long tvec_root_s;
-	long tvec_root_s_vec;
-	long tvec_s_vec;
-	long tvec_t_base_s_tv1;
 	long tvec_s;
 	long tvec_t_base_s;
 	long wait_queue;
@@ -2205,25 +2310,6 @@ struct size_table {         /* stash of commonly-used sizes */
 	long thread_union;
 	long prio_array;
 	long user_regs_struct;
-	long user_regs_struct_eax;
-	long user_regs_struct_ebp;
-	long user_regs_struct_ebx;
-	long user_regs_struct_ecx;
-	long user_regs_struct_edi;
-	long user_regs_struct_edx;
-	long user_regs_struct_eflags;
-	long user_regs_struct_eip;
-	long user_regs_struct_esi;
-	long user_regs_struct_esp;
-	long user_regs_struct_rax;
-	long user_regs_struct_rbp;
-	long user_regs_struct_rbx;
-	long user_regs_struct_rcx;
-	long user_regs_struct_rdi;
-	long user_regs_struct_rdx;
-	long user_regs_struct_rip;
-	long user_regs_struct_rsi;
-	long user_regs_struct_rsp;
 	long switch_stack;
 	long vm_area_struct_vm_flags;
 	long e820map;
@@ -2331,20 +2417,8 @@ struct size_table {         /* stash of commonly-used sizes */
 	long printk_info_ts_nsec;
 	long printk_ringbuffer;
 	long prb_desc;
-	long prb_data_blk_lpos_begin;
-	long prb_data_blk_lpos_next;
-	long prb_data_ring_data;
-	long prb_data_ring_size_bits;
-	long prb_desc_ring;
-	long prb_desc_ring_count_bits;
-	long prb_desc_ring_descs;
-	long prb_desc_ring_head_id;
-	long prb_desc_ring_infos;
-	long prb_desc_ring_tail_id;
-	long prb_desc_state_var;
-	long prb_desc_text_blk_lpos;
-	long prb_text_data_ring;
 	long wait_queue_entry;
+	long task_struct_state;
 	long printk_safe_seq_buf_buffer;
 	long sbitmap_word;
 	long sbitmap;
@@ -2386,7 +2460,6 @@ struct array_table {
 	int pid_hash;
 	int kmem_cache_node;
 	int kmem_cache_cpu_slab;
-	int kmem_cache_cpu_page;
 	int rt_prio_array_queue;
 	int height_to_maxnodes;
 	int task_struct_rlim;
@@ -2442,6 +2515,7 @@ struct array_table {
 #define ASSIGN_OFFSET(X)   (offset_table.X)
 #define ASSIGN_SIZE(X)     (size_table.X)
 #define OFFSET_OPTION(X,Y) (OFFSET_option(offset_table.X, offset_table.Y, (char *)__FUNCTION__, __FILE__, __LINE__, #X, #Y))
+#define OFFSET_OPTION_DIRECT(X,Y) (OFFSET_option(X, Y, (char *)__FUNCTION__, __FILE__, __LINE__, #X, #Y))
 #define SIZE_OPTION(X,Y)   (SIZE_option(size_table.X, size_table.Y, (char *)__FUNCTION__, __FILE__, __LINE__, #X, #Y))
 
 #define MEMBER_OFFSET_INIT(X, Y, Z) (ASSIGN_OFFSET(X) = MEMBER_OFFSET(Y, Z))

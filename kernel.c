@@ -555,12 +555,12 @@ kernel_init()
 			kt->flags |= KALLSYMS_V1;
 	}
 
-	if (VALID_MEMBER_LAZY(module_num_symtab)) {
+	if (VALID_MEMBER(module_num_symtab)) {
 		if (!(kt->flags & NO_KALLSYMS))
 			kt->flags |= KALLSYMS_V2;
 	}
 
-	if (INVALID_MEMBER_LAZY(module_num_symtab) && 
+	if (INVALID_MEMBER(module_num_symtab) && 
 	    MEMBER_EXISTS("module", "core_kallsyms")) {
 		ASSIGN_OFFSET(module_num_symtab) =
 			MEMBER_OFFSET("module", "core_kallsyms") +
@@ -2956,7 +2956,7 @@ back_trace(struct bt_info *bt)
 					btloc.hp->eip = symbol_value("do_IRQ");
 					if (symbol_exists("__do_IRQ"))
 						btloc.hp->esp = ULONG(bt->stackbuf +
-					    		LAZY_OFFSET(thread_info_previous_esp));
+					    		OFFSET(thread_info_previous_esp));
 					else
 						btloc.hp->esp = ULONG(bt->stackbuf +
 					    		SIZE(irq_ctx) - (sizeof(char *)*2));
@@ -2978,7 +2978,7 @@ back_trace(struct bt_info *bt)
 					btloc.hp->esp = ULONG(bt->stackbuf);
 				} else
 					btloc.hp->esp = ULONG(bt->stackbuf +
-						LAZY_OFFSET(thread_info_previous_esp));
+						OFFSET(thread_info_previous_esp));
 				fprintf(fp, "--- <soft IRQ> ---\n");
                 		break;
         		}
@@ -3053,7 +3053,7 @@ restore_stack(struct bt_info *bt)
 				bt->instptr = symbol_value("do_IRQ");
 			if (symbol_exists("__do_IRQ"))
 				bt->stkptr = ULONG(bt->stackbuf +
-					LAZY_OFFSET(thread_info_previous_esp));
+					OFFSET(thread_info_previous_esp));
 			else
 				bt->stkptr = ULONG(bt->stackbuf + 
 					SIZE(irq_ctx) - (sizeof(char *)*2));
@@ -3078,7 +3078,7 @@ restore_stack(struct bt_info *bt)
 			else
 				bt->instptr = symbol_value("do_softirq");
 	               	bt->stkptr = ULONG(bt->stackbuf +
-	                       	LAZY_OFFSET(thread_info_previous_esp));
+	                       	OFFSET(thread_info_previous_esp));
 		}
 		type = BT_SOFTIRQ;
 		break;
@@ -3533,14 +3533,14 @@ module_init(void)
 
 		case KALLSYMS_V2:
 			if (THIS_KERNEL_VERSION >= LINUX(2,6,27)) {
-				numksyms = UINT(modbuf + LAZY_OFFSET(module_num_symtab));
+				numksyms = UINT(modbuf + OFFSET(module_num_symtab));
 				if (MODULE_MEMORY())
 					/* check mem[MOD_TEXT].size only */
 					size = UINT(modbuf + OFFSET(module_mem) + OFFSET(module_memory_size));
 				else
 					size = UINT(modbuf + MODULE_OFFSET2(module_core_size, rx));
 			} else {
-				numksyms = ULONG(modbuf + LAZY_OFFSET(module_num_symtab));
+				numksyms = ULONG(modbuf + OFFSET(module_num_symtab));
 				size = ULONG(modbuf + MODULE_OFFSET2(module_core_size, rx));
 			}
 
@@ -3597,7 +3597,7 @@ verify_modules(void)
 	int found, irregularities;
         ulong mod, mod_next, mod_base;
 	long mod_size;
-        char *modbuf, *module_name;
+        char *modbuf, *module_name_str;
 	ulong module_list, mod_name; 
 	physaddr_t paddr;
 	int mods_installed;
@@ -3676,7 +3676,7 @@ verify_modules(void)
 					}
 					break;
 				case KMOD_V2:
-        				module_name = modbuf + 
+        				module_name_str = modbuf + 
 						LAZY_OFFSET(module_name);
 					if (MODULE_MEMORY()) {
 						mod_size = 0;
@@ -3694,10 +3694,10 @@ verify_modules(void)
 					else
 						mod_size = ULONG(modbuf +
 							MODULE_OFFSET2(module_core_size, rx));
-                			if (strlen(module_name) < MAX_MOD_NAME)
-                        			strcpy(buf, module_name);
+                			if (strlen(module_name_str) < MAX_MOD_NAME)
+                        			strcpy(buf, module_name_str);
                 			else 
-                        			strncpy(buf, module_name, 
+                        			strncpy(buf, module_name_str, 
 							MAX_MOD_NAME-1);
 					if (!STREQ(lm->mod_name, buf) ||
 					    (mod_size != lm->mod_size)) {

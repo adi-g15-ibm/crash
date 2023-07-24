@@ -96,7 +96,7 @@ static void dump_signal_data(struct task_context *, ulong);
 #define TASK_INDENT        (0x4)
 static int sigrt_minmax(int *, int *);
 static void signame_list(void);
-static void sigqueue_list(ulong);
+static void sigqueue_list_(ulong);
 static ulonglong task_signal(ulong, ulong*);
 static ulonglong task_blocked(ulong);
 static void translate_sigset(ulonglong);
@@ -661,7 +661,7 @@ irqstacks_init(void)
 
 		if (MEMBER_EXISTS("irq_ctx", "tinfo"))
 			tt->hardirq_tasks[i] = 
-				ULONG(thread_info_buf+LAZY_OFFSET(thread_info_task));
+				ULONG(thread_info_buf+OFFSET(thread_info_task));
 		else {
 			hardirq_next_sp = ULONG(thread_info_buf);
 			tt->hardirq_tasks[i] = stkptr_to_task(hardirq_next_sp);
@@ -709,7 +709,7 @@ irqstacks_init(void)
 
 		if (MEMBER_EXISTS("irq_ctx", "tinfo")) 
 			tt->softirq_tasks[i] =
-				ULONG(thread_info_buf+LAZY_OFFSET(thread_info_task));
+				ULONG(thread_info_buf+OFFSET(thread_info_task));
 		else {
 			tt->softirq_tasks[i] = stkptr_to_task(ULONG(thread_info_buf));
 			/* Checking if softirq => hardirq nested stack */
@@ -2813,7 +2813,7 @@ add_context(ulong task, char *tp)
                 	processor_addr = (int *) (tp + LAZY_OFFSET(task_struct_cpu));
 		else
 			processor_addr = (int *) (tt->thread_info + 
-				LAZY_OFFSET(thread_info_cpu));
+				OFFSET(thread_info_cpu));
 	} else if (VALID_MEMBER_LAZY(task_struct_processor))
                 processor_addr = (int *) (tp + LAZY_OFFSET(task_struct_processor));
         else if (VALID_MEMBER_LAZY(task_struct_cpu))
@@ -9411,7 +9411,7 @@ dump_tasks_in_cfs_rq(ulong cfs_rq)
 		}
 	}
 
-	readmem(cfs_rq + LAZY_OFFSET(cfs_rq_rb_leftmost), KVADDR, &leftmost,
+	readmem(cfs_rq + OFFSET(cfs_rq_rb_leftmost), KVADDR, &leftmost,
 		sizeof(ulong), "rb_leftmost", FAULT_ON_ERROR);
 	root = (struct rb_root *)(cfs_rq + LAZY_OFFSET(cfs_rq_tasks_timeline));
 
@@ -9496,7 +9496,7 @@ dump_tasks_in_task_group_cfs_rq(int depth, ulong cfs_rq, int cpu,
 		dump_task_runq_entry(ctc, 1);
 	}
 
-	readmem(cfs_rq + LAZY_OFFSET(cfs_rq_rb_leftmost), KVADDR, &leftmost,
+	readmem(cfs_rq + OFFSET(cfs_rq_rb_leftmost), KVADDR, &leftmost,
 		sizeof(ulong), "rb_leftmost", FAULT_ON_ERROR);
 	root = (struct rb_root *)(cfs_rq + LAZY_OFFSET(cfs_rq_tasks_timeline));
 
@@ -9607,7 +9607,7 @@ cfs_rq_offset_init(void)
 		STRUCT_SIZE_INIT(cfs_rq, "cfs_rq");
 		STRUCT_SIZE_INIT(rt_rq, "rt_rq");
 		STRUCT_SIZE_INIT(sched_entity, "sched_entity");
-		if (INVALID_MEMBER_LAZY(cfs_rq_rb_leftmost) && 
+		if (INVALID_MEMBER(cfs_rq_rb_leftmost) && 
 		    VALID_MEMBER_LAZY(cfs_rq_tasks_timeline) &&
 		    MEMBER_EXISTS("rb_root_cached", "rb_leftmost"))
 			ASSIGN_OFFSET(cfs_rq_rb_leftmost) = LAZY_OFFSET(cfs_rq_tasks_timeline) + 
@@ -10780,8 +10780,9 @@ dump_signal_data(struct task_context *tc, ulong flags)
 		else if (VALID_MEMBER_LAZY(task_struct_pending)) 
 			sigqueue = ULONG(tt->task_struct +
 				LAZY_OFFSET(task_struct_pending) +
-				OFFSET_OPTION(sigpending_head, 
-				sigpending_list));
+				OFFSET_OPTION_DIRECT(
+					get_lazy_offset(sigpending_head),
+					get_lazy_offset(sigpending_list)));
 	
 		if (VALID_MEMBER_LAZY(sigqueue_list) && empty_list(sigqueue))
 			sigqueue = 0;
@@ -10791,7 +10792,7 @@ dump_signal_data(struct task_context *tc, ulong flags)
 		if (sigqueue) {
                 	fprintf(fp, "  SIGQUEUE:  SIG  %s\n",
                         	mkstring(buf1, VADDR_PRLEN, CENTER|LJUST, "SIGINFO"));
-		 	sigqueue_list(sigqueue);
+		 	sigqueue_list_(sigqueue);
 		} else
                 	fprintf(fp, "  SIGQUEUE: (empty)\n");
 	}
@@ -10812,7 +10813,9 @@ dump_signal_data(struct task_context *tc, ulong flags)
 			INDENT(2);
 		fprintf(fp, "    SIGNAL: %016llx\n", sigset);
                 sigqueue = (shared_pending + 
-			OFFSET_OPTION(sigpending_head, sigpending_list) + 
+			OFFSET_OPTION_DIRECT(
+				get_lazy_offset(sigpending_head),
+				get_lazy_offset(sigpending_list)) + 
 			LAZY_OFFSET(list_head_next));
 		readmem(sigqueue,KVADDR, signal_buf,
 			SIZE(sigqueue), "sigqueue", FAULT_ON_ERROR);
@@ -10825,7 +10828,7 @@ dump_signal_data(struct task_context *tc, ulong flags)
 		if (sigqueue) {
                		fprintf(fp, "  SIGQUEUE:  SIG  %s\n",
                        		mkstring(buf1, VADDR_PRLEN, CENTER|LJUST, "SIGINFO"));
-			 sigqueue_list(sigqueue);
+			 sigqueue_list_(sigqueue);
 		} else
                		fprintf(fp, "  SIGQUEUE: (empty)\n");
 	}
@@ -10836,7 +10839,7 @@ dump_signal_data(struct task_context *tc, ulong flags)
  *  Dump a pending signal queue (private/shared).
  */
 
-static void sigqueue_list(ulong sigqueue) {
+static void sigqueue_list_(ulong sigqueue) {
         ulong sigqueue_save, next;
 	int sig;
 	char *signal_buf;
@@ -10857,7 +10860,10 @@ static void sigqueue_list(ulong sigqueue) {
 				 LAZY_OFFSET(siginfo_si_signo));
 		} else {
 			next = ULONG(signal_buf +
-                        	OFFSET_OPTION(sigqueue_next, sigqueue_list));
+                        	OFFSET_OPTION_DIRECT(
+								get_lazy_offset(sigqueue_next),
+								get_lazy_offset(sigqueue_list))
+							);
                 	sig = INT(signal_buf + LAZY_OFFSET(sigqueue_info) + 
 				LAZY_OFFSET(siginfo_si_signo));
 		}
@@ -10867,7 +10873,10 @@ static void sigqueue_list(ulong sigqueue) {
 
                 fprintf(fp, "             %3d  %lx\n",
                         sig, sigqueue +
-			OFFSET_OPTION(signal_queue_info, sigqueue_info));
+			OFFSET_OPTION_DIRECT(
+				get_lazy_offset(signal_queue_info),
+				get_lazy_offset(sigqueue_info))
+			);
 
                 sigqueue = next;
         }
@@ -11031,11 +11040,11 @@ check_stack_overflow(void)
 	struct task_context *tc;
 
 	if (!tt->stack_end_magic && 
-	    INVALID_MEMBER_LAZY(thread_info_task) && 
-	    INVALID_MEMBER_LAZY(thread_info_cpu))
+	    INVALID_MEMBER(thread_info_task) && 
+	    INVALID_MEMBER(thread_info_cpu))
 		option_not_supported('v');
 
-	cpu_size = VALID_MEMBER_LAZY(thread_info_cpu) ? 
+	cpu_size = VALID_MEMBER(thread_info_cpu) ? 
 		MEMBER_SIZE("thread_info", "cpu") : 0;
 
 	tc = FIRST_CONTEXT();
@@ -11054,8 +11063,8 @@ check_stack_overflow(void)
 				continue;
 		}
 
-		if (VALID_MEMBER_LAZY(thread_info_task)) {
-			task = ULONG(buf + LAZY_OFFSET(thread_info_task));
+		if (VALID_MEMBER(thread_info_task)) {
+			task = ULONG(buf + OFFSET(thread_info_task));
 			if (task != tc->task) {
 				print_task_header(fp, tc, 0);
 				fprintf(fp, 
@@ -11065,17 +11074,17 @@ check_stack_overflow(void)
 			}
 		}
 
-		if (VALID_MEMBER_LAZY(thread_info_cpu)) {
+		if (VALID_MEMBER(thread_info_cpu)) {
 			switch (cpu_size)
 			{
 			case 1:
-				cpu = UCHAR(buf + LAZY_OFFSET(thread_info_cpu));
+				cpu = UCHAR(buf + OFFSET(thread_info_cpu));
 				break;
 			case 2:
-				cpu = USHORT(buf + LAZY_OFFSET(thread_info_cpu));
+				cpu = USHORT(buf + OFFSET(thread_info_cpu));
 				break;
 			case 4:
-				cpu = UINT(buf + LAZY_OFFSET(thread_info_cpu));
+				cpu = UINT(buf + OFFSET(thread_info_cpu));
 				break;
 			default:
 				cpu = 0;

@@ -2452,16 +2452,16 @@ diskdump_display_regs(int cpu, FILE *ofp)
 		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rsi)),
 		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rdi)),
 		    ULONGLONG(user_regs + OFFSET(user_regs_struct_rbp)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r8)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r9)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r10)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r11)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r12)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r13)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r14)),
-		    ULONGLONG(user_regs + LAZY_OFFSET(user_regs_struct_r15)),
-		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
-		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ss))
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r8)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r9)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r10)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r11)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r12)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r13)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r14)),
+		    ULONGLONG(user_regs + OFFSET(user_regs_struct_r15)),
+		    USHORT(user_regs + OFFSET(user_regs_struct_cs)),
+		    USHORT(user_regs + OFFSET(user_regs_struct_ss))
 		);
 	}
 
@@ -2604,12 +2604,12 @@ diskdump_display_regs(int cpu, FILE *ofp)
 		    UINT(user_regs + OFFSET(user_regs_struct_eip)),
 		    UINT(user_regs + OFFSET(user_regs_struct_esi)),
 		    UINT(user_regs + OFFSET(user_regs_struct_edi)),
-		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
-		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ds)),
-		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_es)),
-		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_fs)),
-		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_gs)),
-		    USHORT(user_regs + LAZY_OFFSET(user_regs_struct_ss)),
+		    USHORT(user_regs + OFFSET(user_regs_struct_cs)),
+		    USHORT(user_regs + OFFSET(user_regs_struct_ds)),
+		    USHORT(user_regs + OFFSET(user_regs_struct_es)),
+		    USHORT(user_regs + OFFSET(user_regs_struct_fs)),
+		    USHORT(user_regs + OFFSET(user_regs_struct_gs)),
+		    USHORT(user_regs + OFFSET(user_regs_struct_ss)),
 		    UINT(user_regs + OFFSET(user_regs_struct_ebp)),
 		    UINT(user_regs + OFFSET(user_regs_struct_eflags))
 		);

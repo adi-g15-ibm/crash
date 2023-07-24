@@ -1973,7 +1973,7 @@ store_module_symbols_6_4(ulong total, int mods_installed)
 		nsyms = UINT(modbuf + LAZY_OFFSET(module_num_syms));
 		ngplsyms = UINT(modbuf + LAZY_OFFSET(module_num_gpl_syms));
 
-		nksyms = UINT(modbuf + LAZY_OFFSET(module_num_symtab));
+		nksyms = UINT(modbuf + OFFSET(module_num_symtab));
 
 		mod_name = modbuf + LAZY_OFFSET(module_name);
 
@@ -2332,10 +2332,10 @@ store_module_symbols_v2(ulong total, int mods_installed)
                 ngplsyms = UINT(modbuf + LAZY_OFFSET(module_num_gpl_syms));
 
 		if (THIS_KERNEL_VERSION >= LINUX(2,6,27)) {
-			nksyms = UINT(modbuf + LAZY_OFFSET(module_num_symtab));
+			nksyms = UINT(modbuf + OFFSET(module_num_symtab));
 			size = UINT(modbuf + MODULE_OFFSET2(module_core_size, rx));
 		} else {
-			nksyms = ULONG(modbuf + LAZY_OFFSET(module_num_symtab));
+			nksyms = ULONG(modbuf + OFFSET(module_num_symtab));
 			size = ULONG(modbuf + MODULE_OFFSET2(module_core_size, rx));
 		}
 
@@ -2903,11 +2903,11 @@ store_module_kallsyms_v2(struct load_module *lm, int start, int curr,
 	}
 
 	if (THIS_KERNEL_VERSION >= LINUX(2,6,27))
-		nksyms = UINT(modbuf + LAZY_OFFSET(module_num_symtab));
+		nksyms = UINT(modbuf + OFFSET(module_num_symtab));
 	else
-		nksyms = ULONG(modbuf + LAZY_OFFSET(module_num_symtab));
+		nksyms = ULONG(modbuf + OFFSET(module_num_symtab));
 
-	ksymtab = ULONG(modbuf + LAZY_OFFSET(module_symtab));
+	ksymtab = ULONG(modbuf + OFFSET(module_symtab));
 	if (!IN_MODULE(ksymtab, lm) && !IN_MODULE_INIT(ksymtab, lm)) {
 		error(WARNING,
 		    "%s: module.symtab outside of module address space\n",
@@ -2922,7 +2922,7 @@ store_module_kallsyms_v2(struct load_module *lm, int start, int curr,
 	else
 		locsymtab = module_buf_init + (ksymtab - base_init);
 
-	kstrtab = ULONG(modbuf + LAZY_OFFSET(module_strtab));
+	kstrtab = ULONG(modbuf + OFFSET(module_strtab));
 	if (!IN_MODULE(kstrtab, lm) && !IN_MODULE_INIT(kstrtab, lm)) {
 		error(WARNING, 
 		    "%s: module.strtab outside of module address space\n",
@@ -3678,11 +3678,11 @@ kallsyms_module_function_size(struct syment *sp, struct load_module *lm, ulong *
 	 	module_buf_init = NULL;
 
 	if (THIS_KERNEL_VERSION >= LINUX(2,6,27))
-		nksyms = UINT(modbuf + LAZY_OFFSET(module_num_symtab));
+		nksyms = UINT(modbuf + OFFSET(module_num_symtab));
 	else
-		nksyms = ULONG(modbuf + LAZY_OFFSET(module_num_symtab));
+		nksyms = ULONG(modbuf + OFFSET(module_num_symtab));
 
-        ksymtab = ULONG(modbuf + LAZY_OFFSET(module_symtab));
+        ksymtab = ULONG(modbuf + OFFSET(module_symtab));
         if (!IN_MODULE(ksymtab, lm) && !IN_MODULE_INIT(ksymtab, lm)) {
                 FREEBUF(module_buf);
                 if (module_buf_init)
@@ -9848,7 +9848,7 @@ dump_offset_table(char *spec, ulong makestruct)
         fprintf(fp, "              task_struct_tgid: %ld\n",
                 LAZY_OFFSET(task_struct_tgid));
         fprintf(fp, "         task_struct_namespace: %ld\n",
-                LAZY_OFFSET(task_struct_namespace));
+                OFFSET(task_struct_namespace));
         fprintf(fp, "          task_struct_rss_stat: %ld\n",
                 LAZY_OFFSET(task_struct_rss_stat));
         fprintf(fp, "           task_rss_stat_count: %ld\n",
@@ -9885,13 +9885,13 @@ dump_offset_table(char *spec, ulong makestruct)
                 LAZY_OFFSET(task_struct_policy));
 
 	fprintf(fp, "              thread_info_task: %ld\n",
-                LAZY_OFFSET(thread_info_task));
+                OFFSET(thread_info_task));
 	fprintf(fp, "               thread_info_cpu: %ld\n",
-                LAZY_OFFSET(thread_info_cpu));
+                OFFSET(thread_info_cpu));
 	fprintf(fp, "             thread_info_flags: %ld\n",
                 LAZY_OFFSET(thread_info_flags));
 	fprintf(fp, "      thread_info_previous_esp: %ld\n",
-                LAZY_OFFSET(thread_info_previous_esp));
+                OFFSET(thread_info_previous_esp));
 
 	fprintf(fp, "                nsproxy_mnt_ns: %ld\n",
 		LAZY_OFFSET(nsproxy_mnt_ns));
@@ -10160,39 +10160,39 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "                   module_list: %ld\n",
 		LAZY_OFFSET(module_list));
 	fprintf(fp, "            module_module_core: %ld\n",
-		LAZY_OFFSET(module_module_core));
+		OFFSET(module_module_core));
 	fprintf(fp, "              module_core_size: %ld\n",
-		LAZY_OFFSET(module_core_size));
+		OFFSET(module_core_size));
 	fprintf(fp, "         module_core_text_size: %ld\n",
-		LAZY_OFFSET(module_core_text_size));
+		OFFSET(module_core_text_size));
 	fprintf(fp, "              module_init_size: %ld\n",
-		LAZY_OFFSET(module_init_size));
+		OFFSET(module_init_size));
 	fprintf(fp, "         module_init_text_size: %ld\n",
-		LAZY_OFFSET(module_init_text_size));
+		OFFSET(module_init_text_size));
 	fprintf(fp, "            module_module_init: %ld\n",
-		LAZY_OFFSET(module_module_init));
+		OFFSET(module_module_init));
 	fprintf(fp, "         module_module_core_rx: %ld\n",
-		LAZY_OFFSET(module_module_core_rx));
+		OFFSET(module_module_core_rx));
 	fprintf(fp, "         module_module_core_rw: %ld\n",
-		LAZY_OFFSET(module_module_core_rw));
+		OFFSET(module_module_core_rw));
 	fprintf(fp, "           module_core_size_rx: %ld\n",
-		LAZY_OFFSET(module_core_size_rx));
+		OFFSET(module_core_size_rx));
 	fprintf(fp, "           module_core_size_rw: %ld\n",
-		LAZY_OFFSET(module_core_size_rw));
+		OFFSET(module_core_size_rw));
 	fprintf(fp, "         module_module_init_rx: %ld\n",
-		LAZY_OFFSET(module_module_init_rx));
+		OFFSET(module_module_init_rx));
 	fprintf(fp, "         module_module_init_rw: %ld\n",
-		LAZY_OFFSET(module_module_init_rw));
+		OFFSET(module_module_init_rw));
 	fprintf(fp, "           module_init_size_rx: %ld\n",
-		LAZY_OFFSET(module_init_size_rx));
+		OFFSET(module_init_size_rx));
 	fprintf(fp, "           module_init_size_rw: %ld\n",
-		LAZY_OFFSET(module_init_size_rw));
+		OFFSET(module_init_size_rw));
 	fprintf(fp, "             module_num_symtab: %ld\n",
-		LAZY_OFFSET(module_num_symtab));
+		OFFSET(module_num_symtab));
 	fprintf(fp, "                 module_symtab: %ld\n",
-		LAZY_OFFSET(module_symtab));
+		OFFSET(module_symtab));
 	fprintf(fp, "                 module_strtab: %ld\n",
-		LAZY_OFFSET(module_strtab));
+		OFFSET(module_strtab));
 	fprintf(fp, "                 module_percpu: %ld\n",
 		LAZY_OFFSET(module_percpu));
 	fprintf(fp, "                    module_mem: %ld\n", OFFSET(module_mem));
@@ -10479,9 +10479,9 @@ dump_offset_table(char *spec, ulong makestruct)
         fprintf(fp, "    files_struct_open_fds_init: %ld\n", 
 		LAZY_OFFSET(files_struct_open_fds_init));
         fprintf(fp, "                 file_f_dentry: %ld\n", 
-		LAZY_OFFSET(file_f_dentry));
+		OFFSET(file_f_dentry));
         fprintf(fp, "                 file_f_vfsmnt: %ld\n", 
-		LAZY_OFFSET(file_f_vfsmnt));
+		OFFSET(file_f_vfsmnt));
         fprintf(fp, "                  file_f_count: %ld\n", 
 		LAZY_OFFSET(file_f_count));
         fprintf(fp, "                   file_f_path: %ld\n", 
@@ -10554,9 +10554,9 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "                     mount_mnt: %ld\n",
 		LAZY_OFFSET(mount_mnt));
 	fprintf(fp, "                namespace_root: %ld\n",
-			LAZY_OFFSET(namespace_root));
+			OFFSET(namespace_root));
 	fprintf(fp, "                namespace_list: %ld\n",
-			LAZY_OFFSET(namespace_list));
+			OFFSET(namespace_list));
 
         fprintf(fp, "           super_block_s_dirty: %ld\n", 
 		LAZY_OFFSET(super_block_s_dirty));
@@ -10799,7 +10799,7 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "        socket_alloc_vfs_inode: %ld\n",
 		LAZY_OFFSET(socket_alloc_vfs_inode));
         fprintf(fp, "                inet_sock_inet: %ld\n", 
-		LAZY_OFFSET(inet_sock_inet));
+		OFFSET(inet_sock_inet));
         fprintf(fp, "                inet_opt_daddr: %ld\n", 
 		OFFSET(inet_opt_daddr));
         fprintf(fp, "            inet_opt_rcv_saddr: %ld\n", 
@@ -10927,7 +10927,7 @@ dump_offset_table(char *spec, ulong makestruct)
                 LAZY_OFFSET(zone_struct_pages_high));
 
 	fprintf(fp, "               zone_free_pages: %ld\n",
-                LAZY_OFFSET(zone_free_pages));
+                OFFSET(zone_free_pages));
 	fprintf(fp, "                zone_watermark: %ld\n",
                 OFFSET(zone_watermark));
 	fprintf(fp, "                zone_free_area: %ld\n",
@@ -11089,9 +11089,9 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "       user_regs_struct_eflags: %ld\n",
 		OFFSET(user_regs_struct_eflags));
 	fprintf(fp, "           user_regs_struct_cs: %ld\n",
-		LAZY_OFFSET(user_regs_struct_cs));
+		OFFSET(user_regs_struct_cs));
 	fprintf(fp, "           user_regs_struct_ss: %ld\n",
-		LAZY_OFFSET(user_regs_struct_ss));
+		OFFSET(user_regs_struct_ss));
 	fprintf(fp, "          user_regs_struct_eip: %ld\n",
 		OFFSET(user_regs_struct_eip));
 	fprintf(fp, "          user_regs_struct_rax: %ld\n",
@@ -11119,31 +11119,31 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "          user_regs_struct_edi: %ld\n",
 		OFFSET(user_regs_struct_edi));
 	fprintf(fp, "           user_regs_struct_ds: %ld\n",
-		LAZY_OFFSET(user_regs_struct_ds));
+		OFFSET(user_regs_struct_ds));
 	fprintf(fp, "           user_regs_struct_es: %ld\n",
-		LAZY_OFFSET(user_regs_struct_es));
+		OFFSET(user_regs_struct_es));
 	fprintf(fp, "           user_regs_struct_fs: %ld\n",
-		LAZY_OFFSET(user_regs_struct_fs));
+		OFFSET(user_regs_struct_fs));
 	fprintf(fp, "           user_regs_struct_gs: %ld\n",
-		LAZY_OFFSET(user_regs_struct_gs));
+		OFFSET(user_regs_struct_gs));
 	fprintf(fp, "          user_regs_struct_rbp: %ld\n",
 		OFFSET(user_regs_struct_rbp));
 	fprintf(fp, "           user_regs_struct_r8: %ld\n",
-		LAZY_OFFSET(user_regs_struct_r8));
+		OFFSET(user_regs_struct_r8));
 	fprintf(fp, "           user_regs_struct_r9: %ld\n",
-		LAZY_OFFSET(user_regs_struct_r9));
+		OFFSET(user_regs_struct_r9));
 	fprintf(fp, "          user_regs_struct_r10: %ld\n",
-		LAZY_OFFSET(user_regs_struct_r10));
+		OFFSET(user_regs_struct_r10));
 	fprintf(fp, "          user_regs_struct_r11: %ld\n",
-		LAZY_OFFSET(user_regs_struct_r11));
+		OFFSET(user_regs_struct_r11));
 	fprintf(fp, "          user_regs_struct_r12: %ld\n",
-		LAZY_OFFSET(user_regs_struct_r12));
+		OFFSET(user_regs_struct_r12));
 	fprintf(fp, "          user_regs_struct_r13: %ld\n",
-		LAZY_OFFSET(user_regs_struct_r13));
+		OFFSET(user_regs_struct_r13));
 	fprintf(fp, "          user_regs_struct_r14: %ld\n",
-		LAZY_OFFSET(user_regs_struct_r14));
+		OFFSET(user_regs_struct_r14));
 	fprintf(fp, "          user_regs_struct_r15: %ld\n",
-		LAZY_OFFSET(user_regs_struct_r15));
+		OFFSET(user_regs_struct_r15));
 
 	fprintf(fp, "                e820map_nr_map: %ld\n",
 		OFFSET(e820map_nr_map));
@@ -11223,7 +11223,7 @@ dump_offset_table(char *spec, ulong makestruct)
 		LAZY_OFFSET(x8664_pda_me));
 
 	fprintf(fp, "                tss_struct_ist: %ld\n", 
-		LAZY_OFFSET(tss_struct_ist));
+		OFFSET(tss_struct_ist));
 	fprintf(fp, "   mem_section_section_mem_map: %ld\n",
 		LAZY_OFFSET(mem_section_section_mem_map));
 	fprintf(fp, "   mem_section_pageblock_flags: %ld\n",
@@ -11285,7 +11285,7 @@ dump_offset_table(char *spec, ulong makestruct)
 	fprintf(fp, "             cfs_rq_nr_running: %ld\n",
 		LAZY_OFFSET(cfs_rq_nr_running));
 	fprintf(fp, "            cfs_rq_rb_leftmost: %ld\n",
-		LAZY_OFFSET(cfs_rq_rb_leftmost));
+		OFFSET(cfs_rq_rb_leftmost));
 	fprintf(fp, "         cfs_rq_tasks_timeline: %ld\n",
 		LAZY_OFFSET(cfs_rq_tasks_timeline));
 	fprintf(fp, "                  rt_rq_active: %ld\n",
@@ -14600,8 +14600,8 @@ init_module_function(ulong vaddr)
 	struct load_module *lm;
 
 	if (((kt->flags & (KMOD_V1|KMOD_V2)) == KMOD_V1) ||
-	    INVALID_MEMBER_LAZY(module_init_text_size) ||
-	    INVALID_MEMBER_LAZY(module_module_init))
+	    INVALID_MEMBER(module_init_text_size) ||
+	    INVALID_MEMBER(module_module_init))
 		return NULL;
 
         for (i = 0; i < st->mods_installed; i++) {

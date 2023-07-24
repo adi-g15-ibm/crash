@@ -501,7 +501,7 @@ x86_64_init(int when)
 		if (INVALID_MEMBER(thread_struct_rsp0))
 			MEMBER_OFFSET_INIT(thread_struct_rsp0, "thread_struct", "sp0");
 		STRUCT_SIZE_INIT(tss_struct, "tss_struct");
-		if (INVALID_MEMBER_LAZY(tss_struct_ist)) {
+		if (INVALID_MEMBER(tss_struct_ist)) {
 			long x86_tss_offset, ist_offset;
 			x86_tss_offset = MEMBER_OFFSET("tss_struct", "x86_tss");
 			ist_offset = MEMBER_OFFSET("x86_hw_tss", "ist");
@@ -1404,7 +1404,7 @@ x86_64_ist_init(void)
 	
 		for (c = cpus = 0; c < NR_CPUS; c++) {
 			vaddr = init_tss + (c * SIZE(tss_struct)) +
-				LAZY_OFFSET(tss_struct_ist); 
+				OFFSET(tss_struct_ist); 
 			readmem(vaddr, KVADDR, &ms->stkinfo.ebase[c][0], 
 				sizeof(ulong) * MAX_EXCEPTION_STACKS, 
 				"tss_struct ist array", FAULT_ON_ERROR);
@@ -1420,7 +1420,7 @@ x86_64_ist_init(void)
 			} else 
 				vaddr = tss_sp->value;
 
-			vaddr += LAZY_OFFSET(tss_struct_ist);
+			vaddr += OFFSET(tss_struct_ist);
 
                         readmem(vaddr, KVADDR, &ms->stkinfo.ebase[c][0],
                                 sizeof(ulong) * MAX_EXCEPTION_STACKS, 
@@ -4994,8 +4994,8 @@ x86_64_get_dumpfile_stack_frame(struct bt_info *bt_in, ulong *rip, ulong *rsp)
 
 		if (x86_64_eframe_verify(bt, 
 		    0,
-		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_cs)),
-		    ULONG(user_regs + LAZY_OFFSET(user_regs_struct_ss)),
+		    ULONG(user_regs + OFFSET(user_regs_struct_cs)),
+		    ULONG(user_regs + OFFSET(user_regs_struct_ss)),
 		    ULONG(user_regs + OFFSET(user_regs_struct_rip)),
         	    ULONG(user_regs + OFFSET(user_regs_struct_rsp)),
 		    ULONG(user_regs + OFFSET(user_regs_struct_eflags)))) {
