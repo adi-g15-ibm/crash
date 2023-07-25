@@ -2574,9 +2574,7 @@ retry_xarray:
 			goto retry_xarray;
 		}
 
-		upid_ns = LAZY_OFFSET(upid_ns);
-		printf("\nValue of upid_ns: %ld\n", upid_ns); fflush(stdout);
-		upid_ns = ULONG(pidbuf + LAZY_OFFSET(pid_numbers) + upid_ns);
+		upid_ns = ULONG(pidbuf + LAZY_OFFSET(pid_numbers) + LAZY_OFFSET(upid_ns));
 		if (upid_ns != tt->init_pid_ns)
 			continue;
 		pid_tasks_0 = ULONG(pidbuf + LAZY_OFFSET(pid_tasks));
