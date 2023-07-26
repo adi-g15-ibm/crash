@@ -245,7 +245,7 @@ read_module_unwind_table(struct unwind_table *tbl, ulong addr)
 		goto fail;
 	}
 
-#define TABLE_VALUE(b, offs) (*((ulong *)((b) + OFFSET(offs))))
+#define TABLE_VALUE(b, offs) (*((ulong *)((b) + LAZY_OFFSET(offs))))
 
 	idx_start = TABLE_VALUE(buf, unwind_table_start);
 	idx_stop = TABLE_VALUE(buf, unwind_table_stop);

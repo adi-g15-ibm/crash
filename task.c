@@ -1993,8 +1993,8 @@ refresh_hlist_task_table_v3(void)
         ulong curpid;
         ulong retries;
 	ulong *tlp;
-	uint upid_nr;
-	ulong upid_ns;
+	uint upid_nr_;
+	ulong upid_ns_;
 	int chained;
 	ulong pid;
 	ulong pid_tasks_0;
@@ -2088,17 +2088,17 @@ do_chained:
 
 		pnext = ULONG(nodebuf + LAZY_OFFSET(upid_pid_chain) + LAZY_OFFSET(hlist_node_next));
 		pprev = ULONG(nodebuf + LAZY_OFFSET(upid_pid_chain) + LAZY_OFFSET(hlist_node_pprev));
-		upid_nr = UINT(nodebuf + LAZY_OFFSET(upid_nr));
-		upid_ns = ULONG(nodebuf + LAZY_OFFSET(upid_ns));
+		upid_nr_ = UINT(nodebuf + LAZY_OFFSET(upid_nr));
+		upid_ns_ = ULONG(nodebuf + LAZY_OFFSET(upid_ns));
 		/*
 		 *  Use init_pid_ns level 0 (PIDTYPE_PID).
 		 */
-		if (upid_ns != tt->init_pid_ns) {
-			if (!accessible(upid_ns)) {
+		if (upid_ns_ != tt->init_pid_ns) {
+			if (!accessible(upid_ns_)) {
 				error(INFO, 
 				    "%spid_hash[%d]: invalid upid.ns: %lx\n",
 					DUMPFILE() ? "\n" : "",
-					i, upid_ns);
+					i, upid_ns_);
                              	continue;
 			}
 			goto chain_next;
@@ -2125,11 +2125,11 @@ do_chained:
 			if (chained)
 				console("                %lx upid: %lx nr: %d pid: %lx\n" 
 				    "                pnext/pprev: %.*lx/%lx task: %lx\n",
-				    kpp, upid, upid_nr, pid, VADDR_PRLEN, pnext, pprev, next);
+				    kpp, upid, upid_nr_, pid, VADDR_PRLEN, pnext, pprev, next);
 			else
 				console("pid_hash[%4d]: %lx upid: %lx nr: %d pid: %lx\n"
 				    "                pnext/pprev: %.*lx/%lx task: %lx\n",
-				    i, kpp, upid, upid_nr, pid, VADDR_PRLEN, pnext, pprev, next);
+				    i, kpp, upid, upid_nr_, pid, VADDR_PRLEN, pnext, pprev, next);
 		}
 
 		if (!IS_TASK_ADDR(next)) {
@@ -2241,7 +2241,7 @@ static void
 refresh_radix_tree_task_table(void)
 {
 	int i, cnt;
-	ulong count, retries, next, curtask, curpid, upid_ns, pid_tasks_0, task;
+	ulong count, retries, next, curtask, curpid, upid_ns_, pid_tasks_0, task;
 	ulong *tlp;
 	char *tp;
 	struct list_pair rtp;
@@ -2353,8 +2353,8 @@ retry_radix_tree:
 			goto retry_radix_tree;
 		}
 
-		upid_ns = ULONG(pidbuf + LAZY_OFFSET(pid_numbers) + LAZY_OFFSET(upid_ns));
-		if (upid_ns != tt->init_pid_ns)
+		upid_ns_ = ULONG(pidbuf + LAZY_OFFSET(pid_numbers) + LAZY_OFFSET(upid_ns));
+		if (upid_ns_ != tt->init_pid_ns)
 			continue;
 		pid_tasks_0 = ULONG(pidbuf + LAZY_OFFSET(pid_tasks));
 		if (!pid_tasks_0)
@@ -2366,7 +2366,7 @@ retry_radix_tree:
 
 		if (CRASHDEBUG(1))
 			console("pid: %lx  ns: %lx  tasks[0]: %lx task: %lx\n",
-				next, upid_ns, pid_tasks_0, task);
+				next, upid_ns_, pid_tasks_0, task);
 
 		if (is_idle_thread(task))
 			continue;
@@ -2457,7 +2457,7 @@ static void
 refresh_xarray_task_table(void)
 {
 	int i, cnt;
-	ulong count, retries, next, curtask, curpid, upid_ns, pid_tasks_0, task;
+	ulong count, retries, next, curtask, curpid, upid_ns_, pid_tasks_0, task;
 	ulong *tlp;
 	char *tp;
 	struct list_pair xp;
@@ -2574,8 +2574,8 @@ retry_xarray:
 			goto retry_xarray;
 		}
 
-		upid_ns = ULONG(pidbuf + LAZY_OFFSET(pid_numbers) + LAZY_OFFSET(upid_ns));
-		if (upid_ns != tt->init_pid_ns)
+		upid_ns_ = ULONG(pidbuf + LAZY_OFFSET(pid_numbers) + LAZY_OFFSET(upid_ns));
+		if (upid_ns_ != tt->init_pid_ns)
 			continue;
 		pid_tasks_0 = ULONG(pidbuf + LAZY_OFFSET(pid_tasks));
 		if (!pid_tasks_0)
@@ -2587,7 +2587,7 @@ retry_xarray:
 
 		if (CRASHDEBUG(1))
 			console("pid: %lx  ns: %lx  tasks[0]: %lx task: %lx\n",
-				next, upid_ns, pid_tasks_0, task);
+				next, upid_ns_, pid_tasks_0, task);
 
 		if (is_idle_thread(task))
 			continue;

@@ -6967,7 +6967,7 @@ percpu_counter_sum_positive(ulong fbc)
 ulong
 get_subsys_private(char *kset_name, char *target_name)
 {
-	ulong kset_addr, kset_list, name_addr, private = 0;
+	ulong kset_addr, kset_list_, name_addr, private = 0;
 	struct list_data list_data, *ld;
 	char buf[32];
 	int i, cnt;
@@ -6979,11 +6979,11 @@ get_subsys_private(char *kset_name, char *target_name)
 	BZERO(ld, sizeof(struct list_data));
 
 	get_symbol_data(kset_name, sizeof(ulong), &kset_addr);
-	readmem(kset_addr + LAZY_OFFSET(kset_list), KVADDR, &kset_list,
+	readmem(kset_addr + LAZY_OFFSET(kset_list), KVADDR, &kset_list_,
 		sizeof(ulong), "kset.list", FAULT_ON_ERROR);
 
 	ld->flags |= LIST_ALLOCATE;
-	ld->start = kset_list;
+	ld->start = kset_list_;
 	ld->end = kset_addr + LAZY_OFFSET(kset_list);
 	ld->list_head_offset = LAZY_OFFSET(kobject_entry);
 

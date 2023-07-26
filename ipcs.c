@@ -622,7 +622,7 @@ idr_find(ulong idp, int id)
 {
 	ulong idr_layer_p;
 	int layer;
-	int idr_layers;
+	int idr_layers_;
 	int n;
 	int index;
 
@@ -638,9 +638,9 @@ idr_find(ulong idp, int id)
 			FAULT_ON_ERROR);
 		n = (layer + 1) * ipcs_table.idr_bits;
 	} else {
-		readmem(idp + LAZY_OFFSET(idr_layers), KVADDR, &idr_layers,
+		readmem(idp + LAZY_OFFSET(idr_layers), KVADDR, &idr_layers_,
 			sizeof(int), "idr.layers", FAULT_ON_ERROR);
-		n = idr_layers * ipcs_table.idr_bits;
+		n = idr_layers_ * ipcs_table.idr_bits;
 	}
 	id &= MAX_ID_MASK;
 

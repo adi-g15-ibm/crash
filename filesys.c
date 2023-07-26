@@ -1811,8 +1811,8 @@ inode_type(char *inode_buf, char *pathname)
         uint32_t umode32;
         uint16_t umode16;
         uint mode;
-        ulong inode_i_op;
-        ulong inode_i_fop;
+        ulong inode_i_op_;
+        ulong inode_i_fop_;
 	long i_fop_off;
 
         mode = umode16 = umode32 = 0;
@@ -1844,8 +1844,8 @@ inode_type(char *inode_buf, char *pathname)
 	if (S_ISFIFO(mode)) {
 		type = "FIFO";
 		if (symbol_exists("pipe_inode_operations")) {
-			inode_i_op = ULONG(inode_buf + LAZY_OFFSET(inode_i_op));
-			if (inode_i_op == 
+			inode_i_op_ = ULONG(inode_buf + LAZY_OFFSET(inode_i_op));
+			if (inode_i_op_ == 
 			    symbol_value("pipe_inode_operations")) {
 				type = "PIPE";
 				pathname[0] = NULLCHAR;
@@ -1853,8 +1853,8 @@ inode_type(char *inode_buf, char *pathname)
 		} else {
 			if (symbol_exists("rdwr_pipe_fops") && 
 			    (i_fop_off = LAZY_OFFSET(inode_i_fop)) > 0) {
-				 inode_i_fop = ULONG(inode_buf + i_fop_off);
-				 if (inode_i_fop == 
+				 inode_i_fop_ = ULONG(inode_buf + i_fop_off);
+				 if (inode_i_fop_ == 
 				     symbol_value("rdwr_pipe_fops")) { 
 					type = "PIPE";
 					pathname[0] = NULLCHAR;

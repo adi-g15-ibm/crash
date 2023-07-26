@@ -1299,7 +1299,7 @@ arm_get_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 
 	cpu_context = tt->thread_info + LAZY_OFFSET(thread_info_cpu_context);
 
-#define GET_REG(ptr, cp, off) ((*ptr) = (*((ulong *)((cp) + OFFSET(off)))))
+#define GET_REG(ptr, cp, off) ((*ptr) = (*((ulong *)((cp) + LAZY_OFFSET(off)))))
 	GET_REG(spp, cpu_context, cpu_context_save_sp);
 	GET_REG(pcp, cpu_context, cpu_context_save_pc);
 
