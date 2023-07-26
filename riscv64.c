@@ -660,14 +660,14 @@ riscv64_display_full_frame(struct bt_info *bt, struct riscv64_unwind_frame *curr
 static void
 riscv64_stackframe_init(void)
 {
-	long task_struct_thread = MEMBER_OFFSET("task_struct", "thread");
+	long task_struct_thread_ = MEMBER_OFFSET("task_struct", "thread");
 
 	/* from arch/riscv/include/asm/processor.h */
 	long thread_reg_ra = MEMBER_OFFSET("thread_struct", "ra");
 	long thread_reg_sp = MEMBER_OFFSET("thread_struct", "sp");
 	long thread_reg_fp = MEMBER_OFFSET("thread_struct", "s");
 
-	if ((task_struct_thread == INVALID_OFFSET) ||
+	if ((task_struct_thread_ == INVALID_OFFSET) ||
 	    (thread_reg_ra == INVALID_OFFSET) ||
 	    (thread_reg_sp == INVALID_OFFSET) ||
 	    (thread_reg_fp == INVALID_OFFSET) )
@@ -675,11 +675,11 @@ riscv64_stackframe_init(void)
 		      "cannot determine thread_struct offsets\n");
 
 	ASSIGN_OFFSET(task_struct_thread_context_pc) =
-		task_struct_thread + thread_reg_ra;
+		task_struct_thread_ + thread_reg_ra;
 	ASSIGN_OFFSET(task_struct_thread_context_sp) =
-		task_struct_thread + thread_reg_sp;
+		task_struct_thread_ + thread_reg_sp;
 	ASSIGN_OFFSET(task_struct_thread_context_fp) =
-		task_struct_thread + thread_reg_fp;
+		task_struct_thread_ + thread_reg_fp;
 }
 
 static void

@@ -324,7 +324,7 @@ void
 xen_hyper_x86_pcpu_init(void)
 {
 	ulong cpu_info;
-	ulong init_tss_base, init_tss, stack_base = 0;
+	ulong init_tss_base_, init_tss, stack_base = 0;
 	ulong sp;
 	struct xen_hyper_pcpu_context *pcc;
 	char *buf, *bp;
@@ -344,13 +344,13 @@ xen_hyper_x86_pcpu_init(void)
 		stack_base = symbol_value("stack_base");
 		flag = 0;
 	} else if (symbol_exists("per_cpu__init_tss")) {
-		init_tss_base = symbol_value("per_cpu__init_tss");
+		init_tss_base_ = symbol_value("per_cpu__init_tss");
 		flag = 1;
 	} else if (symbol_exists("per_cpu__tss_page")) {
-		init_tss_base = symbol_value("per_cpu__tss_page");
+		init_tss_base_ = symbol_value("per_cpu__tss_page");
 		flag = 1;
 	} else {
-		init_tss_base = symbol_value("init_tss");
+		init_tss_base_ = symbol_value("init_tss");
 		flag = 2;
 	}
 	if (flag)
@@ -359,9 +359,9 @@ xen_hyper_x86_pcpu_init(void)
 	{
 		if (flag) {
 			if (flag == 1)
-				init_tss = xen_hyper_per_cpu(init_tss_base, cpuid);
+				init_tss = xen_hyper_per_cpu(init_tss_base_, cpuid);
 			else
-				init_tss = init_tss_base + XEN_HYPER_SIZE(tss) * cpuid;
+				init_tss = init_tss_base_ + XEN_HYPER_SIZE(tss) * cpuid;
 			readmem(init_tss, KVADDR, buf,
 				XEN_HYPER_SIZE(tss), "init_tss", FAULT_ON_ERROR);
 			if (machine_type("X86")) {

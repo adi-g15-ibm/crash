@@ -359,7 +359,7 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 	struct bpf_info *bpf;
 	int i, c, found, entries, type;
 	uint uid, map_pages, key_size = 0, value_size = 0, max_entries = 0;
-	ulong bpf_prog_aux, bpf_func, end_func, addr, insnsi, user;
+	ulong bpf_prog_aux_, bpf_func, end_func, addr, insnsi, user;
 	ulong do_progs, do_maps;
 	ulonglong load_time;
 	char *symbol;
@@ -430,8 +430,8 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 		if (!readmem((ulong)bpf->proglist[i].value, KVADDR, bpf->bpf_prog_buf, 
 		    SIZE(bpf_prog), "struct bpf_prog", RETURN_ON_ERROR))
 			goto bailout;
-		bpf_prog_aux = ULONG(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_aux));
-		if (!readmem(bpf_prog_aux, KVADDR, bpf->bpf_prog_aux_buf, 
+		bpf_prog_aux_ = ULONG(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_aux));
+		if (!readmem(bpf_prog_aux_, KVADDR, bpf->bpf_prog_aux_buf, 
 		    SIZE(bpf_prog_aux), "struct bpf_prog_aux", RETURN_ON_ERROR))
 			goto bailout;
 
@@ -443,7 +443,7 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 		fprintf(fp, "%s %s %s ", 
 			mkstring(buf1, 4, CENTER|LJUST|LONG_DEC, MKSTR(bpf->proglist[i].index)),
 			mkstring(buf2, VADDR_PRLEN, CENTER|LJUST|LONG_HEX, MKSTR(bpf->proglist[i].value)),
-			mkstring(buf3, VADDR_PRLEN, CENTER|LJUST|LONG_HEX, MKSTR(bpf_prog_aux)));
+			mkstring(buf3, VADDR_PRLEN, CENTER|LJUST|LONG_HEX, MKSTR(bpf_prog_aux_)));
 		type = INT(bpf->bpf_prog_buf + LAZY_OFFSET(bpf_prog_type));
 		fprintf(fp, "%s ", 
 			mkstring(buf1, bpf->bpf_prog_type_size, CENTER|LJUST, bpf_prog_type_string(type, buf2)));
@@ -560,7 +560,7 @@ do_bpf(ulong flags, ulong prog_id, ulong map_id, int radix)
 			fprintf(fp, "\n");
 			dump_struct("bpf_prog", (ulong)bpf->proglist[i].value, radix);
 			fprintf(fp, "\n");
-			dump_struct("bpf_prog_aux", bpf_prog_aux, radix);
+			dump_struct("bpf_prog_aux", bpf_prog_aux_, radix);
 		}
 	}
 

@@ -737,7 +737,7 @@ unwind(struct unwind_frame_info *frame, int is_ehframe)
 void 
 init_unwind_table(void)
 {
-	ulong unwind_table_size;
+	ulong unwind_table_size_;
 	void *unwind_table;
 
 	kt->flags &= ~DWARF_UNWIND;
@@ -758,16 +758,16 @@ init_unwind_table(void)
 
 	if (symbol_exists("__start_unwind") &&
 	    symbol_exists("__end_unwind")) {
-		unwind_table_size = symbol_value("__end_unwind") - 
+		unwind_table_size_ = symbol_value("__end_unwind") - 
 			symbol_value("__start_unwind");
 
-		if (!(unwind_table = malloc(unwind_table_size))) {
+		if (!(unwind_table = malloc(unwind_table_size_))) {
 			error(WARNING, "cannot malloc unwind table space\n");
 			goto try_eh_frame;
 		}
 
 		if (!readmem(symbol_value("__start_unwind"), KVADDR, unwind_table,
-            	    unwind_table_size, "unwind table", RETURN_ON_ERROR)) {
+            	    unwind_table_size_, "unwind table", RETURN_ON_ERROR)) {
 			error(WARNING, "cannot read unwind table data\n");
 			free(unwind_table);
 			goto try_eh_frame;
@@ -777,7 +777,7 @@ init_unwind_table(void)
 		if (!(kt->flags & NO_DWARF_UNWIND))
 			kt->flags |= DWARF_UNWIND;
 
-		default_unwind_table.size = unwind_table_size;
+		default_unwind_table.size = unwind_table_size_;
 		default_unwind_table.address = unwind_table;
 
 		if (CRASHDEBUG(1)) 
@@ -793,10 +793,10 @@ try_eh_frame:
 		int is_ehframe = (!st->dwarf_debug_frame_size &&
 				   st->dwarf_eh_frame_size);
 
-		unwind_table_size = is_ehframe ? st->dwarf_eh_frame_size :
+		unwind_table_size_ = is_ehframe ? st->dwarf_eh_frame_size :
 						 st->dwarf_debug_frame_size;
 
-		if (!(unwind_table = malloc(unwind_table_size))) {
+		if (!(unwind_table = malloc(unwind_table_size_))) {
 			error(WARNING, "cannot malloc unwind table space\n");
 			return;
 		}
@@ -813,8 +813,8 @@ try_eh_frame:
 		else
 			lseek(fd, st->dwarf_debug_frame_file_offset, SEEK_SET);
 
-		if (read(fd, unwind_table, unwind_table_size) !=
-		    unwind_table_size) {
+		if (read(fd, unwind_table, unwind_table_size_) !=
+		    unwind_table_size_) {
 			if (CRASHDEBUG(1))
 				error(WARNING, "cannot read %s data from %s\n",
 			        	is_ehframe ? ".eh_frame" : ".debug_frame", pc->namelist);
@@ -825,7 +825,7 @@ try_eh_frame:
 
 		close(fd);
 
-		default_unwind_table.size = unwind_table_size;
+		default_unwind_table.size = unwind_table_size_;
 		default_unwind_table.address = unwind_table;
 
 		kt->flags |= DWARF_UNWIND_EH_FRAME;

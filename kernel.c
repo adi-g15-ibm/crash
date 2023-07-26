@@ -3600,7 +3600,7 @@ verify_modules(void)
         ulong mod, mod_next, mod_base;
 	long mod_size;
         char *modbuf, *module_name_str;
-	ulong module_list, mod_name; 
+	ulong module_list_, mod_name; 
 	physaddr_t paddr;
 	int mods_installed;
 	struct load_module *lm;
@@ -3612,15 +3612,15 @@ verify_modules(void)
 	switch (kt->flags & (KMOD_V1|KMOD_V2))
 	{
 	case KMOD_V1:
-        	get_symbol_data("module_list", sizeof(ulong), &module_list);
+        	get_symbol_data("module_list", sizeof(ulong), &module_list_);
 		break;
 	case KMOD_V2:
                 if (kt->module_list == symbol_value("modules")) {
 			if (!kt->mods_installed)
 				return TRUE;
                 }
-                get_symbol_data("modules", sizeof(ulong), &module_list);
-                module_list -= LAZY_OFFSET(module_list);
+                get_symbol_data("modules", sizeof(ulong), &module_list_);
+                module_list_ -= LAZY_OFFSET(module_list);
 		break;
 	}
 
@@ -3628,7 +3628,7 @@ verify_modules(void)
 	mod_base = mod_next = 0;
         modbuf = GETBUF(SIZE(module));
 
-        for (mod = module_list; mod != kt->kernel_module; mod = mod_next) {
+        for (mod = module_list_; mod != kt->kernel_module; mod = mod_next) {
 
                 if (!readmem(mod, KVADDR, modbuf, SIZE(module), 
 		    "module struct", RETURN_ON_ERROR|QUIET)) {
@@ -4028,7 +4028,7 @@ show_module_taint_4_10(void)
 	char buf2[BUFSIZE];
 	struct syment *sp;
 	ulong *taintsp, taints;
-	bool tnt_mod;
+	bool tnt_mod_;
 	char tnt_true;
 	int tnts_len;
 	ulong tnts_addr;
@@ -4095,9 +4095,9 @@ show_module_taint_4_10(void)
 		for (j = 0; j < tnts_len; j++) {
 			readmem((tnts_addr + j * SIZE(taint_flag)) +
 					LAZY_OFFSET(tnt_mod),
-					KVADDR, &tnt_mod, sizeof(bool),
+					KVADDR, &tnt_mod_, sizeof(bool),
 					"tnt mod", FAULT_ON_ERROR);
-			if (!tnt_mod)
+			if (!tnt_mod_)
 				continue;
 			if (NUM_IN_BITMAP(taintsp, j)) {
 				readmem((tnts_addr + j * SIZE(taint_flag)) +
@@ -4129,7 +4129,7 @@ show_module_taint(void)
 	int gpgsig_ok, license_gplok;
 	struct syment *sp;
 	uint *taintsp, taints;
-	uint8_t tnt_bit;
+	uint8_t tnt_bit_;
 	char tnt_true, tnt_false;
 	int tnts_exists, tnts_len;
 	ulong tnts_addr;
@@ -4220,10 +4220,10 @@ show_module_taint(void)
 			taintsp = &taints;
 			for (j = 0; j < (tnts_len * SIZE(tnt)); j += SIZE(tnt)) {
 				readmem((tnts_addr + j) + LAZY_OFFSET(tnt_bit),
-					KVADDR, &tnt_bit, sizeof(uint8_t), 
+					KVADDR, &tnt_bit_, sizeof(uint8_t), 
 					"tnt bit", FAULT_ON_ERROR);
 
-				if (NUM_IN_BITMAP(taintsp, tnt_bit)) {
+				if (NUM_IN_BITMAP(taintsp, tnt_bit_)) {
 					readmem((tnts_addr + j) + OFFSET(tnt_true),
 						KVADDR, &tnt_true, sizeof(char), 
 						"tnt true", FAULT_ON_ERROR);
@@ -11088,7 +11088,7 @@ static void
 show_kernel_taints(char *buf, int verbose)
 {
 	int i, bx;
-	uint8_t tnt_bit;
+	uint8_t tnt_bit_;
 	char tnt_true, tnt_false;
 	int tnts_len = 0;
 	ulong tnts_addr;
@@ -11145,10 +11145,10 @@ show_kernel_taints(char *buf, int verbose)
 	if (VALID_STRUCT(tnt)) {
 		for (i = 0; i < (tnts_len * SIZE(tnt)); i += SIZE(tnt)) {
 			readmem((tnts_addr + i) + LAZY_OFFSET(tnt_bit),
-				KVADDR, &tnt_bit, sizeof(uint8_t),
+				KVADDR, &tnt_bit_, sizeof(uint8_t),
 				"tnt bit", FAULT_ON_ERROR);
 
-			if (NUM_IN_BITMAP(tainted_mask_ptr, tnt_bit)) {
+			if (NUM_IN_BITMAP(tainted_mask_ptr, tnt_bit_)) {
 				readmem((tnts_addr + i) + OFFSET(tnt_true),
 					KVADDR, &tnt_true, sizeof(char),
 					"tnt true", FAULT_ON_ERROR);

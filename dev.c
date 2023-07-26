@@ -400,8 +400,8 @@ search_cdev_map_probes(char *name, int major, int minor, ulong *cdev)
 {
 	char *probe_buf;
 	ulong probes[MAX_DEV];
-	ulong cdev_map, addr, next, ops, probe_data;
-	uint probe_dev;
+	ulong cdev_map, addr, next, ops, probe_data_;
+	uint probe_dev_;
 
 	if (kernel_symbol_exists("cdev_map"))
 		get_symbol_data("cdev_map", sizeof(ulong), &cdev_map);
@@ -422,17 +422,17 @@ search_cdev_map_probes(char *name, int major, int minor, ulong *cdev)
 		    "struct probe", QUIET|RETURN_ON_ERROR))
 			break;
 
-		probe_dev = UINT(probe_buf + LAZY_OFFSET(probe_dev));
+		probe_dev_ = UINT(probe_buf + LAZY_OFFSET(probe_dev));
 
-		if ((MAJOR(probe_dev) == major) && 
-		    (MINOR(probe_dev) == minor)) {
-			probe_data = ULONG(probe_buf + LAZY_OFFSET(probe_data));
-			addr = probe_data + LAZY_OFFSET(cdev_ops);
+		if ((MAJOR(probe_dev_) == major) && 
+		    (MINOR(probe_dev_) == minor)) {
+			probe_data_ = ULONG(probe_buf + LAZY_OFFSET(probe_data));
+			addr = probe_data_ + LAZY_OFFSET(cdev_ops);
 			if (!readmem(addr, KVADDR, &ops, sizeof(void *),
 	    		    "cdev ops", QUIET|RETURN_ON_ERROR))
 				ops = 0;
 			else 
-				*cdev = probe_data;
+				*cdev = probe_data_;
 			break;
 		}
 
@@ -750,8 +750,8 @@ search_bdev_map_probes(char *name, int major, int minor, ulong *gendisk)
 {
 	char *probe_buf, *gendisk_buf;
 	ulong probes[MAX_DEV];
-	ulong bdev_map, addr, next, probe_data, fops;
-	uint probe_dev;
+	ulong bdev_map, addr, next, probe_data_, fops;
+	uint probe_dev_;
 
 	get_symbol_data("bdev_map", sizeof(ulong), &bdev_map);
 
@@ -772,15 +772,15 @@ search_bdev_map_probes(char *name, int major, int minor, ulong *gendisk)
 		    "struct probe", QUIET|RETURN_ON_ERROR))
 			break;
 
-		probe_data = ULONG(probe_buf + LAZY_OFFSET(probe_data));
-		if (!probe_data)
+		probe_data_ = ULONG(probe_buf + LAZY_OFFSET(probe_data));
+		if (!probe_data_)
 			continue;
 
-		probe_dev = UINT(probe_buf + LAZY_OFFSET(probe_dev));
-		if (MAJOR(probe_dev) != major)
+		probe_dev_ = UINT(probe_buf + LAZY_OFFSET(probe_dev));
+		if (MAJOR(probe_dev_) != major)
 			continue;
 
-		if (!readmem(probe_data, KVADDR, gendisk_buf,
+		if (!readmem(probe_data_, KVADDR, gendisk_buf,
 		    SIZE(gendisk), "gendisk buffer",
 		    QUIET|RETURN_ON_ERROR))
 			break;
@@ -788,7 +788,7 @@ search_bdev_map_probes(char *name, int major, int minor, ulong *gendisk)
 		fops = ULONG(gendisk_buf + LAZY_OFFSET(gendisk_fops));
 
 		if (fops) {
-			*gendisk = probe_data;
+			*gendisk = probe_data_;
 			break;
 		}
 	}
@@ -806,7 +806,7 @@ search_blockdev_inodes(int major, ulong *gendisk)
 {
 	struct list_data list_data, *ld;
 	ulong addr, bd_sb, disk, fops = 0;
-	int i, inode_count, gendisk_major;
+	int i, inode_count, gendisk_major_;
 	char *gendisk_buf;
 
 	ld = &list_data;
@@ -843,8 +843,8 @@ search_blockdev_inodes(int major, ulong *gendisk)
 		    "gendisk buffer", QUIET|RETURN_ON_ERROR))
 			continue;
 
-		gendisk_major = INT(gendisk_buf + LAZY_OFFSET(gendisk_major));
-		if (gendisk_major != major)
+		gendisk_major_ = INT(gendisk_buf + LAZY_OFFSET(gendisk_major));
+		if (gendisk_major_ != major)
 			continue;
 
 		fops = ULONG(gendisk_buf + LAZY_OFFSET(gendisk_fops));
@@ -4120,12 +4120,12 @@ static int
 match_list(struct iter *i, unsigned long entry)
 {
 	unsigned long device_address;
-	unsigned long device_type;
+	unsigned long device_type_;
 
 	device_address = entry - LAZY_OFFSET(device_node);
-	readmem(device_address + LAZY_OFFSET(device_type), KVADDR, &device_type,
-		sizeof(device_type), "device.type", FAULT_ON_ERROR);
-	if (device_type != i->type_address)
+	readmem(device_address + LAZY_OFFSET(device_type), KVADDR, &device_type_,
+		sizeof(device_type_), "device.type", FAULT_ON_ERROR);
+	if (device_type_ != i->type_address)
 		return FALSE;
 
 	return TRUE;
@@ -4136,7 +4136,7 @@ static int
 match_klist(struct iter *i, unsigned long entry)
 {
 	unsigned long device_address;
-	unsigned long device_type;
+	unsigned long device_type_;
 	unsigned long device_private_address;
 
 	if (VALID_MEMBER_LAZY(device_knode_class))
@@ -4149,9 +4149,9 @@ match_klist(struct iter *i, unsigned long entry)
 			KVADDR, &device_address, sizeof(device_address),
 			"device_private.device", FAULT_ON_ERROR);
 	}
-	readmem(device_address + LAZY_OFFSET(device_type), KVADDR, &device_type,
-		sizeof(device_type), "device.type", FAULT_ON_ERROR);
-	if (device_type != i->type_address)
+	readmem(device_address + LAZY_OFFSET(device_type), KVADDR, &device_type_,
+		sizeof(device_type_), "device.type", FAULT_ON_ERROR);
+	if (device_type_ != i->type_address)
 		return FALSE;
 
 	return TRUE;

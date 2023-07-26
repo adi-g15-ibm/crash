@@ -2231,7 +2231,7 @@ arm64_overflow_stack_init(void)
 static void
 arm64_stackframe_init(void)
 {
-	long task_struct_thread;
+	long task_struct_thread_;
 	long thread_struct_cpu_context;
 	long context_sp, context_pc, context_fp;
 	struct syment *sp1, *sp1n, *sp2, *sp2n, *sp3, *sp3n;
@@ -2282,10 +2282,10 @@ arm64_stackframe_init(void)
 		machdep->flags |= KDUMP_ENABLED;
 	}
 
-	task_struct_thread = MEMBER_OFFSET("task_struct", "thread");
+	task_struct_thread_ = MEMBER_OFFSET("task_struct", "thread");
 	thread_struct_cpu_context = MEMBER_OFFSET("thread_struct", "cpu_context");
 
-	if ((task_struct_thread == INVALID_OFFSET) ||
+	if ((task_struct_thread_ == INVALID_OFFSET) ||
 	    (thread_struct_cpu_context == INVALID_OFFSET)) {
 		error(INFO, 
 		    "cannot determine task_struct.thread.context offset\n");
@@ -2329,11 +2329,11 @@ arm64_stackframe_init(void)
 		return;
 	}
 	ASSIGN_OFFSET(task_struct_thread_context_sp) =
-		task_struct_thread + thread_struct_cpu_context + context_sp;
+		task_struct_thread_ + thread_struct_cpu_context + context_sp;
 	ASSIGN_OFFSET(task_struct_thread_context_fp) =
-		task_struct_thread + thread_struct_cpu_context + context_fp;
+		task_struct_thread_ + thread_struct_cpu_context + context_fp;
 	ASSIGN_OFFSET(task_struct_thread_context_pc) =
-		task_struct_thread + thread_struct_cpu_context + context_pc;
+		task_struct_thread_ + thread_struct_cpu_context + context_pc;
 }
 
 #define KERNEL_MODE (1)

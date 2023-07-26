@@ -714,11 +714,11 @@ mips_get_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 static void
 mips_stackframe_init(void)
 {
-	long task_struct_thread = MEMBER_OFFSET("task_struct", "thread");
+	long task_struct_thread_ = MEMBER_OFFSET("task_struct", "thread");
 	long thread_reg29 = MEMBER_OFFSET("thread_struct", "reg29");
 	long thread_reg31 = MEMBER_OFFSET("thread_struct", "reg31");
 
-	if ((task_struct_thread == INVALID_OFFSET) ||
+	if ((task_struct_thread_ == INVALID_OFFSET) ||
 	    (thread_reg29 == INVALID_OFFSET) ||
 	    (thread_reg31 == INVALID_OFFSET)) {
 		error(FATAL,
@@ -727,9 +727,9 @@ mips_stackframe_init(void)
 	}
 
 	ASSIGN_OFFSET(task_struct_thread_reg29) =
-		task_struct_thread + thread_reg29;
+		task_struct_thread_ + thread_reg29;
 	ASSIGN_OFFSET(task_struct_thread_reg31) =
-		task_struct_thread + thread_reg31;
+		task_struct_thread_ + thread_reg31;
 
 	STRUCT_SIZE_INIT(pt_regs, "pt_regs");
 }

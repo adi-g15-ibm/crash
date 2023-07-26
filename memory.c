@@ -10102,7 +10102,7 @@ static char *
 vaddr_to_kmem_cache(ulong vaddr, char *buf, int verbose)
 {
 	physaddr_t paddr;
-	ulong page, cache, page_flags;
+	ulong page, cache, page_flags_;
 
         if (!kvtop(NULL, vaddr, &paddr, 0)) {
 		if (verbose)
@@ -10122,16 +10122,16 @@ vaddr_to_kmem_cache(ulong vaddr, char *buf, int verbose)
 
 	if (vt->PG_slab) {
 		readmem(page+LAZY_OFFSET(page_flags), KVADDR,
-			&page_flags, sizeof(ulong), "page.flags",
+			&page_flags_, sizeof(ulong), "page.flags",
 			FAULT_ON_ERROR);
-		if (!(page_flags & (1 << vt->PG_slab))) {
+		if (!(page_flags_ & (1 << vt->PG_slab))) {
 			if (((vt->flags & KMALLOC_SLUB) || VALID_MEMBER(page_compound_head)) ||
 			    ((vt->flags & KMALLOC_COMMON) &&
 			    VALID_MEMBER(page_slab) && VALID_MEMBER(page_first_page))) {
 				readmem(compound_head(page)+LAZY_OFFSET(page_flags), KVADDR,
-					&page_flags, sizeof(ulong), "page.flags",
+					&page_flags_, sizeof(ulong), "page.flags",
 					FAULT_ON_ERROR);
-				if (!(page_flags & (1 << vt->PG_slab)))
+				if (!(page_flags_ & (1 << vt->PG_slab)))
 					return NULL;
 			} else
 				return NULL;
@@ -20578,7 +20578,7 @@ char *
 is_slab_page(struct meminfo *si, char *buf)
 {
 	int i, cnt;
-	ulong page_slab, page_flags, name;
+	ulong page_slab, page_flags_, name;
         ulong *cache_list;
         char *retval;
 
@@ -20589,11 +20589,11 @@ is_slab_page(struct meminfo *si, char *buf)
 		return NULL;
 
 	if (!readmem(si->spec_addr + LAZY_OFFSET(page_flags), KVADDR, 
-	    &page_flags, sizeof(ulong), "page.flags", 
+	    &page_flags_, sizeof(ulong), "page.flags", 
 	    RETURN_ON_ERROR|QUIET))
 		return NULL;
 
-	if (!(page_flags & (1 << vt->PG_slab)))
+	if (!(page_flags_ & (1 << vt->PG_slab)))
 		return NULL;
 
 	if (!readmem(si->spec_addr + OFFSET(page_slab), KVADDR, 

@@ -9297,21 +9297,21 @@ orc_module_find(ulong ip)
 {
 	struct load_module *lm;
 	uint num_orcs;
-	ulong orc_unwind_ip, orc_unwind, module_arch;
+	ulong orc_unwind_ip, orc_unwind, module_arch_;
 	struct ORC_data *orc = &machdep->machspec->orc;
 
 	if (!(orc->module_ORC) || !module_symbol(ip, NULL, &lm, NULL, 0))
 		return NULL;
 
-	module_arch = lm->module_struct + LAZY_OFFSET(module_arch);
+	module_arch_ = lm->module_struct + LAZY_OFFSET(module_arch);
 
-	if (!readmem(module_arch + LAZY_OFFSET(mod_arch_specific_num_orcs), KVADDR, 
+	if (!readmem(module_arch_ + LAZY_OFFSET(mod_arch_specific_num_orcs), KVADDR, 
 	    &num_orcs, sizeof(int), "module num_orcs", RETURN_ON_ERROR|QUIET)) 
 		return NULL;
-	if (!readmem(module_arch + LAZY_OFFSET(mod_arch_specific_orc_unwind_ip), KVADDR, 
+	if (!readmem(module_arch_ + LAZY_OFFSET(mod_arch_specific_orc_unwind_ip), KVADDR, 
 	    &orc_unwind_ip, sizeof(void *), "module orc_unwind_ip", RETURN_ON_ERROR|QUIET)) 
 		return NULL;
-	if (!readmem(module_arch + LAZY_OFFSET(mod_arch_specific_orc_unwind), KVADDR, 
+	if (!readmem(module_arch_ + LAZY_OFFSET(mod_arch_specific_orc_unwind), KVADDR, 
 	    &orc_unwind, sizeof(void *), "module orc_unwind", RETURN_ON_ERROR|QUIET)) 
 		return NULL;
 
