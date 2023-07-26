@@ -14394,6 +14394,16 @@ SIZE_option(long size1, long size2, char *func, char *file, int line,
 long
 get_lazy_offset(enum lazy_offset off)
 {
+	static char errmsg[BUFSIZE];
+
+	if (off <= 0 || off >= NUM_LAZY_OFFSETS) {
+		void *retaddr[NUMBER_STACKFRAMES] = { 0 };
+
+		SAVE_RETURN_ADDRESS(retaddr);
+		sprintf(errmsg, "invalid integer, not representing any valid lazy offset: %d",
+			off);
+		datatype_error(retaddr, errmsg, __FUNCTION__, __FILE__, __LINE__);
+	}
     if (lazy_offset_cache[off] != UNINITIALISED_OFFSET) {
         return lazy_offset_cache[off];
     }
@@ -14418,7 +14428,7 @@ get_lazy_offset(enum lazy_offset off)
 long
 OFFSET_verify(long offset, char *func, char *file, int line, char *item)
 {
-	char errmsg[BUFSIZE];
+	static char errmsg[BUFSIZE];
 
 	if (!(pc->flags & DATADEBUG))
 		return offset;
