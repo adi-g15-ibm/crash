@@ -1227,6 +1227,8 @@ struct reference {
 /* These offsets can be lazy initialised using information from
  * `lazy_offset_initinfo` array. Access these using LAZY_OFFSET(X) */
 enum lazy_offset {
+	_PLACEHOLDER_OFFSET,  // Don't remove this offset, this way uninitialised int
+						  // with value 0 is not a valid lazy offset
 	RESIDUAL_VitalProductData,
 	VPD_ProcessorHz,
 	__wait_queue_head_task_list,
