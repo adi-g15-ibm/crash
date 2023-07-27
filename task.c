@@ -251,6 +251,11 @@ task_init(void)
 		get_idle_threads(&tt->idle_threads[0], kt->cpus);
 	}
 
+	/*
+     * Handle CONFIG_THREAD_INFO_IN_TASK changes
+     */
+    MEMBER_OFFSET_INIT(task_struct_thread_info, "task_struct", "thread_info");
+
 	if (VALID_MEMBER(task_struct_thread_info)) {
 		switch (MEMBER_TYPE("task_struct", "thread_info"))
 		{
@@ -265,7 +270,8 @@ task_init(void)
 				MEMBER_TYPE("task_struct", "thread_info"));
 			break;
 		}
-	}
+	} else if (VALID_MEMBER_LAZY(task_struct_stack))
+        MEMBER_OFFSET_INIT(task_struct_thread_info, "task_struct", "stack");
 
 	if (VALID_MEMBER(task_struct_thread_info)) {
 		if (tt->flags & THREAD_INFO_IN_TASK && VALID_MEMBER_LAZY(task_struct_cpu)) {
@@ -273,6 +279,11 @@ task_init(void)
 			ASSIGN_OFFSET(thread_info_task) = INVALID_OFFSET;
 			ASSIGN_OFFSET(thread_info_cpu) = INVALID_OFFSET;
 			ASSIGN_OFFSET(thread_info_previous_esp) = INVALID_OFFSET;
+        } else {
+            MEMBER_OFFSET_INIT(thread_info_task, "thread_info", "task");
+            MEMBER_OFFSET_INIT(thread_info_cpu, "thread_info", "cpu");
+            MEMBER_OFFSET_INIT(thread_info_previous_esp, "thread_info",
+                "previous_esp");
 		}
 		STRUCT_SIZE_INIT(thread_info, "thread_info");
 		tt->flags |= THREAD_INFO;
@@ -9607,6 +9618,7 @@ cfs_rq_offset_init(void)
 		STRUCT_SIZE_INIT(cfs_rq, "cfs_rq");
 		STRUCT_SIZE_INIT(rt_rq, "rt_rq");
 		STRUCT_SIZE_INIT(sched_entity, "sched_entity");
+		MEMBER_OFFSET_INIT(cfs_rq_rb_leftmost, "cfs_rq", "rb_leftmost");
 		if (INVALID_MEMBER(cfs_rq_rb_leftmost) && 
 		    VALID_MEMBER_LAZY(cfs_rq_tasks_timeline) &&
 		    MEMBER_EXISTS("rb_root_cached", "rb_leftmost"))

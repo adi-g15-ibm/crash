@@ -501,6 +501,7 @@ x86_64_init(int when)
 		if (INVALID_MEMBER(thread_struct_rsp0))
 			MEMBER_OFFSET_INIT(thread_struct_rsp0, "thread_struct", "sp0");
 		STRUCT_SIZE_INIT(tss_struct, "tss_struct");
+		MEMBER_OFFSET_INIT(tss_struct_ist, "tss_struct", "ist");
 		if (INVALID_MEMBER(tss_struct_ist)) {
 			long x86_tss_offset, ist_offset;
 			x86_tss_offset = MEMBER_OFFSET("tss_struct", "x86_tss");
@@ -525,6 +526,10 @@ x86_64_init(int when)
 		if (INVALID_MEMBER(user_regs_struct_eflags))
 			MEMBER_OFFSET_INIT(user_regs_struct_eflags,
 				"user_regs_struct", "flags");
+		MEMBER_OFFSET_INIT(user_regs_struct_cs,
+            "user_regs_struct", "cs");
+        MEMBER_OFFSET_INIT(user_regs_struct_ss,
+            "user_regs_struct", "ss");
 		MEMBER_OFFSET_INIT(user_regs_struct_rax,
 			"user_regs_struct", "rax");
 		if (INVALID_MEMBER(user_regs_struct_rax))
@@ -560,6 +565,22 @@ x86_64_init(int when)
 		if (INVALID_MEMBER(user_regs_struct_rbp))
 			MEMBER_OFFSET_INIT(user_regs_struct_rbp,
 				"user_regs_struct", "bp");
+        MEMBER_OFFSET_INIT(user_regs_struct_r8,
+            "user_regs_struct", "r8");
+        MEMBER_OFFSET_INIT(user_regs_struct_r9,
+            "user_regs_struct", "r9");
+        MEMBER_OFFSET_INIT(user_regs_struct_r10,
+            "user_regs_struct", "r10");
+        MEMBER_OFFSET_INIT(user_regs_struct_r11,
+            "user_regs_struct", "r11");
+        MEMBER_OFFSET_INIT(user_regs_struct_r12,
+            "user_regs_struct", "r12");
+        MEMBER_OFFSET_INIT(user_regs_struct_r13,
+            "user_regs_struct", "r13");
+        MEMBER_OFFSET_INIT(user_regs_struct_r14,
+            "user_regs_struct", "r14");
+        MEMBER_OFFSET_INIT(user_regs_struct_r15,
+            "user_regs_struct", "r15");
 		STRUCT_SIZE_INIT(user_regs_struct, "user_regs_struct");
 		if (!VALID_STRUCT(user_regs_struct)) {
 			/*  Use this hardwired version -- sometimes the
