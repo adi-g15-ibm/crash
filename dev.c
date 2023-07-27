@@ -4795,6 +4795,10 @@ void diskio_init(void)
 	MEMBER_OFFSET_INIT(gendisk_dev, "gendisk", "dev");
 	if (INVALID_MEMBER(gendisk_dev))
 		MEMBER_OFFSET_INIT(gendisk_dev, "gendisk", "__dev");
+	if (MEMBER_EXISTS("request_queue", "rq"))
+        MEMBER_OFFSET_INIT(request_queue_rq, "request_queue", "rq");
+    else
+        MEMBER_OFFSET_INIT(request_queue_rq, "request_queue", "root_rl");
 	if (MEMBER_EXISTS("request_queue", "mq_ops")) {
 		ANON_MEMBER_OFFSET_INIT(request_queue_queue_ctx,
 			"request_queue", "queue_ctx");

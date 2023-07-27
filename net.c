@@ -157,6 +157,7 @@ net_init(void)
 			STRUCT_SIZE_INIT(socket, "socket");
 
 			if (STRUCT_EXISTS("inet_opt")) {
+				MEMBER_OFFSET_INIT(inet_sock_inet, "inet_sock", "inet");
 				MEMBER_OFFSET_INIT(inet_opt_daddr, "inet_opt", "daddr");
 				MEMBER_OFFSET_INIT(inet_opt_rcv_saddr, "inet_opt", "rcv_saddr");
 				MEMBER_OFFSET_INIT(inet_opt_dport, "inet_opt", "dport");

@@ -555,7 +555,12 @@ kernel_init()
 			kt->flags |= KALLSYMS_V1;
 	}
 
+	MEMBER_OFFSET_INIT(module_num_symtab, "module", "num_symtab");
+
 	if (VALID_MEMBER(module_num_symtab)) {
+		MEMBER_OFFSET_INIT(module_symtab, "module", "symtab");
+        MEMBER_OFFSET_INIT(module_strtab, "module", "strtab");
+
 		if (!(kt->flags & NO_KALLSYMS))
 			kt->flags |= KALLSYMS_V2;
 	}
@@ -3357,11 +3362,45 @@ module_init(void)
 			if (get_array_length("module.mem", NULL, 0) != MOD_MEM_NUM_TYPES)
 				error(WARNING, "module memory types have changed!\n");
 
+		} else if (MEMBER_EXISTS("module", "module_core")) {
+            MEMBER_OFFSET_INIT(module_core_size, "module",
+                       "core_size");
+            MEMBER_OFFSET_INIT(module_init_size, "module",
+                       "init_size");
+
+            MEMBER_OFFSET_INIT(module_core_text_size, "module",
+                       "core_text_size");
+            MEMBER_OFFSET_INIT(module_init_text_size, "module",
+                       "init_text_size");
+
+            MEMBER_OFFSET_INIT(module_module_core, "module",
+                       "module_core");
+            MEMBER_OFFSET_INIT(module_module_init, "module",
+                       "module_init");
 		} else if (MEMBER_EXISTS("module", "module_core_rx")) {
 			if (CRASHDEBUG(1))
 				error(INFO, "PaX module layout detected.\n");
 			kt->flags2 |= KMOD_PAX;
 
+            MEMBER_OFFSET_INIT(module_core_size_rw, "module",
+                       "core_size_rw");
+            MEMBER_OFFSET_INIT(module_core_size_rx, "module",
+                       "core_size_rx");
+
+            MEMBER_OFFSET_INIT(module_init_size_rw, "module",
+                       "init_size_rw");
+            MEMBER_OFFSET_INIT(module_init_size_rx, "module",
+                       "init_size_rx");
+
+            MEMBER_OFFSET_INIT(module_module_core_rw, "module",
+                       "module_core_rw");
+            MEMBER_OFFSET_INIT(module_module_core_rx, "module",
+                       "module_core_rx");
+
+            MEMBER_OFFSET_INIT(module_module_init_rw, "module",
+                       "module_init_rw");
+            MEMBER_OFFSET_INIT(module_module_init_rx, "module",
+                       "module_init_rx");
 		} else if (MEMBER_EXISTS("module_layout", "base_rx")) {
 			if (CRASHDEBUG(1))
 				error(INFO, "PaX module layout detected.\n");

@@ -1995,6 +1995,8 @@ create_dentry_array_percpu(ulong percpu_list_addr, int *count)
 void
 vfs_init(void)
 { 
+	MEMBER_OFFSET_INIT(file_f_dentry, "file", "f_dentry");
+    MEMBER_OFFSET_INIT(file_f_vfsmnt, "file", "f_vfsmnt");
 	if (INVALID_MEMBER(file_f_dentry)) {
 		ASSIGN_OFFSET(file_f_dentry) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_dentry);
 		ASSIGN_OFFSET(file_f_vfsmnt) = LAZY_OFFSET(file_f_path) + LAZY_OFFSET(path_mnt);
@@ -2003,7 +2005,12 @@ vfs_init(void)
 	if (INVALID_MEMBER(qstr_len))
 		ANON_MEMBER_OFFSET_INIT(qstr_len, "qstr", "len");
 
-	if (THIS_KERNEL_VERSION >= LINUX(2,4,20)) {
+	MEMBER_OFFSET_INIT(namespace_root, "namespace", "root");
+    if (VALID_MEMBER(namespace_root)) {
+        MEMBER_OFFSET_INIT(namespace_list, "namespace", "list");
+        MEMBER_OFFSET_INIT(task_struct_namespace,
+            "task_struct", "namespace");
+    } else if (THIS_KERNEL_VERSION >= LINUX(2,4,20)) {
 		if (CRASHDEBUG(2))
 			fprintf(fp, "hardwiring namespace stuff\n");
 		ASSIGN_OFFSET(task_struct_namespace) = LAZY_OFFSET(task_struct_files) +

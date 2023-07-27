@@ -1843,6 +1843,12 @@ x86_init(int when)
 		else
 			MEMBER_OFFSET_INIT(user_regs_struct_ebp,
 				"user_regs_struct", "bp");
+        if (MEMBER_EXISTS("user_regs_struct", "esp"))
+            MEMBER_OFFSET_INIT(user_regs_struct_esp,
+                "user_regs_struct", "esp");
+        else
+            MEMBER_OFFSET_INIT(user_regs_struct_esp,
+                "user_regs_struct", "sp");
 		if (MEMBER_EXISTS("user_regs_struct", "eip"))
 			MEMBER_OFFSET_INIT(user_regs_struct_eip,
 				"user_regs_struct", "eip");
@@ -1873,6 +1879,12 @@ x86_init(int when)
 		else
 			MEMBER_OFFSET_INIT(user_regs_struct_edx,
 				"user_regs_struct", "dx");
+        if (MEMBER_EXISTS("user_regs_struct", "esi"))
+            MEMBER_OFFSET_INIT(user_regs_struct_esi,
+                "user_regs_struct", "esi");
+        else
+            MEMBER_OFFSET_INIT(user_regs_struct_esi,
+                "user_regs_struct", "si");
 		if (MEMBER_EXISTS("user_regs_struct", "edi"))
 			MEMBER_OFFSET_INIT(user_regs_struct_edi,
 				"user_regs_struct", "edi");
@@ -1885,6 +1897,18 @@ x86_init(int when)
 		else
 			MEMBER_OFFSET_INIT(user_regs_struct_eflags,
 				"user_regs_struct", "flags");
+        MEMBER_OFFSET_INIT(user_regs_struct_cs,
+            "user_regs_struct", "cs");
+        MEMBER_OFFSET_INIT(user_regs_struct_ds,
+            "user_regs_struct", "ds");
+        MEMBER_OFFSET_INIT(user_regs_struct_es,
+            "user_regs_struct", "es");
+        MEMBER_OFFSET_INIT(user_regs_struct_fs,
+            "user_regs_struct", "fs");
+        MEMBER_OFFSET_INIT(user_regs_struct_gs,
+            "user_regs_struct", "gs");
+        MEMBER_OFFSET_INIT(user_regs_struct_ss,
+            "user_regs_struct", "ss");
 		if (!VALID_STRUCT(user_regs_struct)) {
 			/*  Use this hardwired version -- sometimes the 
 			 *  debuginfo doesn't pick this up even though
