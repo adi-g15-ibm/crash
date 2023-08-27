@@ -298,6 +298,20 @@ struct machine_specific book3e_machine_specific = {
 	.is_vmaddr = book3e_is_vmaddr,
 };
 
+/**
+ * This is a check that determines whether we trust the prstatus note, some
+ * architectures use the machdep->is_cpu_prstatus_valid hook to verify whether
+ * 'crash_notes' is valid
+ *
+ * On PPC64 though, we simply read the prstatus notes provided in vmcore/elf
+ * notes, so we don't have any additional checks for 'crash_notes', hence simply
+ * return TRUE for all cpus
+ */
+int ppc64_is_cpu_prstatus_valid(int cpu)
+{
+	return TRUE;
+}
+
 #define SKIBOOT_BASE			0x30000000
 
 /*
@@ -418,6 +432,7 @@ ppc64_init(int when)
 		break;
 
 	case POST_GDB:
+		machdep->is_cpu_prstatus_valid = ppc64_is_cpu_prstatus_valid;
 		ms = machdep->machspec;
 
 		if (!(machdep->flags & BOOK3E)) {
