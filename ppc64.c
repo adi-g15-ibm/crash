@@ -298,6 +298,15 @@ struct machine_specific book3e_machine_specific = {
 	.is_vmaddr = book3e_is_vmaddr,
 };
 
+/**
+ * No additional checks are required on PPC64, for checking if PRSTATUS notes
+ * is valid
+ */
+int ppc64_is_cpu_prstatus_valid(int cpu)
+{
+	return TRUE;
+}
+
 #define SKIBOOT_BASE			0x30000000
 
 /*
@@ -418,6 +427,7 @@ ppc64_init(int when)
 		break;
 
 	case POST_GDB:
+		machdep->is_cpu_prstatus_valid = ppc64_is_cpu_prstatus_valid;
 		ms = machdep->machspec;
 
 		if (!(machdep->flags & BOOK3E)) {
