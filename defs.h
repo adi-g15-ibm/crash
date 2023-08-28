@@ -1073,6 +1073,7 @@ struct machdep_table {
         int (*verify_line_number)(ulong, ulong, ulong);
         void (*get_irq_affinity)(int);
         void (*show_interrupts)(int, ulong *);
+	int (*is_cpu_prstatus_valid)(int cpu);
 	int (*is_page_ptr)(ulong, physaddr_t *);
 	int (*get_cpu_reg)(int, int, const char *, int, void *);
 };
