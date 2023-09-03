@@ -401,14 +401,11 @@ ppc64_init(int when)
 		machdep->get_kvaddr_ranges = ppc64_get_kvaddr_ranges;
 		machdep->init_kernel_pgd = NULL;
 
-		if (symbol_exists("vmemmap_populate")) {
-			if (symbol_exists("vmemmap")) {
-				readmem(symbol_value("vmemmap"), KVADDR,
-					&machdep->machspec->vmemmap_base,
-					sizeof(void *), "vmemmap", QUIET|FAULT_ON_ERROR);
-			} else
-				machdep->machspec->vmemmap_base =
-					VMEMMAP_REGION_ID << REGION_SHIFT;
+		machdep->machspec->vmemmap_base = VMEMMAP_REGION_ID << REGION_SHIFT;
+		if (symbol_exists("vmemmap_populate") && symbol_exists("vmemmap")) {
+			readmem(symbol_value("vmemmap"), KVADDR,
+				&machdep->machspec->vmemmap_base,
+				sizeof(void *), "vmemmap", QUIET|FAULT_ON_ERROR);
 
 			machdep->flags |= VMEMMAP;
 		}
@@ -1183,8 +1180,7 @@ ppc64_kvtop(struct task_context *tc, ulong kvaddr,
         if (!IS_KVADDR(kvaddr))
                 return FALSE;
 
-	if ((machdep->flags & VMEMMAP) && 
-	    (kvaddr >= machdep->machspec->vmemmap_base))
+	if (kvaddr >= machdep->machspec->vmemmap_base)
 		return ppc64_vmemmap_to_phys(kvaddr, paddr, verbose);
 
 	if (!vt->vmalloc_start) {
@@ -1282,6 +1278,28 @@ void ppc64_vmemmap_init(void)
 	char *vmemmap_buf;
 	struct machine_specific *ms;
 	
+	ms = machdep->machspec;
+	ld = &list_data;
+	BZERO(ld, sizeof(struct list_data));
+	if (!readmem(symbol_value("vmemmap_list"),
+	    KVADDR, &ld->start, sizeof(void *), "vmemmap_list",
+	    RETURN_ON_ERROR))
+		return;
+
+	if (!ld->start) {
+		/**
+		 * vmemmap_list is empty, it has not been populated by the kernel
+		 *
+		 * Instead of depending on vmemmap_list for address translation, we can
+		 * leave vmemmap_list as NULL, and later do a kernel pagetable traversal
+		 */
+		ms->vmemmap_list = NULL;
+		ms->vmemmap_cnt = 0;
+
+		machdep->flags |= VMEMMAP_AWARE;
+		return;
+	}
+
 	if (!(kernel_symbol_exists("vmemmap_list")) ||
 	    !(kernel_symbol_exists("mmu_psize_defs")) ||
 	    !(kernel_symbol_exists("mmu_vmemmap_psize")) ||
@@ -1292,8 +1310,6 @@ void ppc64_vmemmap_init(void)
 	    !MEMBER_EXISTS("vmemmap_backing", "virt_addr") ||
 	    !MEMBER_EXISTS("vmemmap_backing", "list"))
 		return;
-
-	ms = machdep->machspec;
 
 	backing_size = STRUCT_SIZE("vmemmap_backing");
 	virt_addr_offset = MEMBER_OFFSET("vmemmap_backing", "virt_addr");
@@ -1313,14 +1329,8 @@ void ppc64_vmemmap_init(void)
 
 	ms->vmemmap_psize = 1 << shift;
 
-        ld =  &list_data;
-        BZERO(ld, sizeof(struct list_data));
-	if (!readmem(symbol_value("vmemmap_list"),
-	    KVADDR, &ld->start, sizeof(void *), "vmemmap_list",
-	    RETURN_ON_ERROR))
-		return;
-        ld->end = symbol_value("vmemmap_list");
-        ld->list_head_offset = list_offset;
+	ld->end = symbol_value("vmemmap_list");
+	ld->list_head_offset = list_offset;
 
         hq_open();
 	cnt = do_list(ld);
@@ -1366,7 +1376,7 @@ ppc64_vmemmap_to_phys(ulong kvaddr, physaddr_t *paddr, int verbose)
 {
 	int i;
 	ulong offset;
-	struct machine_specific *ms;
+	struct machine_specific *ms = machdep->machspec;
 
 	if (!(machdep->flags & VMEMMAP_AWARE)) {
 		/*
@@ -1386,7 +1396,12 @@ ppc64_vmemmap_to_phys(ulong kvaddr, physaddr_t *paddr, int verbose)
 		return FALSE;
 	}
 
-	ms = machdep->machspec;
+	/**
+	 * When vmemmap_list is not populated, kernel does the mapping in init_mm
+	 * page table, so do a pagetable walk in kernel page table
+	 */
+	if (!ms->vmemmap_list)
+		return ppc64_vtop_level4(kvaddr, (ulong *)vt->kernel_pgd[0], paddr, verbose);
 
 	for (i = 0; i < ms->vmemmap_cnt; i++) {
 		if ((kvaddr >= ms->vmemmap_list[i].virt) &&
