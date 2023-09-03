@@ -401,14 +401,11 @@ ppc64_init(int when)
 		machdep->get_kvaddr_ranges = ppc64_get_kvaddr_ranges;
 		machdep->init_kernel_pgd = NULL;
 
-		if (symbol_exists("vmemmap_populate")) {
-			if (symbol_exists("vmemmap")) {
-				readmem(symbol_value("vmemmap"), KVADDR,
-					&machdep->machspec->vmemmap_base,
-					sizeof(void *), "vmemmap", QUIET|FAULT_ON_ERROR);
-			} else
-				machdep->machspec->vmemmap_base =
-					VMEMMAP_REGION_ID << REGION_SHIFT;
+		machdep->machspec->vmemmap_base = VMEMMAP_REGION_ID << REGION_SHIFT;
+		if (symbol_exists("vmemmap_populate") && symbol_exists("vmemmap")) {
+			readmem(symbol_value("vmemmap"), KVADDR,
+				&machdep->machspec->vmemmap_base,
+				sizeof(void *), "vmemmap", QUIET|FAULT_ON_ERROR);
 
 			machdep->flags |= VMEMMAP;
 		}
@@ -1183,8 +1180,7 @@ ppc64_kvtop(struct task_context *tc, ulong kvaddr,
         if (!IS_KVADDR(kvaddr))
                 return FALSE;
 
-	if ((machdep->flags & VMEMMAP) && 
-	    (kvaddr >= machdep->machspec->vmemmap_base))
+	if (kvaddr >= machdep->machspec->vmemmap_base)
 		return ppc64_vmemmap_to_phys(kvaddr, paddr, verbose);
 
 	if (!vt->vmalloc_start) {
@@ -1322,6 +1318,20 @@ void ppc64_vmemmap_init(void)
         ld->end = symbol_value("vmemmap_list");
         ld->list_head_offset = list_offset;
 
+	if (!ld->start) {
+		/**
+		 * vmemmap_list is empty, it has not been populated by the kernel
+		 *
+		 * Instead of depending on vmemmap_list for address translation, we can
+		 * leave vmemmap_list as NULL, and later do a kernel pagetable traversal
+		 */
+		ms->vmemmap_list = NULL;
+		ms->vmemmap_cnt = 0;
+
+		machdep->flags |= VMEMMAP_AWARE;
+		return;
+	}
+
         hq_open();
 	cnt = do_list(ld);
         vmemmap_list = (ulong *)GETBUF(cnt * sizeof(ulong));
@@ -1366,7 +1376,14 @@ ppc64_vmemmap_to_phys(ulong kvaddr, physaddr_t *paddr, int verbose)
 {
 	int i;
 	ulong offset;
-	struct machine_specific *ms;
+	struct machine_specific *ms = machdep->machspec;
+
+	/**
+	 * Do a page traversal in kernel page table, since vmemmap_list is not
+	 * populated
+	 */
+	if (!ms->vmemmap_list)
+		return ppc64_vtop_level4(kvaddr, (ulong *)vt->kernel_pgd[0], paddr, verbose);
 
 	if (!(machdep->flags & VMEMMAP_AWARE)) {
 		/*
@@ -1385,8 +1402,6 @@ ppc64_vmemmap_to_phys(ulong kvaddr, physaddr_t *paddr, int verbose)
 	
 		return FALSE;
 	}
-
-	ms = machdep->machspec;
 
 	for (i = 0; i < ms->vmemmap_cnt; i++) {
 		if ((kvaddr >= ms->vmemmap_list[i].virt) &&
