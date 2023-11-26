@@ -5285,6 +5285,7 @@ set_context(ulong task, ulong pid)
 {
 	int i;
 	struct task_context *tc;
+	struct gnu_request req = {0};
 	int found;
 
 	tc = FIRST_CONTEXT();
@@ -5301,6 +5302,11 @@ set_context(ulong task, ulong pid)
 
 	if (found) {
 		CURRENT_CONTEXT() = tc;
+
+		// change the selected thread in gdb, according to current context
+		req.buf = "thread 4";
+		gdb_interface(&req);
+
 		return TRUE;
 	} else {
 		if (task) 
