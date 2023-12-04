@@ -706,6 +706,15 @@ task_init(void)
 		kt->boot_date.tv_nsec = 0;
 	}
 
+	/*
+	 * Refresh gdb thread's regcache
+	 *
+	 * This is required since, threads were initialised in crash_target_init
+	 * when crash was not initialised yet and hence could not pass
+	 * registers to gdb when gdb requests via crash_target::fetch_registers.
+	 * */
+	gdb_refresh_regcache();
+
 	tt->flags |= TASK_INIT_DONE;
 }
 

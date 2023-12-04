@@ -6491,9 +6491,10 @@ no_cpu_flags:
 
 /*
  *  Set the context to the active task on a given cpu -- dumpfiles only.
+ *  Optionally show the context if print_context is TRUE
  */
 void
-set_cpu(int cpu)
+set_cpu(int cpu, int print_context)
 {
 	ulong task;
 
@@ -6515,7 +6516,8 @@ set_cpu(int cpu)
 	else
 		error(FATAL, "cannot determine active task on cpu %ld\n", cpu);
 
-	show_context(CURRENT_CONTEXT());
+	if (print_context)
+		show_context(CURRENT_CONTEXT());
 }
 
 

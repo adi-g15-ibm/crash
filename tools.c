@@ -1860,7 +1860,7 @@ cmd_set(void)
 				break;
 			}
 			cpu = dtoi(optarg, FAULT_ON_ERROR, NULL);
-			set_cpu(cpu);
+			set_cpu(cpu, TRUE);
 			return;
 
 		case 'p':
