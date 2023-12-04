@@ -5940,7 +5940,7 @@ extern char *help_map[];
  *  task.c
  */ 
 void task_init(void);
-int set_context(ulong, ulong);
+int set_context(ulong, ulong, uint);
 void show_context(struct task_context *);
 ulong pid_to_task(ulong);
 ulong task_to_pid(ulong);
@@ -6044,7 +6044,7 @@ void parse_kernel_version(char *);
 #define SHOW_LOG_AUDIT (0x8)
 #define SHOW_LOG_CTIME (0x10)
 #define SHOW_LOG_SAFE  (0x20)
-void set_cpu(int);
+void set_cpu(int cpu, int print_context);
 void clear_machdep_cache(void);
 struct stack_hook *gather_text_list(struct bt_info *);
 int get_cpus_online(void);
@@ -7978,5 +7978,6 @@ enum ppc64_regnum {
 
 /* crash_target.c */
 extern int gdb_change_cpu_context (unsigned int cpu);
+extern void gdb_refresh_regcache (unsigned int cpu);
 
 #endif /* !GDB_COMMON */
