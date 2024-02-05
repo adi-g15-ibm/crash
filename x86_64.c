@@ -143,6 +143,18 @@ struct machine_specific x86_64_machine_specific = { 0 };
 static const char *exception_functions_orig[];
 static const char *exception_functions_5_8[];
 
+/*  Use this hardwired version -- sometimes the
+ *  debuginfo doesn't pick this up even though
+ *  it exists in the kernel; it shouldn't change.
+ */
+struct x86_64_user_regs_struct {
+	unsigned long r15, r14, r13, r12, bp, bx;
+	unsigned long r11, r10, r9, r8, ax, cx, dx;
+	unsigned long si, di, orig_ax, ip, cs;
+	unsigned long flags, sp, ss, fs_base;
+	unsigned long gs_base, ds, es, fs, gs;
+};
+
 /*
  *  Do all necessary machine-specific setup here.  This is called several
  *  times during initialization.
@@ -500,6 +512,12 @@ x86_64_init(int when)
 			MEMBER_OFFSET_INIT(thread_struct_rsp, "thread_struct", "sp");
 		if (INVALID_MEMBER(thread_struct_rsp0))
 			MEMBER_OFFSET_INIT(thread_struct_rsp0, "thread_struct", "sp0");
+		MEMBER_OFFSET_INIT(thread_struct_es, "thread_struct", "es");
+		MEMBER_OFFSET_INIT(thread_struct_ds, "thread_struct", "ds");
+		MEMBER_OFFSET_INIT(thread_struct_fsbase, "thread_struct", "fsbase");
+		MEMBER_OFFSET_INIT(thread_struct_gsbase, "thread_struct", "gsbase");
+		MEMBER_OFFSET_INIT(thread_struct_fs, "thread_struct", "fs");
+		MEMBER_OFFSET_INIT(thread_struct_gs, "thread_struct", "gs");
 		STRUCT_SIZE_INIT(tss_struct, "tss_struct");
 		MEMBER_OFFSET_INIT(tss_struct_ist, "tss_struct", "ist");
 		if (INVALID_MEMBER(tss_struct_ist)) {
@@ -583,17 +601,6 @@ x86_64_init(int when)
 			"user_regs_struct", "r15");
 		STRUCT_SIZE_INIT(user_regs_struct, "user_regs_struct");
 		if (!VALID_STRUCT(user_regs_struct)) {
-			/*  Use this hardwired version -- sometimes the
-			 *  debuginfo doesn't pick this up even though
- 			 *  it exists in the kernel; it shouldn't change.
- 			 */
-			struct x86_64_user_regs_struct {
-				unsigned long r15, r14, r13, r12, bp, bx;
-				unsigned long r11, r10, r9, r8, ax, cx, dx;
-				unsigned long si, di, orig_ax, ip, cs;
-				unsigned long flags, sp, ss, fs_base;
-				unsigned long gs_base, ds, es, fs, gs;
-			};
 			ASSIGN_SIZE(user_regs_struct) = 
 				sizeof(struct x86_64_user_regs_struct);
 			ASSIGN_OFFSET(user_regs_struct_rip) =
@@ -4970,22 +4977,91 @@ x86_64_eframe_verify(struct bt_info *bt, long kvaddr, long cs, long ss,
 	return FALSE;
 }
 
+#define GET_REG_FROM_THREAD_STRUCT(reg) \
+({ \
+	ulong offset, reg_value = 0; \
+	offset = OFFSET(task_struct_thread) + OFFSET(thread_struct_##reg); \
+	readmem(bt->task + offset, KVADDR, &reg_value, \
+		sizeof(ulong), "thread.##reg", FAULT_ON_ERROR); \
+	reg_value; \
+})
+
+#define GET_REG_FROM_INACTIVE_TASK_FRAME(reg) \
+({ \
+	ulong offset, reg_value = 0, rsp; \
+	if ((machdep->flags & ORC) && VALID_MEMBER(inactive_task_frame_bp)) { \
+		offset = OFFSET(task_struct_thread) + OFFSET(thread_struct_rsp); \
+		readmem(bt->task + offset, KVADDR, &rsp, \
+			sizeof(ulong), "thread_struct.rsp", FAULT_ON_ERROR); \
+		readmem(rsp + OFFSET(inactive_task_frame_##reg), KVADDR, &reg_value, \
+			sizeof(ulong), "inactive_task_frame.##reg", FAULT_ON_ERROR); \
+	} \
+	reg_value; \
+})
+
 /*
  *  Get a stack frame combination of pc and ra from the most relevent spot.
  */
 static void
 x86_64_get_stack_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 {
-	if (bt->flags & BT_DUMPFILE_SEARCH)
-		return x86_64_get_dumpfile_stack_frame(bt, pcp, spp);
+	struct x86_64_user_regs_struct *user_regs;
 
 	if (bt->flags & BT_SKIP_IDLE)
 		bt->flags &= ~BT_SKIP_IDLE;
+	if (pcp)
+		*pcp = x86_64_get_pc(bt);
+	if (spp)
+		*spp = x86_64_get_sp(bt);
 
-        if (pcp)
-                *pcp = x86_64_get_pc(bt);
-        if (spp)
-                *spp = x86_64_get_sp(bt);
+	user_regs = GETBUF(sizeof(struct x86_64_user_regs_struct));
+	memset(user_regs, 0, sizeof(struct x86_64_user_regs_struct));
+
+	if ((machdep->flags & ORC) && VALID_MEMBER(inactive_task_frame_bp)) {
+		if (!is_task_active(bt->task)) {
+			/*
+			* For inactive tasks in live and dumpfile, regs can be
+			* get from inactive_task_frame struct.
+			*/
+			user_regs->r15 = GET_REG_FROM_INACTIVE_TASK_FRAME(r15);
+			user_regs->r14 = GET_REG_FROM_INACTIVE_TASK_FRAME(r14);
+			user_regs->r13 = GET_REG_FROM_INACTIVE_TASK_FRAME(r13);
+			user_regs->r12 = GET_REG_FROM_INACTIVE_TASK_FRAME(r12);
+			user_regs->bx  = GET_REG_FROM_INACTIVE_TASK_FRAME(bx);
+			user_regs->bp  = GET_REG_FROM_INACTIVE_TASK_FRAME(bp);
+		} else {
+			/*
+			* For active tasks in dumpfile, we get regs through the
+			* original way. For active tasks in live, we cannot get the
+			* regs.
+			*/
+			if (bt->flags & BT_DUMPFILE_SEARCH) {
+				FREEBUF(user_regs);
+				bt->need_free = FALSE;
+				return x86_64_get_dumpfile_stack_frame(bt, pcp, spp);
+			}
+		}
+	} else {
+		if (!is_task_active(bt->task)) {
+			readmem(*spp, KVADDR, &(user_regs->bp),
+				sizeof(ulong), "user_regs->bp", FAULT_ON_ERROR);
+		} else {
+			if (bt->flags & BT_DUMPFILE_SEARCH) {
+				FREEBUF(user_regs);
+				bt->need_free = FALSE;
+				return x86_64_get_dumpfile_stack_frame(bt, pcp, spp);
+			}
+		}
+	}
+
+	user_regs->ip = *pcp;
+	user_regs->sp = *spp;
+	user_regs->es = GET_REG_FROM_THREAD_STRUCT(es);
+
+	fprintf(fp, ">>>> sp:%lx bp:%lx ip:%lx\n", user_regs->sp, user_regs->bp, user_regs->ip);
+
+	bt->machdep = user_regs;
+	bt->need_free = TRUE;
 }
 
 /*
@@ -6457,6 +6533,14 @@ x86_64_ORC_init(void)
 
 	MEMBER_OFFSET_INIT(inactive_task_frame_bp, "inactive_task_frame", "bp");
 	MEMBER_OFFSET_INIT(inactive_task_frame_ret_addr, "inactive_task_frame", "ret_addr");
+	MEMBER_OFFSET_INIT(inactive_task_frame_r15, "inactive_task_frame", "r15");
+	MEMBER_OFFSET_INIT(inactive_task_frame_r14, "inactive_task_frame", "r14");
+	MEMBER_OFFSET_INIT(inactive_task_frame_r13, "inactive_task_frame", "r13");
+	MEMBER_OFFSET_INIT(inactive_task_frame_r12, "inactive_task_frame", "r12");
+	MEMBER_OFFSET_INIT(inactive_task_frame_flags, "inactive_task_frame", "flags");
+	MEMBER_OFFSET_INIT(inactive_task_frame_si, "inactive_task_frame", "si");
+	MEMBER_OFFSET_INIT(inactive_task_frame_di, "inactive_task_frame", "di");
+	MEMBER_OFFSET_INIT(inactive_task_frame_bx, "inactive_task_frame", "bx");
 
 	orc->has_signal = MEMBER_EXISTS("orc_entry", "signal");	/* added at 6.3 */
 	orc->has_end = MEMBER_EXISTS("orc_entry", "end");	/* removed at 6.4 */
@@ -9073,13 +9157,206 @@ static int
 x86_64_get_cpu_reg(int cpu, int regno, const char *name,
                    int size, void *value)
 {
-        if (regno >= LAST_REGNUM)
-                return FALSE;
+	struct bt_info bt_info, bt_setup;
+	struct task_context *tc;
+	struct x86_64_user_regs_struct *pt_regs, *pt_regs_new;
+	ulong ip, sp;
+	bool ret = FALSE;
 
-        if (VMSS_DUMPFILE())
-                return vmware_vmss_get_cpu_reg(cpu, regno, name, size, value);
+	if (VMSS_DUMPFILE())
+		return vmware_vmss_get_cpu_reg(cpu, regno, name, size, value);
+	switch (regno) {
+	case RAX_REGNUM ... GS_REGNUM:
+	case FS_BASE_REGNUM ... ORIG_RAX_REGNUM:
+		break;
+	default:
+		return FALSE;
+	}
 
-        return FALSE;
+	tc = CURRENT_CONTEXT();
+	if (!tc)
+		return FALSE;
+	BZERO(&bt_setup, sizeof(struct bt_info));
+	clone_bt_info(&bt_setup, &bt_info, tc);
+	fill_stackbuf(&bt_info);
+
+	// reusing the get_dumpfile_regs function to get pt regs structure
+	get_dumpfile_regs(&bt_info, &sp, &ip);
+	if (bt_info.stackbuf)
+		FREEBUF(bt_info.stackbuf);
+	pt_regs = (struct x86_64_user_regs_struct *)bt_info.machdep;
+	if (!pt_regs)
+		return FALSE;
+
+	switch (regno) {
+	case RAX_REGNUM:
+		if (size != sizeof(pt_regs->ax)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->ax, size);
+		ret = TRUE; break;
+	case RBX_REGNUM:
+		if (size != sizeof(pt_regs->bx)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->bx, size);
+		ret = TRUE; break;
+	case RCX_REGNUM:
+		if (size != sizeof(pt_regs->cx)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->cx, size);
+		ret = TRUE; break;
+	case RDX_REGNUM:
+		if (size != sizeof(pt_regs->dx)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->dx, size);
+		ret = TRUE; break;
+	case RSI_REGNUM:
+		if (size != sizeof(pt_regs->si)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->si, size);
+		ret = TRUE; break;
+	case RDI_REGNUM:
+		if (size != sizeof(pt_regs->di)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->di, size);
+		ret = TRUE; break;
+	case RBP_REGNUM:
+		if (size != sizeof(pt_regs->bp)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->bp, size);
+		ret = TRUE; break;
+	case RSP_REGNUM:
+		if (size != sizeof(pt_regs->sp)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->sp, size);
+		ret = TRUE; break;
+	case R8_REGNUM:
+		if (size != sizeof(pt_regs->r8)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->r8, size);
+		ret = TRUE; break;
+	case R9_REGNUM:
+		if (size != sizeof(pt_regs->r9)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->r9, size);
+		ret = TRUE; break;
+	case R10_REGNUM:
+		if (size != sizeof(pt_regs->r10)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->r10, size);
+		ret = TRUE; break;
+	case R11_REGNUM:
+		if (size != sizeof(pt_regs->r11)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->r11, size);
+	case R12_REGNUM:
+		if (size != sizeof(pt_regs->r12)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->r12, size);
+		ret = TRUE; break;
+	case R13_REGNUM:
+		if (size != sizeof(pt_regs->r13)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->r13, size);
+		ret = TRUE; break;
+	case R14_REGNUM:
+		if (size != sizeof(pt_regs->r14)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->r14, size);
+		ret = TRUE; break;
+	case R15_REGNUM:
+		if (size != sizeof(pt_regs->r15)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->r15, size);
+		ret = TRUE; break;
+	case RIP_REGNUM:
+		if (size != sizeof(pt_regs->ip)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->ip, size);
+		ret = TRUE; break;
+	case EFLAGS_REGNUM:
+		if (size != sizeof(pt_regs->flags)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->flags, size);
+		ret = TRUE; break;
+	case CS_REGNUM:
+		if (size != sizeof(pt_regs->cs)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->cs, size);
+		ret = TRUE; break;
+	case SS_REGNUM:
+		if (size != sizeof(pt_regs->ss)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->ss, size);
+		ret = TRUE; break;
+	case DS_REGNUM:
+		if (size != sizeof(pt_regs->ds)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->ds, size);
+		ret = TRUE; break;
+	case ES_REGNUM:
+		if (size != sizeof(pt_regs->es)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->es, size);
+		ret = TRUE; break;
+	case FS_REGNUM:
+		if (size != sizeof(pt_regs->fs)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->fs, size);
+		ret = TRUE; break;
+	case GS_REGNUM:
+		if (size != sizeof(pt_regs->gs)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->gs, size);
+		ret = TRUE; break;
+	case FS_BASE_REGNUM:
+		if (size != sizeof(pt_regs->fs_base)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->fs_base, size);
+		ret = TRUE; break;
+	case GS_BASE_REGNUM:
+		if (size != sizeof(pt_regs->gs_base)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->gs_base, size);
+		ret = TRUE; break;
+	case ORIG_RAX_REGNUM:
+		if (size != sizeof(pt_regs->orig_ax)) {
+			ret = FALSE; break;
+		}
+		memcpy(value, &pt_regs->orig_ax, size);
+		ret = TRUE; break;
+	}
+
+	if (bt_info.need_free) {
+		FREEBUF(pt_regs);
+		bt_info.need_free = FALSE;
+	}
+	return ret;
 }
 
 /*
