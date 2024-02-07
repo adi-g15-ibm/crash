@@ -4989,7 +4989,7 @@ x86_64_eframe_verify(struct bt_info *bt, long kvaddr, long cs, long ss,
 #define GET_REG_FROM_INACTIVE_TASK_FRAME(reg) \
 ({ \
 	ulong offset, reg_value = 0, rsp; \
-	if ((machdep->flags & ORC) && VALID_MEMBER(inactive_task_frame_bp)) { \
+	if (VALID_MEMBER(inactive_task_frame_bp)) { \
 		offset = OFFSET(task_struct_thread) + OFFSET(thread_struct_rsp); \
 		readmem(bt->task + offset, KVADDR, &rsp, \
 			sizeof(ulong), "thread_struct.rsp", FAULT_ON_ERROR); \
@@ -5017,7 +5017,7 @@ x86_64_get_stack_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 	user_regs = GETBUF(sizeof(struct x86_64_user_regs_struct));
 	memset(user_regs, 0, sizeof(struct x86_64_user_regs_struct));
 
-	if ((machdep->flags & ORC) && VALID_MEMBER(inactive_task_frame_bp)) {
+	if (VALID_MEMBER(inactive_task_frame_bp)) {
 		if (!is_task_active(bt->task)) {
 			/*
 			* For inactive tasks in live and dumpfile, regs can be
@@ -6372,7 +6372,7 @@ parse_cmdline_args(void)
 			{
 			case 0:
 				break;
-		
+
 			case VM_ORIG:
 				error(NOTE, "using original x86_64 VM address ranges\n");
 				lines++;
@@ -6474,6 +6474,17 @@ x86_64_ORC_init(void)
 	};
 	struct ORC_data *orc;
 
+        MEMBER_OFFSET_INIT(inactive_task_frame_bp, "inactive_task_frame", "bp");
+        MEMBER_OFFSET_INIT(inactive_task_frame_ret_addr, "inactive_task_frame", "ret_addr");
+        MEMBER_OFFSET_INIT(inactive_task_frame_r15, "inactive_task_frame", "r15");
+        MEMBER_OFFSET_INIT(inactive_task_frame_r14, "inactive_task_frame", "r14");
+        MEMBER_OFFSET_INIT(inactive_task_frame_r13, "inactive_task_frame", "r13");
+        MEMBER_OFFSET_INIT(inactive_task_frame_r12, "inactive_task_frame", "r12");
+        MEMBER_OFFSET_INIT(inactive_task_frame_flags, "inactive_task_frame", "flags");
+        MEMBER_OFFSET_INIT(inactive_task_frame_si, "inactive_task_frame", "si");
+        MEMBER_OFFSET_INIT(inactive_task_frame_di, "inactive_task_frame", "di");
+        MEMBER_OFFSET_INIT(inactive_task_frame_bx, "inactive_task_frame", "bx");
+
 	if (machdep->flags & FRAMEPOINTER)
 		return;
 
@@ -6530,17 +6541,6 @@ x86_64_ORC_init(void)
 	orc->__start_orc_unwind = symbol_value("__start_orc_unwind");
 	orc->__stop_orc_unwind = symbol_value("__stop_orc_unwind");
 	orc->orc_lookup = symbol_value("orc_lookup");
-
-	MEMBER_OFFSET_INIT(inactive_task_frame_bp, "inactive_task_frame", "bp");
-	MEMBER_OFFSET_INIT(inactive_task_frame_ret_addr, "inactive_task_frame", "ret_addr");
-	MEMBER_OFFSET_INIT(inactive_task_frame_r15, "inactive_task_frame", "r15");
-	MEMBER_OFFSET_INIT(inactive_task_frame_r14, "inactive_task_frame", "r14");
-	MEMBER_OFFSET_INIT(inactive_task_frame_r13, "inactive_task_frame", "r13");
-	MEMBER_OFFSET_INIT(inactive_task_frame_r12, "inactive_task_frame", "r12");
-	MEMBER_OFFSET_INIT(inactive_task_frame_flags, "inactive_task_frame", "flags");
-	MEMBER_OFFSET_INIT(inactive_task_frame_si, "inactive_task_frame", "si");
-	MEMBER_OFFSET_INIT(inactive_task_frame_di, "inactive_task_frame", "di");
-	MEMBER_OFFSET_INIT(inactive_task_frame_bx, "inactive_task_frame", "bx");
 
 	orc->has_signal = MEMBER_EXISTS("orc_entry", "signal");	/* added at 6.3 */
 	orc->has_end = MEMBER_EXISTS("orc_entry", "end");	/* removed at 6.4 */
