@@ -8192,7 +8192,6 @@ enum ppc64_regnum {
 };
 
 /* crash_target.c */
-extern int gdb_change_cpu_context (unsigned int cpu);
 extern void gdb_refresh_regcache (unsigned int cpu);
 
 #endif /* !GDB_COMMON */
