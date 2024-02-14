@@ -6563,7 +6563,7 @@ crash_set_thread(ulong task)
 	if (CURRENT_TASK() == tc->task)
 		return tc->processor;
 
-	set_context(tc->task, NO_PID);
+	set_context(tc->task, NO_PID, TRUE);
 	return tc->processor;
 }
 
