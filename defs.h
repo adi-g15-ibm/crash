@@ -982,6 +982,7 @@ struct bt_info {
 	ulong eframe_ip;
 	ulong radix;
 	ulong *cpumask;
+	bool need_free;
 };
 
 #define STACK_OFFSET_TYPE(OFF) \
@@ -2240,6 +2241,20 @@ struct offset_table {                    /* stash of commonly-used offsets */
 	long mnt_namespace_nr_mounts;
 	long mount_mnt_node;
 	long log_caller_id;
+	long inactive_task_frame_r15;
+	long inactive_task_frame_r14;
+	long inactive_task_frame_r13;
+	long inactive_task_frame_r12;
+	long inactive_task_frame_flags;
+	long inactive_task_frame_si;
+	long inactive_task_frame_di;
+	long inactive_task_frame_bx;
+	long thread_struct_es;
+	long thread_struct_ds;
+	long thread_struct_fsbase;
+	long thread_struct_gsbase;
+	long thread_struct_fs;
+	long thread_struct_gs;
 };
 
 struct size_table {         /* stash of commonly-used sizes */
@@ -2414,6 +2429,7 @@ struct size_table {         /* stash of commonly-used sizes */
 	long maple_tree;
 	long maple_node;
 	long module_memory;
+	long cpumask_t;
 };
 
 struct array_table {
@@ -8049,6 +8065,9 @@ enum x86_64_regnum {
         FOSEG_REGNUM,
         FOOFF_REGNUM,
         FOP_REGNUM,
+        FS_BASE_REGNUM = 152,
+        GS_BASE_REGNUM,
+        ORIG_RAX_REGNUM,
         LAST_REGNUM
 };
 
