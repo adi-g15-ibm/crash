@@ -2514,6 +2514,7 @@ ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
 	ulong task;
 	struct ppc64_pt_regs *pt_regs;
 	ulong ip, sp;
+	bool ret = FALSE;
 
 	if (LIVE()) {
 		/* doesn't support reading registers in live dump */
@@ -2545,14 +2546,17 @@ ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
 		return FALSE;
 	}
 
-	task = get_active_task(cpu);
-	tc = task_to_context(task);
+	tc = CURRENT_CONTEXT();
+	if (!tc)
+		return FALSE;
 	BZERO(&bt_setup, sizeof(struct bt_info));
 	clone_bt_info(&bt_setup, &bt_info, tc);
 	fill_stackbuf(&bt_info);
 
 	// reusing the get_dumpfile_regs function to get pt regs structure
 	get_dumpfile_regs(&bt_info, &sp, &ip);
+	if (bt_info.stackbuf)
+		FREEBUF(bt_info.stackbuf);
 	pt_regs = (struct ppc64_pt_regs *)bt_info.machdep;
 
 	if (!pt_regs) {
@@ -2562,46 +2566,46 @@ ppc64_get_cpu_reg(int cpu, int regno, const char *name, int size,
 
 	switch (regno) {
 	case PPC64_R0_REGNUM ... PPC64_R31_REGNUM:
-		if (size != sizeof(pt_regs->gpr[regno]))
-			return FALSE;  // size mismatch
-
+		if (size != sizeof(pt_regs->gpr[regno])) {
+			ret = FALSE; break;  // size mismatch
+		}
 		memcpy(value, &pt_regs->gpr[regno], size);
-		break;
+		ret = TRUE; break;
 
 	case PPC64_PC_REGNUM:
-		if (size != sizeof(pt_regs->nip))
-			return FALSE;  // size mismatch
-
+		if (size != sizeof(pt_regs->nip)) {
+			ret = FALSE; break;  // size mismatch
+		}
 		memcpy(value, &pt_regs->nip, size);
-		break;
+		ret = TRUE; break;
 
 	case PPC64_MSR_REGNUM:
-		if (size != sizeof(pt_regs->msr))
-			return FALSE;  // size mismatch
-
+		if (size != sizeof(pt_regs->msr)) {
+			ret = FALSE; break;  // size mismatch
+		}
 		memcpy(value, &pt_regs->msr, size);
-		break;
+		ret = TRUE; break;
 
 	case PPC64_LR_REGNUM:
-		if (size != sizeof(pt_regs->link))
-			return FALSE;  // size mismatch
-
+		if (size != sizeof(pt_regs->link)) {
+			ret = FALSE; break;  // size mismatch
+		}
 		memcpy(value, &pt_regs->link, size);
-		break;
+		ret = TRUE; break;
 
 	case PPC64_CTR_REGNUM:
-		if (size != sizeof(pt_regs->ctr))
-			return FALSE;  // size mismatch
-
+		if (size != sizeof(pt_regs->ctr)) {
+			ret = FALSE; break;  // size mismatch
+		}
 		memcpy(value, &pt_regs->ctr, size);
-		break;
+		ret = TRUE; break;
+	}
+	if (bt_info.need_free) {
+		FREEBUF(pt_regs);
+		bt_info.need_free = FALSE;
 	}
 
-	/* free buffer allocated by fill_stackbuf */
-	if (bt_info.stackbuf)
-		FREEBUF(bt_info.stackbuf);
-
-	return TRUE;
+	return ret;
 }
 
 /*
@@ -2884,19 +2888,27 @@ static void
 ppc64_get_stack_frame(struct bt_info *bt, ulong *pcp, ulong *spp)
 {
 	ulong ksp, nip;
-	
+	struct ppc64_pt_regs *regs;
+
 	nip = ksp = 0;
 
-	if (DUMPFILE() && is_task_active(bt->task)) 
+	if (DUMPFILE() && is_task_active(bt->task)) {
 		ppc64_get_dumpfile_stack_frame(bt, &nip, &ksp);
-	else
+		bt->need_free = FALSE;
+	} else {
 		get_ppc64_frame(bt, &nip, &ksp);
+		regs = (struct ppc64_pt_regs *)GETBUF(sizeof(struct ppc64_pt_regs));
+		memset(regs, 0, sizeof(struct ppc64_pt_regs));
+		regs->nip = nip;
+		regs->gpr[1] = ksp;
+		bt->machdep = regs;
+		bt->need_free = TRUE;
+	}
 
 	if (pcp)
 		*pcp = nip;
 	if (spp)
 		*spp = ksp;
-
 }
 
 static ulong
