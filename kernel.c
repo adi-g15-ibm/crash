@@ -6481,9 +6481,10 @@ no_cpu_flags:
 
 /*
  *  Set the context to the active task on a given cpu -- dumpfiles only.
+ *  Optionally show the context if print_context is TRUE
  */
 void
-set_cpu(int cpu)
+set_cpu(int cpu, int print_context)
 {
 	ulong task;
 
@@ -6494,12 +6495,19 @@ set_cpu(int cpu)
 	if (hide_offline_cpu(cpu))
 		error(FATAL, "invalid cpu number: cpu %d is OFFLINE\n", cpu);
 
-	if ((task = get_active_task(cpu))) 
-		set_context(task, NO_PID);
+	task = get_active_task(cpu);
+
+	/* Check if context is already set to given cpu */
+	if (task == CURRENT_TASK())
+		return;
+
+	if (task)
+		set_context(task, NO_PID, TRUE);
 	else
 		error(FATAL, "cannot determine active task on cpu %ld\n", cpu);
 
-	show_context(CURRENT_CONTEXT());
+	if (print_context)
+		show_context(CURRENT_CONTEXT());
 }
 
 

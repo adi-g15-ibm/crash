@@ -12,6 +12,7 @@ tar xvzmf gdb-10.2.tar.gz \
 	gdb-10.2/gdb/symtab.c \
 	gdb-10.2/gdb/printcmd.c \
 	gdb-10.2/gdb/symfile.c \
+	gdb-10.2/gdb/thread.c \
 	gdb-10.2/gdb/Makefile.in \
 	gdb-10.2/gdb/dwarf2/read.c \
 	gdb-10.2/gdb/ada-lang.c \
