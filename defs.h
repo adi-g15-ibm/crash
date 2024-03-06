@@ -6068,6 +6068,7 @@ void sort_tgid_array(void);
 int sort_by_tgid(const void *, const void *);
 int in_irq_ctx(ulonglong, int, ulong);
 void check_stack_overflow(void);
+int gdb_change_thread_context (ulong);
 
 /*
  *  extensions.c
@@ -6107,6 +6108,7 @@ void dump_kernel_table(int);
 void dump_bt_info(struct bt_info *, char *where);
 void dump_log(int);
 void parse_kernel_version(char *);
+int crash_set_thread(ulong);
 
 #define LOG_LEVEL(v) ((v) & 0x07)
 #define SHOW_LOG_LEVEL    (0x1)

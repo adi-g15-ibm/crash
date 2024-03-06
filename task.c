@@ -5304,7 +5304,7 @@ set_context(ulong task, ulong pid, uint update_gdb_thread)
 
 		/* change the selected thread in gdb, according to current context */
 		if (update_gdb_thread)
-			return gdb_change_cpu_context(tc->processor);
+			return gdb_change_thread_context(tc->task);
 		else
 			return TRUE;
 	} else {
