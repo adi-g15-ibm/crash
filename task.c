@@ -16,6 +16,7 @@
  */
 
 #include "defs.h"
+#include <time.h>
 
 static ulong get_panic_context(void);
 static int sort_by_pid(const void *, const void *);
@@ -715,8 +716,12 @@ task_init(void)
 	 * crash_target::fetch_registers, so CPU 0's registers are shown as
 	 * <unavailable> in gdb mode
 	 * */
+	clock_t starttime = clock();
 	for (int i = 0; i < get_cpus_online(); i++)
 		gdb_refresh_regcache(i);
+	clock_t endtime = clock();
+
+	printf("\n\n\nTime taken: %f\n\n\n", (float)(endtime-starttime)/CLOCKS_PER_SEC);
 
 	tt->flags |= TASK_INIT_DONE;
 }
