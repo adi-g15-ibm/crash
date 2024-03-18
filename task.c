@@ -3053,7 +3053,7 @@ sort_context_array(void)
 	curtask = CURRENT_TASK();
 	qsort((void *)tt->context_array, (size_t)tt->running_tasks,
         	sizeof(struct task_context), sort_by_pid);
-	set_context(curtask, NO_PID, FALSE);
+	set_context(curtask, NO_PID, TRUE);
 
 	sort_context_by_task();
 }
@@ -3100,7 +3100,7 @@ sort_context_array_by_last_run(void)
 	curtask = CURRENT_TASK();
 	qsort((void *)tt->context_array, (size_t)tt->running_tasks,
         	sizeof(struct task_context), sort_by_last_run);
-	set_context(curtask, NO_PID, FALSE);
+	set_context(curtask, NO_PID, TRUE);
 
 	sort_context_by_task();
 }
@@ -11284,4 +11284,21 @@ check_stack_end_magic:
 
 	if (!total)
 		fprintf(fp, "No stack overflows detected\n");
+}
+
+void crash_get_current_task_info(unsigned long *pid, char **comm)
+{
+	int i;
+	struct task_context *tc;
+
+	tc = FIRST_CONTEXT();
+	for (i = 0; i < RUNNING_TASKS(); i++, tc++)
+		if (tc->task == CURRENT_TASK()) {
+			*pid = tc->pid;
+			*comm = tc->comm;
+			return;
+		}
+	*pid = 0;
+	*comm = NULL;
+	return;
 }
