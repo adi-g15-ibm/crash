@@ -195,7 +195,7 @@ x86_64_init(int when)
 		machdep->machspec->irq_eframe_link = UNINITIALIZED;
 		machdep->machspec->irq_stack_gap = UNINITIALIZED;
 		machdep->get_kvaddr_ranges = x86_64_get_kvaddr_ranges;
-		machdep->get_cpu_reg = x86_64_get_cpu_reg;
+		machdep->get_current_task_reg = x86_64_get_cpu_reg;
                 if (machdep->cmdline_args[0])
                         parse_cmdline_args();
 		if ((string = pc->read_vmcoreinfo("relocate"))) {
