@@ -6719,7 +6719,10 @@ ulong *
 get_cpumask_buf(void)
 {
 	int cpulen;
-	if ((cpulen = STRUCT_SIZE("cpumask_t")) < 0)
+
+	if (VALID_SIZE(cpumask_t))
+		cpulen = SIZE(cpumask_t);
+	else
 		cpulen = DIV_ROUND_UP(kt->cpus, BITS_PER_LONG) * sizeof(ulong);
 	return (ulong *)GETBUF(cpulen);
 }
