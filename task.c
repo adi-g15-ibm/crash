@@ -5295,6 +5295,10 @@ set_context(ulong task, ulong pid, uint update_gdb_thread)
 	struct task_context *tc;
 	int found;
 
+	if (CURRENT_CONTEXT() &&
+	    (CURRENT_TASK() == task || CURRENT_PID() == pid))
+		return TRUE;
+
 	tc = FIRST_CONTEXT();
 
         for (i = 0, found = FALSE; i < RUNNING_TASKS(); i++, tc++) {
