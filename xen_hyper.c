@@ -52,7 +52,7 @@ xen_hyper_init(void)
 	 */
 	xht->xen_virt_start &= 0xffffffffc0000000;
 #endif
-
+	STRUCT_SIZE_INIT(cpumask_t, "cpumask_t");
 	if (machine_type("X86_64") &&
 	    symbol_exists("xen_phys_start") && !xen_phys_start())
 		error(WARNING, 
